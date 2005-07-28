@@ -1,0 +1,22 @@
+# 在 mail.acl 不在 unmail.acl 中的 email 才可收信
+# 整個 isp
+
+# 站台
+ptt.cc
+ptt2.cc
+.ptt.cc
+wretch.cc
+
+# 整個域名
+.com
+.com.tw
+.edu
+.edu.tw
+.gov
+.gov.tw
+.idv
+.idv.tw
+.net
+.net.tw
+.org
+.org.tw

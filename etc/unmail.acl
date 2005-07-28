@@ -1,0 +1,6 @@
+# 在 mail.acl 不在 unmail.acl 中的 email 才可收信
+# denied name
+sales@
+sex@
+
+# 自動擋信
