@@ -1331,18 +1331,15 @@ igetch()
       continue;
     }
 
-    if ((cc == Ctrl('R')) && (bbstate & STAT_STARTED) && !(bbstate & STAT_LOCK) 
-         && !(imode & IM_REPLY))		/* lkchu.990513: 鎖定時不可回訊 */
+    if ((cc == Ctrl('R')) && (bbstate & STAT_STARTED) && !(bbstate & STAT_LOCK) && !(imode & IM_REPLY))
+						/* lkchu.990513: 鎖定時不可回訊 */
     {
       signal(SIGUSR1, SIG_IGN);
 
-      /* Thor.980307: 想不到什麼好方法, 在^R時禁止talk, 否則會因沒有vio_fd     *
-       *              看不到 I_OTHERDATA 所以在 ctrl-r時talk, 看不到對方打的字 */
+      /* Thor.980307: 在 ^R 時 talk 會因沒有 vio_fd 看不到 I_OTHERDATA，而看不到對方打的字，所以在 ^R 時禁止 talk */
       imode |= IM_REPLY;
       bmw_reply();
       imode ^= IM_REPLY;
-      /* Thor.980307: 想不到什麼好方法, 在^R時禁止talk, 否則會因沒有vio_fd     *
-       *              看不到 I_OTHERDATA 所以在 ctrl-r時talk, 看不到對方打的字 */
 
       signal(SIGUSR1, (void *) talk_rqst);
 

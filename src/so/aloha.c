@@ -107,7 +107,7 @@ aloha_item(num, aloha)
   ALOHA *aloha;
 {
 #ifdef CHECK_ONLINE
-  UTMP *online = utmp_find(aloha->userno);
+  UTMP *online = utmp_get(aloha->userno, NULL);
 
   prints("%6d%c   %s%-14s%s\n", num, tag_char(aloha->userno), 
   online ? COLOR7 : "", aloha->userid, online ? str_ransi : "");

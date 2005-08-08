@@ -324,7 +324,7 @@ pal_item(num, pal)
   PAL *pal;
 {
 #ifdef CHECK_ONLINE
-  UTMP *online = utmp_find(pal->userno);
+  UTMP *online = utmp_get(pal->userno, NULL);
 
   prints("%6d%c%-3s%s%-14s%s%s\n", 
     num, tag_char(pal->userno), pal->ftype & PAL_BAD ? "¢æ" : "", 

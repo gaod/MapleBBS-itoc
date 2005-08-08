@@ -120,7 +120,6 @@ typedef struct Agent
   int sock;
   int sno;
   int state;
-  int mode;
 
   unsigned int ip_addr;
   char fromhost[60];
@@ -848,12 +847,13 @@ str_dehtml(src, dst, size)
 
 
 static int			/* 1:成功 */
-arg_analyze(argc, str, arg1, arg2, arg3)
+arg_analyze(argc, str, arg1, arg2, arg3, arg4)
   int argc;		/* 有幾個參數 */
   char *str;		/* 引數 */
   char **arg1;		/* 參數一 */
   char **arg2;		/* 參數二 */
   char **arg3;		/* 參數三 */
+  char **arg4;		/* 參數四 */
 {
   int i;
   char *ptr;
@@ -868,9 +868,11 @@ arg_analyze(argc, str, arg1, arg2, arg3)
       *arg1 = ptr;
     else if (i == 2)
       *arg2 = ptr;
-    else /* if (i == 3) */	/* 最多三個參數 */
-    {
+    else if (i == 3)
       *arg3 = ptr;
+    else /* if (i == 4) */	/* 最多四個參數 */
+    {
+      *arg4 = ptr;
       continue;		/* 跳過 do-while */
     }
 
@@ -908,7 +910,7 @@ acct_fetch(ap)
 
     /* u=userid&p=passwd */
 
-    if (!arg_analyze(2, dst, &userid, &passwd, NULL))
+    if (!arg_analyze(2, dst, &userid, &passwd, NULL, NULL))
       return;
 
     userid += 2;	/* skip "u=" */
@@ -1625,7 +1627,7 @@ cmd_postlist(ap)
 
   out_head(ap, "文章列表");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL))
+  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL, NULL))
     return -1;
 
   if (!allow_brdname(ap, brdname, BRD_R_BIT, 1))
@@ -1753,7 +1755,7 @@ cmd_gemlist(ap)
 
   out_head(ap, "精華區");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &xname, NULL))
+  if (!arg_analyze(2, ap->urlp, &brdname, &xname, NULL, NULL))
     return -1;
 
   if (*xname != 'F' && strlen(xname) != 8 && strcmp(xname, FN_DIR))
@@ -1890,7 +1892,7 @@ cmd_mboxlist(ap)
     return 0;
   }
 
-  if (!arg_analyze(1, ap->urlp, &number, NULL, NULL))
+  if (!arg_analyze(1, ap->urlp, &number, NULL, NULL, NULL))
     return -1;
 
   usr_fpath(folder, ap->userid, FN_DIR);
@@ -2023,7 +2025,7 @@ cmd_brdmore(ap)
 
   out_head(ap, "閱\讀看板文章");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL))
+  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL, NULL))
     return -1;
 
   if (!allow_brdname(ap, brdname, BRD_R_BIT, 1))
@@ -2142,7 +2144,7 @@ cmd_brdmost(ap)
 
   out_head(ap, "閱\讀看板同標題文章");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL))
+  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL, NULL))
     return -1;
 
   if (!allow_brdname(ap, brdname, BRD_R_BIT, 1))
@@ -2229,7 +2231,7 @@ cmd_gemmore(ap)
 
   out_head(ap, "閱\讀精華區文章");
 
-  if (!arg_analyze(3, ap->urlp, &brdname, &xname, &number))
+  if (!arg_analyze(3, ap->urlp, &brdname, &xname, &number, NULL))
     return -1;
 
   if (*xname != 'F' && strlen(xname) != 8 && strcmp(xname, FN_DIR))
@@ -2340,7 +2342,7 @@ cmd_mboxmore(ap)
 
   out_head(ap, "閱\讀信箱文章");
 
-  if (!arg_analyze(1, ap->urlp, &number, NULL, NULL))
+  if (!arg_analyze(1, ap->urlp, &number, NULL, NULL, NULL))
     return -1;
 
   if (!acct_fetch(ap))
@@ -2389,7 +2391,7 @@ cmd_dopost(ap)
 
   out_head(ap, "發表文章");
 
-  if (!arg_analyze(1, ap->urlp, &brdname, NULL, NULL))
+  if (!arg_analyze(1, ap->urlp, &brdname, NULL, NULL, NULL))
     return -1;
 
   if (!allow_brdname(ap, brdname, BRD_W_BIT, 1))
@@ -2402,6 +2404,7 @@ cmd_dopost(ap)
     "  <input type=text name=t size=%d maxlength=%d><br><br>\r\n"
     "  請輸入內容：<br>\r\n"
     "  <textarea name=c rows=10 cols=%d></textarea><br><br>\r\n"
+    "  <input type=hidden name=end>\r\n"
     "  <input type=submit value=送出文章> "
     "  <input type=reset value=重新填寫>"
     "</form>\r\n",
@@ -2432,6 +2435,7 @@ cmd_domail(ap)
     "  <input type=text name=t size=%d maxlength=%d><br><br>\r\n"
     "  請輸入內容：<br>\r\n"
     "  <textarea name=c rows=10 cols=%d></textarea><br><br>\r\n"
+    "  <input type=hidden name=end>\r\n"
     "  <input type=submit value=送出信件> "
     "  <input type=reset value=重新填寫>"
     "</form>\r\n",
@@ -2460,7 +2464,7 @@ cmd_delpost(ap)
 
   out_head(ap, "刪除文章");
 
-  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp))
+  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp, NULL))
     return -1;
 
   if ((pos = atoi(number) - 1) < 0)
@@ -2502,7 +2506,7 @@ cmd_predelpost(ap)
 
   out_head(ap, "確認刪除文章");
 
-  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp))
+  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp, NULL))
     return -1;
 
   out_mesg(ap, "若確定要刪除此篇文章，請再次點選以下連結；若要取消刪除，請按 [上一頁]");
@@ -2524,7 +2528,7 @@ cmd_delmail(ap)
 
   out_head(ap, "刪除信件");
 
-  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL))
+  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL, NULL))
     return -1;
 
   if ((pos = atoi(number) - 1) < 0)
@@ -2559,7 +2563,7 @@ cmd_predelmail(ap)
 
   out_head(ap, "確認刪除信件");
 
-  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL))
+  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL, NULL))
     return -1;
 
   out_mesg(ap, "若確定要刪除此篇信件，請再次點選以下連結；若要取消刪除，請按 [上一頁]");
@@ -2586,7 +2590,7 @@ cmd_markpost(ap)
 
   out_head(ap, "標記文章");
 
-  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp))
+  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp, NULL))
     return -1;
 
   if ((pos = atoi(number) - 1) < 0)
@@ -2623,7 +2627,7 @@ cmd_markmail(ap)
 
   out_head(ap, "標記信件");
 
-  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL))
+  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL, NULL))
     return -1;
 
   if ((pos = atoi(number) - 1) < 0)
@@ -2664,7 +2668,7 @@ cmd_query(ap)
 
   out_head(ap, "查詢使用者");
 
-  if (!arg_analyze(1, ap->urlp, &userid, NULL, NULL))
+  if (!arg_analyze(1, ap->urlp, &userid, NULL, NULL, NULL))
     return -1;
 
   if (!allow_userid(ap, userid))
@@ -2733,7 +2737,7 @@ cmd_image(ap)
   struct stat st;
   FILE *fpw;
 
-  if (!arg_analyze(1, ap->urlp, &fname, NULL, NULL))
+  if (!arg_analyze(1, ap->urlp, &fname, NULL, NULL, NULL))
   {
     agent_fire(ap);
     return 1;
@@ -2952,7 +2956,7 @@ cmd_login(ap)
 
   /* u=userid&p=passwd */
 
-  if (!arg_analyze(2, dst, &userid, &passwd, NULL))
+  if (!arg_analyze(2, dst, &userid, &passwd, NULL, NULL))
     return 0;
 
   userid += 2;	/* skip "u=" */
@@ -3005,7 +3009,7 @@ cmd_addpost(ap)
 {
   int used;
   char *dst;
-  char *brdname, *title, *content;
+  char *brdname, *title, *content, *end;
   char folder[64], fpath[64];
   HDR hdr;
   BRD *brd;
@@ -3017,9 +3021,9 @@ cmd_addpost(ap)
   dst = (char *) malloc(used);
   str_dehtml(ap->urlp, dst, used);
 
-  /* b=brdname&t=title&c=content */
+  /* b=brdname&t=title&c=content&end= */
 
-  if (arg_analyze(3, dst, &brdname, &title, &content))
+  if (arg_analyze(4, dst, &brdname, &title, &content, &end))
   {
     brdname += 2;	/* skip "b=" */
     title += 2;		/* skip "t=" */
@@ -3074,7 +3078,7 @@ cmd_addmail(ap)
 {
   int used;
   char *dst;
-  char *userid, *title, *content;
+  char *userid, *title, *content, *end;
   char folder[64], fpath[64];
   HDR hdr;
   FILE *fp;
@@ -3085,9 +3089,9 @@ cmd_addmail(ap)
   dst = (char *) malloc(used);
   str_dehtml(ap->urlp, dst, used);
 
-  /* u=userid&t=title&c=content */
+  /* u=userid&t=title&c=content&end= */
 
-  if (arg_analyze(3, dst, &userid, &title, &content))
+  if (arg_analyze(4, dst, &userid, &title, &content, &end))
   {
     userid += 2;	/* skip "u=" */
     title += 2;		/* skip "t=" */
@@ -3334,13 +3338,15 @@ agent_recv(ap)
   head[cc] = '\0';
   ap->used = (used += cc);
 
-  if (cc >= TCP_RCVSIZ)		/* 還有資料未抓完 */
+  /* itoc.050807: recv() 一次還讀不完的，一定是 dopost 或 domail，這二者的結束都有 &end= */
+  if (used >= TCP_RCVSIZ)
   {
-    sleep(1);
-    return 1;
+    /* 多 -2 是因為有些瀏覽器會自動補上 \r\n */
+    if (!strstr(head + cc - strlen("&end=") - 2, "&end="))	/* 還沒讀完，繼續讀 */
+      return 1;
   }
 
-  mode = ap->mode;
+  mode = 0;
   head = data;
 
   while (cc = *head)
@@ -3409,7 +3415,6 @@ agent_recv(ap)
     head++;
   }
 
-  ap->mode = mode;
   ap->used = 0;
   return 1;
 }
@@ -3483,7 +3488,7 @@ agent_accept(ipaddr, from, len)
 
   *ipaddr = csin.sin_addr.s_addr;
   if (hp = gethostbyaddr((char *) &csin.sin_addr, sizeof(struct in_addr), csin.sin_family))
-    str_ncpy(from, hp->h_name, len);
+    str_ncpy(from, (char *) hp->h_name, len);
   else
     str_ncpy(from, inet_ntoa(csin.sin_addr), len);
 

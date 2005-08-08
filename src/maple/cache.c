@@ -215,7 +215,8 @@ utmp_find(userno)
 
 
 UTMP *
-utmp_get(userid)	/* itoc.010306: 檢查使用者是否在站上 */
+utmp_get(userno, userid)	/* itoc.010306: 檢查使用者是否在站上 */
+  int userno;
   char *userid;
 {
   UTMP *uentp, *uceil;
@@ -235,19 +236,20 @@ utmp_get(userid)	/* itoc.010306: 檢查使用者是否在站上 */
   uceil = (void *) uentp + ushm->offset;
   do
   {
-    if (uentp->pid && !strcmp(userid, uentp->userid))	/* 已經離站的不檢查 */
+    if (uentp->pid && 		/* 已經離站的不檢查 */
+      (userno && uentp->userno == userno) || (userid && !strcmp(userid, uentp->userid)))
     {
-      if (!seecloak && (uentp->ufo & UFO_CLOAK))/* 隱形看不見 */
+      if (!seecloak && (uentp->ufo & UFO_CLOAK))	/* 隱形看不見 */
 	continue;
-
-#ifdef HAVE_BADPAL
-      if (!seecloak && is_obad(uentp))		/* 被設壞人看不見 */
-	continue;
-#endif
 
 #ifdef HAVE_SUPERCLOAK
       if (!seesupercloak && (uentp->ufo & UFO_SUPERCLOAK))	/* 紫隱看不見 */
 	continue;
+#endif
+
+#ifdef HAVE_BADPAL
+      if (!seecloak && is_obad(uentp))		/* 被設壞人，連別個 multi-login 也看不見 */
+	break;
 #endif
 
       return uentp;
@@ -264,7 +266,7 @@ utmp_seek(hdr)		/* itoc.010306: 檢查使用者是否在站上 */
 {
   if (hdr->xmode & POST_INCOME)	/* POST_INCOME 和 MAIL_INCOME 是相同的 */
     return NULL;
-  return utmp_get(hdr->owner);
+  return utmp_get(0, hdr->owner);
 }
 
 

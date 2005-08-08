@@ -76,7 +76,7 @@ bmode(up, simple)
   if (mode == M_TALK)
   {
     /* itoc.020829: up 在 Talk 時，若 up->mateid 隱形則看不見 */
-    if (!utmp_get(mateid))
+    if (!utmp_get(0, mateid))
       mateid = "無名氏";
   }
 

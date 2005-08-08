@@ -37,7 +37,7 @@ xo_new(path)
 
   memcpy(xo->dir, path, len);
 
-  return (xo);
+  return xo;
 }
 
 
@@ -197,81 +197,6 @@ xo_load(xo, recsiz)
   }
 
   xo->max = max;
-}
-
-
-static void
-xo_foot(zone)			/* itoc.010403: 把 b_lines 填上 feeter */
-  int zone;
-{
-  switch (zone)
-  {
-  case XZ_CLASS:
-    outf(FEETER_CLASS);
-    break;
-
-  case XZ_ULIST:
-    outf(FEETER_ULIST);
-    break;
-
-  case XZ_PAL:
-    outf(FEETER_PAL);
-    break;
-
-#ifdef HAVE_ALOHA
-  case XZ_ALOHA:
-    outf(FEETER_ALOHA);
-    break;
-#endif
-
-  case XZ_VOTE:
-    outf(FEETER_VOTE);
-    break;
-
-  case XZ_BMW:
-    outf(FEETER_BMW);
-    break;
-
-#ifdef MY_FAVORITE
-  case XZ_MF:
-    outf(FEETER_MF);
-    break;
-#endif
-
-#ifdef HAVE_COSIGN
-  case XZ_COSIGN:
-    outf(FEETER_COSIGN);
-    break;
-#endif
-
-#ifdef HAVE_SONG
-  case XZ_SONG:
-    outf(FEETER_SONG);
-    break;
-#endif
-
-#ifdef HAVE_XYNEWS
-  case XZ_NEWS:
-    outf(FEETER_NEWS);
-    break;
-#endif
-
-  case XZ_XPOST:
-    outf(FEETER_XPOST);
-    break;
-
-  case XZ_MBOX:
-    outf(FEETER_MBOX);
-    break;
-
-  case XZ_POST:
-    outf(FEETER_POST);
-    break;
-
-  case XZ_GEM:
-    outf(FEETER_GEM);
-    break;
-  }
 }
 
 
@@ -1226,6 +1151,35 @@ xo_getch(xo, ch)
 }
 
 
+/* ----------------------------------------------------- */
+/* XZ							 */
+/* ----------------------------------------------------- */
+
+
+extern KeyFunc pal_cb[];
+extern KeyFunc bmw_cb[];
+extern KeyFunc post_cb[];
+
+
+XZ xz[] =
+{
+  {NULL, NULL, M_BOARD, FEETER_CLASS},		/* XZ_CLASS */
+  {NULL, NULL, M_LUSERS, FEETER_ULIST},		/* XZ_ULIST */
+  {NULL, pal_cb, M_PAL, FEETER_PAL},		/* XZ_PAL */
+  {NULL, NULL, M_PAL, FEETER_ALOHA},		/* XZ_ALOHA */
+  {NULL, NULL, M_VOTE, FEETER_VOTE},		/* XZ_VOTE */
+  {NULL, bmw_cb, M_BMW, FEETER_BMW},		/* XZ_BMW */
+  {NULL, NULL, M_MF, FEETER_MF},		/* XZ_MF */
+  {NULL, NULL, M_COSIGN, FEETER_COSIGN},	/* XZ_COSIGN */
+  {NULL, NULL, M_SONG, FEETER_SONG},		/* XZ_SONG */
+  {NULL, NULL, M_READA, FEETER_NEWS},		/* XZ_NEWS */
+  {NULL, NULL, M_READA, FEETER_XPOST},		/* XZ_XPOST */
+  {NULL, NULL, M_RMAIL, FEETER_MBOX},		/* XZ_MBOX */
+  {NULL, post_cb, M_READA, FEETER_POST},	/* XZ_POST */
+  {NULL, NULL, M_GEM, FEETER_GEM}		/* XZ_GEM */
+};
+
+
 static int
 xo_jump(pos, zone)
   int pos;			/* 移動游標到 number 所在的特定位置 */
@@ -1241,7 +1195,7 @@ xo_jump(pos, zone)
   move(b_lines, 0);
   clrtoeol();
 #endif
-  xo_foot(zone);	/* itoc.010403: 把 b_lines 填上 feeter */
+  outf(xz[zone].feeter);	/* itoc.010403: 把 b_lines 填上 feeter */
 
   pos = atoi(buf);
 
@@ -1250,34 +1204,6 @@ xo_jump(pos, zone)
 
   return XO_NONE;
 }
-
-
-/* ----------------------------------------------------- */
-/* ----------------------------------------------------- */
-
-
-extern KeyFunc pal_cb[];
-extern KeyFunc bmw_cb[];
-extern KeyFunc post_cb[];
-
-
-XZ xz[] =
-{
-  {NULL, NULL, M_BOARD},	/* XZ_CLASS */
-  {NULL, NULL, M_LUSERS},	/* XZ_ULIST */
-  {NULL, pal_cb, M_PAL},	/* XZ_PAL */
-  {NULL, NULL, M_PAL},		/* XZ_ALOHA */
-  {NULL, NULL, M_VOTE},		/* XZ_VOTE */
-  {NULL, bmw_cb, M_BMW},	/* XZ_BMW */
-  {NULL, NULL, M_MF},		/* XZ_MF */
-  {NULL, NULL, M_COSIGN},	/* XZ_COSIGN */
-  {NULL, NULL, M_SONG},		/* XZ_SONG */
-  {NULL, NULL, M_READA},	/* XZ_NEWS */
-  {NULL, NULL, M_READA},	/* XZ_XPOST */
-  {NULL, NULL, M_RMAIL},	/* XZ_MBOX */
-  {NULL, post_cb, M_READA},	/* XZ_POST */
-  {NULL, NULL, M_GEM}		/* XZ_GEM */
-};
 
 
 /* ----------------------------------------------------- */
@@ -1299,7 +1225,7 @@ xover(cmd)
     {
       if (cmd == XO_FOOT)
       {
-	xo_foot(zone);		/* itoc.010403: 把 b_lines 填上 feeter */
+	outf(xz[zone].feeter);	/* itoc.010403: 把 b_lines 填上 feeter */
 	break;
       }
 

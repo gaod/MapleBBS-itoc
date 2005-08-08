@@ -581,6 +581,7 @@ typedef struct
   XO *xo;
   KeyFunc *cb;
   int mode;
+  char *feeter;
 } XZ;
 
 

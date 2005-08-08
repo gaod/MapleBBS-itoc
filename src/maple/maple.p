@@ -56,7 +56,7 @@ void utmp_mode(int mode);
 int utmp_new(UTMP *up);
 void utmp_free(void);
 UTMP *utmp_find(int userno);
-UTMP *utmp_get(char *userid);
+UTMP *utmp_get(int userno, char *userid);
 UTMP *utmp_seek(HDR *hdr);
 void utmp_admset(int userno, usint status);
 int utmp_count(int userno, int show);
