@@ -273,7 +273,7 @@ acct_apply()
 
   film_out(FILM_APPLY, 0);
 
-  memset(&cuser, 0, sizeof(cuser));
+  memset(&cuser, 0, sizeof(ACCT));
   userid = cuser.userid;
   try = 0;
   for (;;)
@@ -378,7 +378,7 @@ acct_apply()
 
   usr_fpath(buf, userid, fn_acct);
   fd = open(buf, O_WRONLY | O_CREAT, 0600);
-  write(fd, &cuser, sizeof(cuser));
+  write(fd, &cuser, sizeof(ACCT));
   close(fd);
   /* Thor.990416: 注意: 怎麼會有 .ACCT長度是0的, 而且只有 @目錄, 持續觀察中 */
 
@@ -1055,11 +1055,13 @@ tn_main()
     login_abort("\n貴機器於不被敝站接受");
 #endif
 
+  time(&ap_start);
+
   prints("%s ⊙ " SCHOOLNAME " ⊙ " MYIPADDR "\n"
     "歡迎光臨【\033[1;33;46m %s \033[m】目前線上人數 [%d] 人",
     str_host, str_site, ushm->count);
 
-  film_out((time(&ap_start) % 3) + FILM_OPENING0, 3);	/* 亂數顯示開頭畫面 */
+  film_out((ap_start % 3) + FILM_OPENING0, 3);	/* 亂數顯示開頭畫面 */
   
   currpid = getpid();
 
