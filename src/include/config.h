@@ -25,7 +25,7 @@
 /* 定義 BBS 站名位址					 */
 /* ------------------------------------------------------*/
 
-#define SCHOOLNAME	"test台南一中"		/* 組織名稱 */
+#define SCHOOLNAME	"台南一中"		/* 組織名稱 */
 #define BBSNAME		"與南共舞"		/* 中文站名 */
 #define BBSNAME2	"TNFSH.Wolf.BBS"	/* 英文站名 */
 #define SYSOPNICK	"狼人長老"		/* sysop 的暱稱 */
