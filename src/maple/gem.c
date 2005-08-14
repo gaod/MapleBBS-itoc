@@ -1014,15 +1014,15 @@ invalid_loop(srcDir, dstDir, hdr, depth)	/* itoc.010727: 檢查是否會造成無窮迴圈 
     {  
       if (fhdr.xmode & GEM_FOLDER)	/* plain text 不會造成無窮迴圈 */
       {
-        hdr_fpath(fpath2, srcDir, &fhdr);
-        if (!strcmp(fpath2, dstDir))
-        {
+	hdr_fpath(fpath2, srcDir, &fhdr);
+	if (!strcmp(fpath2, dstDir))
+	{
 	  valid = 1;
 	  return 1;
-        }
+	}
 
-        /* recursive 地一層一層目錄進去檢查是否會造成無窮迴圈 */
-        invalid_loop(fpath1, dstDir, &fhdr, 1);
+	/* recursive 地一層一層目錄進去檢查是否會造成無窮迴圈 */
+	invalid_loop(fpath1, dstDir, &fhdr, 1);
       }
     }
     close(fd);

@@ -963,7 +963,7 @@ brd_edit(bno)
     {
       if (memcmp(&newbh, bhdr, sizeof(BRD)) && vans(msg_sure_ny) == 'y')
       {
-        bname = bhdr->brdname;
+	bname = bhdr->brdname;
 	if (strcmp(bname, newbh.brdname))	/* 看板更名要移目錄 */
 	{
 	  /* Thor.980806: 特別注意如果看板不在同一partition裡的話會有問題 */

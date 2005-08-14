@@ -372,7 +372,7 @@ talk_nextline(twin)
       clrtoeol();
 
       for (i = 0; i < SCR_WIDTH; i++)
-        talk_outc(talk_pic[curln][i] = talk_pic[curln + 1][i]);
+	talk_outc(talk_pic[curln][i] = talk_pic[curln + 1][i]);
       talk_len[curln] = talk_len[curln + 1];
     }
   }

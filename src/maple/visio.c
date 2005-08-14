@@ -482,7 +482,7 @@ refresh()
     if (mode & SL_MODIFIED)
     {
       slp->mode = mode &=
-        (len <= slp->sso) ? ~(SL_MODIFIED | SL_STANDOUT) : ~(SL_MODIFIED);
+	(len <= slp->sso) ? ~(SL_MODIFIED | SL_STANDOUT) : ~(SL_MODIFIED);
 
       if ((smod = slp->smod) < len)
       {
@@ -1035,7 +1035,7 @@ zkey()				/* press any key or timeout */
 {
   /* static */ struct timeval tv = {1, 100};  
   /* Thor.980806: man page 安砞 timeval struct琌穦э跑 */
-                                                 
+
   int rset;
 
   rset = 1;
@@ -1219,12 +1219,12 @@ igetch()
 
       for (;;)
       {
-        struct timeval tv = vio_to;
-        /* Thor.980806: man page 安砞 timeval 琌穦э跑 */
+	struct timeval tv = vio_to;
+	/* Thor.980806: man page 安砞 timeval 琌穦э跑 */
 
 	rset = 1 | fd;
 	cc = select(nfds, (fd_set *) & rset, NULL, NULL, &tv /*&vio_to*/);
-                        /* Thor.980806: man page 安砞 timeval 琌穦э跑 */
+			/* Thor.980806: man page 安砞 timeval 琌穦э跑 */
 
 	if (cc > 0)
 	{
