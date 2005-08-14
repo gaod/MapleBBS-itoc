@@ -237,7 +237,7 @@ utmp_get(userno, userid)	/* itoc.010306: 檢查使用者是否在站上 */
   do
   {
     if (uentp->pid && 		/* 已經離站的不檢查 */
-      (userno && uentp->userno == userno) || (userid && !strcmp(userid, uentp->userid)))
+      ((userno && uentp->userno == userno) || (userid && !strcmp(userid, uentp->userid))))
     {
       if (!seecloak && (uentp->ufo & UFO_CLOAK))	/* 隱形看不見 */
 	continue;
