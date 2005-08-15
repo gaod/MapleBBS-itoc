@@ -3972,7 +3972,7 @@ main(argc, argv)
       if (FD_ISSET(sock, &rset))
 	cc = agent_recv(agent);
       else
-	cc = 0;
+	cc = -1;
 
       if (cc == 0)
       {
