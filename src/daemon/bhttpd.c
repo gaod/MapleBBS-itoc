@@ -328,10 +328,10 @@ ansi_hyperlink(fpw, src)
   fputs("<a class=PRE target=_blank href=", fpw);
   while (ch = *linkEnd)
   {
-    if (ch <= ' ')
+    if (ch < '#' || ch == '<' || ch == '>' || ch > '~')
       break;
     fputc(ch, fpw);
-    ++linkEnd;
+    linkEnd++;
   }
   fputc('>', fpw);
 }
@@ -371,16 +371,11 @@ ansi_remove(psrc)
   uschar *src = *psrc;
   int ch = *src;
 
-  do
-  {
-    while (is_ansi(ch))
-      ch = *(++src);
-
-    if (!ch || ch == '\n')
-      break;
-
+  while (is_ansi(ch))
     ch = *(++src);
-  } while (ch == ANSI_TAG);
+
+  if (ch && ch != '\n')
+    ch = *(++src);
 
   *psrc = src;
   return ch;
@@ -514,64 +509,70 @@ ansi_html(fpw, src)
   uschar *src;
 {
   int ch1, ch2;
-  int in_chi = 0;
+  int has_ansi = 0;
+
+#ifdef HAVE_SAKURA
+  int scode;
+#endif
 
   ch2 = *src;
   while (ch2)
   {
     ch1 = ch2;
     ch2 = *(++src);
-    if (in_chi)			/* 全形字裡面的 ANSI code 就拋棄 */
+    if (ch1 & 0x80)
     {
-      if (ch1 == ANSI_TAG)
+      while (ch2 == ANSI_TAG)
       {
-	ch2 = ansi_remove(&src);
-      }
-      else
-      {
-	if (ch1 < ' ')		/* 可能只有半個字，前半部就不要了 */
+	if (*(++src) == '[')	/* 顏色 */
 	{
-	  fputc(ch1, fpw);
+	  ch2 = ansi_color(&src);
+	  has_ansi = 1;
 	}
+	else			/* 其他直接刪除 */
+	  ch2 = ansi_remove(&src);
+      }
+      if (ch2)
+      {
+	if (ch2 < ' ')		/* 怕出現\n */
+	  fputc(ch2, fpw);
+
+#ifdef HAVE_SAKURA
+	else if (scode = sakura2unicode((ch1 << 8) | ch2))
+	  fprintf(fpw, "&#%d;", scode);
+#endif
+
 	else
 	{
-#ifdef HAVE_SAKURA
-	  int code;
-	  if (code = sakura2unicode((in_chi << 8) | ch1))
-	    fprintf(fpw, "&#%d;", code);
-	  else
-	  {
-	    fputc(in_chi, fpw);
-	    fputc(ch1, fpw);
-	  }
-#else
-	  fputc(in_chi, fpw);
 	  fputc(ch1, fpw);
-#endif
+	  fputc(ch2, fpw);
 	}
-	in_chi = 0;
+	ch2 = *(++src);
       }
-      continue;
-    }
-    else if (ch1 & 0x80)
-    {
-      in_chi = ch1;
+      if (has_ansi)
+      {
+	has_ansi = 0;
+	if (ch2 != ANSI_TAG)
+	  ansi_tag(fpw);
+      }
       continue;
     }
     else if (ch1 == ANSI_TAG)
     {
-      if (ch2 == '[')		/* 顏色 */
+      do
       {
-	ch2 = ansi_color(&src);
-	ansi_tag(fpw);
-      }
-      else if (ch2 == '*')	/* 控制碼 */
-      {
-	fputs("**", fpw);
-	ch2 = *(++src);
-      }
-      else			/* 其他直接刪除 */
-	ch2 = ansi_remove(&src);
+	if (ch2 == '[')		/* 顏色 */
+	{
+	  ch2 = ansi_color(&src);
+	}
+	else if (ch2 == '*')	/* 控制碼 */
+	{
+	  fputc('*', fpw);
+	}
+	else			/* 其他直接刪除 */
+	  ch2 = ansi_remove(&src);
+      } while (ch2 == ANSI_TAG && (ch2 = *(++src)));
+      ansi_tag(fpw);
       continue;
     }
     /* 剩下的字元做html轉換 */
@@ -604,7 +605,7 @@ ansi_html(fpw, src)
     else if (linkEnd)
     {
       fputc(ch1, fpw);
-      if (linkEnd == src)
+      if (linkEnd <= src)
       {
 	fputs("</a>", fpw);
 	linkEnd = NULL;
@@ -633,51 +634,42 @@ str_html(src, len)
   uschar *src;
   int len;
 {
-  int in_chi = 0, in_uni = 0, ch;
+  int in_chi, ch;
   uschar *dst = ansi_buf, *end = src + len;
 
   ch = *src;
   while (ch && src < end)
   {
-    if (in_chi)			/* 全形字的第2個byte不轉換 */
+    if (ch & 0x80)
     {
-      if (ch == ANSI_TAG)
+      in_chi = *(++src);
+      while (in_chi == ANSI_TAG)
       {
 	++src;
-	ch = ansi_remove(&src);
-	continue;
+	in_chi = ansi_remove(&src);
       }
-      if (ch < ' ')		/* 可能只有半個字，前半部就不要了 */
+
+      if (in_chi)
       {
-	*dst++ = ch;
-      }
+	if (in_chi < ' ')	/* 可能只有半個字，前半部就不要了 */
+	  *dst++ = in_chi;
 
 #ifdef HAVE_SAKURA
-      else if (len = sakura2unicode((in_chi << 8) + ch))
-      {
-	sprintf(dst, "&#%d;", len);	/* 12291~12540 */
-	dst += 8;
-      }
+	else if (len = sakura2unicode((ch << 8) + in_chi))
+	{
+	  sprintf(dst, "&#%d;", len);	/* 12291~12540 */
+	  dst += 8;
+	}
 #endif
 
-      else
-      {
-	*dst++ = in_chi;
-	*dst++ = ch;
+	else
+	{
+	  *dst++ = ch;
+	  *dst++ = in_chi;
+	}
       }
-      in_chi = 0;
-    }
-    else if (in_uni)
-    {
-      if (ch == ';')
-	in_uni = 0;
       else
-	++in_uni;
-      *dst++ = ch;
-    }
-    else if (ch & 0x80)
-    {
-      in_chi = ch;
+	break;
     }
     else if (ch == ANSI_TAG)
     {
@@ -697,29 +689,26 @@ str_html(src, len)
     }
     else if (ch == '&')
     {
-      *dst++ = ch;
       ch = *(++src);
       if (ch == '#')
       {
-	in_uni = 2;
-	*dst++ = ch;
-      }
-      else if (ch >= 'A' && ch <= 'z')
-      {
-	strcpy(dst, "amp;");
-	dst += 4;
-	*dst++ = ch;
+	if ((uschar *) strchr(src + 1, ';') >= end)	/* 可能會不是或長度沒超過 */
+	  break;
+	*dst++ = '&';
+	*dst++ = '#';
       }
       else
+      {
+	strcpy(dst, "&amp;");
+	dst += 5;
 	continue;
+      }
     }
     else
       *dst++ = ch;
     ch = *(++src);
   }
 
-  if (in_uni)			/* 刪除不完整的字元 */
-    dst -= in_uni;
   *dst = '\0';
   return ansi_buf;
 }
