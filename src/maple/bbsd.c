@@ -89,7 +89,7 @@ u_exit(mode)
   if (currbno >= 0 && bshm->mantime[currbno] > 0)
     bshm->mantime[currbno]--;	/* 退出最後看的那個板 */
 
-  utmp_free();			/* 釋放 UTMP shm */
+  utmp_free(cutmp);		/* 釋放 UTMP shm */
 
   diff = (time(&cuser.lastlogin) - ap_start) / 60;
   sprintf(fpath, "Stay: %d (%d)", diff, currpid);
@@ -714,13 +714,12 @@ login_user(content)
 	    break;		/* user isn't logged in */
 
 	  pid = ui->pid;
-	  if (!pid || (kill(pid, 0) == -1))	/* stale entry in utmp file */
+	  if (pid && vans("您想踢掉其他重複的 login (Y/N)嗎？[Y] ") != 'n' && pid == ui->pid)
 	  {
-	    memset(ui, 0, sizeof(UTMP));
-	  }
-	  else if (vans("您想踢掉其他重複的 login (Y/N)嗎？[Y] ") != 'n')
-	  {
-	    kill(pid, SIGTERM);
+	    if ((kill(pid, SIGTERM) == -1) && (errno == ESRCH))
+	      utmp_free(ui);
+	    else
+	      sleep(3);			/* 被踢的人這時候正在自我了斷 */ 
 	    blog("MULTI", cuser.userid);
 	  }
 

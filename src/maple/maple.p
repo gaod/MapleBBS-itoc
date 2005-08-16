@@ -54,7 +54,7 @@ int Boards(void);
 void ushm_init(void);
 void utmp_mode(int mode);
 int utmp_new(UTMP *up);
-void utmp_free(void);
+void utmp_free(UTMP *up);
 UTMP *utmp_find(int userno);
 UTMP *utmp_get(int userno, char *userid);
 UTMP *utmp_seek(HDR *hdr);

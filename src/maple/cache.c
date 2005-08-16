@@ -175,19 +175,17 @@ utmp_new(up)
 
 
 void
-utmp_free()
+utmp_free(up)
+  UTMP *up;
 {
-  UTMP *uentp;
-
-  uentp = cutmp;
-  if (!uentp || !uentp->pid)
+  if (!up || !up->pid)
     return;
 
 #ifdef	HAVE_SEM
   sem_lock(BSEM_ENTER);
 #endif
 
-  uentp->pid = uentp->userno = 0;
+  up->pid = up->userno = 0;
   ushm->count--;
 
 #ifdef	HAVE_SEM
