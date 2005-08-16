@@ -73,7 +73,7 @@ reaper(fpath)
 	  fprintf(fpw, "%.78s\n", dst + 1);	/* 去除第一格空白 */
 	  continue;
 	}
-	else if (i == 4 && !strncmp(src, "────", 8))
+	else if (i == 4 && !strncmp(dst, "────", 8))
 	{
 	  /* 分隔線不要了 */
 	  continue;
