@@ -846,10 +846,7 @@ ulist_kick(xo)
       sprintf(buf, "%s (%s)", up->userid, up->username);
 
       if ((kill(pid, SIGTERM) == -1) && (errno == ESRCH))
-      {
-	up->pid = up->userno = 0;
-	ushm->count--;
-      }
+	utmp_free(up);
       else
 	sleep(3);		/* 被踢的人這時候正在自我了斷 */
 
