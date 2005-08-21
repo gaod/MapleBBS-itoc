@@ -61,7 +61,7 @@ static KeyFunc *mapTalk, *mapTurn;
 static int cmdCol, cmdPos;
 static char talkBuf[42] = "T";
 static char *cmdBuf = &talkBuf[1];
-extern KeyFunc Talk[];
+static KeyFunc Talk[];
 
 
 static void bw_printmsg();
@@ -337,7 +337,7 @@ enum
 };
 
 
-extern KeyFunc myRound[], yourRound[];
+static KeyFunc myRound[], yourRound[];
 
 static char *bw_icon[] = {"┼", "●", "○", "  "};	/* Empty, Black, White, Deny */
 
@@ -435,6 +435,9 @@ othEatable(Color, row, col, rowstep, colstep)
 }
 
 
+static int othAllow();
+
+
 static int
 othUpdate(Color, row, col)
   int Color, row, col;
@@ -471,7 +474,6 @@ othUpdate(Color, row, col)
 
   /* Thor.990329.註解: 下滿時 */
   {
-    static int othAllow();
     int my = myColor;		/* Thor.990331: 暫存myColor */
     int allowBlack, allowWhite;
     myColor = Black;
@@ -1246,7 +1248,7 @@ enum
 };
 
 
-extern KeyFunc myTurn[], yourTurn[];
+static KeyFunc myTurn[], yourTurn[];
 
 static int sideline;
 static int Totalch;		/* 加速用 :p */
