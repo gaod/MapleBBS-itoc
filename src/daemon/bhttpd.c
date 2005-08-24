@@ -31,7 +31,7 @@
   http://my.domain/delmail?##&###              刪除信箱中第 ## 篇文章 (其 chrono 是 ###)
   http://my.domain/mmail?##&###                標記信箱中第 ## 篇文章 (其 chrono 是 ###)
   http://my.domain/query?userid                查詢 userid
-  http://my.domain/img/filename                顯示圖檔
+  http://my.domain/img?filename                顯示圖檔
   http://my.domain/rss?brdname                 各看板的RSS Feed
   http://my.domain/class?folder                列出分類中 [folder] 這個卷宗下的所有看板
 
@@ -124,12 +124,13 @@ typedef struct Agent
   time_t tbegin;		/* 連線開始時間 */
   time_t uptime;		/* 上次下指令的時間 */
 
-  char url[48];
+  char url[48];			/* 欲瀏覽的網頁 */
   char *urlp;
 
   char cookie[32];
   int setcookie;
-  char *modified;
+
+  char modified[30];
 
   /* 使用者資料要先 acct_fetch() 才能使用 */
   int userno;
@@ -874,13 +875,10 @@ out_http(ap, code, type)
   }
   else if (state == HS_REDIRECT)/* Location之後不需要內容 */
   {
-    if (!type)
-      type = "";
-
 #if BHTTP_PORT == 80
-    fprintf(fpw, "Location: http://" MYHOSTNAME "/%s\r\n\r\n", type);
+    fprintf(fpw, "Location: http://" MYHOSTNAME "/\r\n\r\n");
 #else
-    fprintf(fpw, "Location: http://" MYHOSTNAME ":%d/%s\r\n\r\n", BHTTP_PORT, type);
+    fprintf(fpw, "Location: http://" MYHOSTNAME ":%d/\r\n\r\n", BHTTP_PORT);
 #endif
   }
   else
@@ -967,17 +965,17 @@ out_title(fpw, title)
     "  PRE {font-size: 15pt; line-height: 15pt; font-weight: lighter; background-color: #000000; color: #C0C0C0;}\n"
     "  TD  {font-size: 15pt; line-height: 15pt; font-weight: lighter;}\n"
     "</style>\n"
-    "<link rel=stylesheet href=/img/ansi.css type=text/css>\n"
+    "<link rel=stylesheet href=/img?ansi.css type=text/css>\n"
     "</head>\n"
     "<BODY bgcolor=" HCOLOR_BG " text=" HCOLOR_TEXT " link=" HCOLOR_LINK " vlink=" HCOLOR_VLINK " alink=" HCOLOR_ALINK "><CENTER>\n"
-    "<a href=/><img src=/img/site.gif border=0></a><br>\n"
-    "<input type=image src=/img/back.gif onclick=\"javascript:history.go(-1);\"> / "
-    "<a href=/class><img src=/img/class.gif border=0></a> / "
-    "<a href=/brdlist><img src=/img/board.gif border=0></a> / "
-    "<a href=/fvrlist><img src=/img/favor.gif border=0></a> / "
-    "<a href=/mbox><img src=/img/mbox.gif border=0></a> / "
-    "<a href=/usrlist><img src=/img/user.gif border=0></a> / "
-    "<a href=telnet://" MYHOSTNAME "><img src=/img/telnet.gif border=0></a><br>\n", fpw);
+    "<a href=/><img src=/img?site.gif border=0></a><br>\n"
+    "<input type=image src=/img?back.gif onclick=\"javascript:history.go(-1);\"> / "
+    "<a href=/class><img src=/img?class.gif border=0></a> / "
+    "<a href=/brdlist><img src=/img?board.gif border=0></a> / "
+    "<a href=/fvrlist><img src=/img?favor.gif border=0></a> / "
+    "<a href=/mbox><img src=/img?mbox.gif border=0></a> / "
+    "<a href=/usrlist><img src=/img?user.gif border=0></a> / "
+    "<a href=telnet://" MYHOSTNAME "><img src=/img?telnet.gif border=0></a><br>\n", fpw);
 }
 
 
@@ -1071,7 +1069,7 @@ arg_analyze(argc, str, arg1, arg2, arg3, arg4)
   int i, ch;
   char *dst;
 
-  if (!(ch = *str))
+  if (*str != '?' || !(ch = *(++str)))
   {
     *arg1 = NULL;
     return 0;
@@ -1959,12 +1957,12 @@ postlist_list(fpw, folder, brdname, start, total)
 
       fputs("<tr onmouseover=mOver(this); onmouseout=mOut(this);>\n", fpw);
       if (brdname)
-	fprintf(fpw, "  <td><a href=/mpost?%s&%d&%d><img src=/img/mark.gif border=0></a></td>\n"
-	  "  <td><a href=/dpost?%s&%d&%d><img src=/img/del.gif border=0></a></td>\n",
+	fprintf(fpw, "  <td><a href=/mpost?%s&%d&%d><img src=/img?mark.gif border=0></a></td>\n"
+	  "  <td><a href=/dpost?%s&%d&%d><img src=/img?del.gif border=0></a></td>\n",
 	  brdname, i, hdr.chrono, brdname, i, hdr.chrono);
       else
-	fprintf(fpw, "  <td><a href=/mmail?%d&%d><img src=/img/mark.gif border=0></a></td>\n"
-	  "  <td><a href=/dmail?%d&%d><img src=/img/del.gif border=0></a></td>\n",
+	fprintf(fpw, "  <td><a href=/mmail?%d&%d><img src=/img?mark.gif border=0></a></td>\n"
+	  "  <td><a href=/dmail?%d&%d><img src=/img?del.gif border=0></a></td>\n",
 	  i, hdr.chrono, i, hdr.chrono);
 
       if (hdr.xmode & POST_BOTTOM)
@@ -2024,7 +2022,7 @@ postlist_neck(fpw, start, total, brdname)
   fprintf(fpw, "></td>\n  <td width=20%% align=center><a href=/dopost?%s target=_blank>發表文章</a></td>\n"
     "  <td width=20%% align=center><a href=/gem?%s>精華區</a></td>\n"
     "  <td width=20%% align=center><a href=/brdlist>看板列表</a>&nbsp;"
-    "<a href=/rss?%s><img border=0 src=/img/xml.gif alt=\"RSS 訂閱\這個看板\"></a></td>\n"
+    "<a href=/rss?%s><img border=0 src=/img?xml.gif alt=\"RSS 訂閱\這個看板\"></a></td>\n"
     "</tr></table><br>\n",
     brdname, brdname, brdname, brdname);
 }
@@ -2300,10 +2298,8 @@ more_item(fpw, folder, pos, brdname)
       if (!(hdr.xmode & POST_RESTRICT))
       {
 #endif
-
 	hdr_fpath(fpath, folder, &hdr);
 	out_article(fpw, fpath);
-
 #ifdef HAVE_REFUSEMARK
       }
       else
@@ -2387,7 +2383,6 @@ do_brdmost(fpw, folder, title)
   {
     while (read(fd, &hdr, sizeof(HDR)) == sizeof(HDR))
     {
-
 #ifdef HAVE_REFUSEMARK
       if (hdr.xmode & POST_RESTRICT)
 	continue;
@@ -2869,11 +2864,10 @@ cmd_query(ap)
 
     usr_fpath(fpath, acct.userid, FN_PLANS);
     out_article(fpw, fpath);
+    return HS_END;
   }
-  else
-    return HS_ERR_USER;
 
-  return HS_END;
+  return HS_ERR_USER;
 }
 
 
@@ -2905,12 +2899,12 @@ cmd_image(ap)
 {
   FILE *fpw;
   struct stat st;
-  char *fname, *ptr, fpath[80];
+  char *fname, *ptr, fpath[64];
 
   if (!arg_analyze(1, ap->urlp, &fname, NULL, NULL, NULL))
     return HS_NOTFOUND;
 
-  if (!valid_path(fname) || !(ptr = strrchr(fname, '.')))
+  if (!valid_path(fname) || !(ptr = strchr(fname, '.')))
     return HS_NOTFOUND;
 
   /* 支援格式 */
@@ -2931,7 +2925,7 @@ cmd_image(ap)
   if (stat(fpath, &st))
     return HS_NOTFOUND;
 
-  if (ap->modified && !strcmp(Gtime(&st.st_mtime), ap->modified))	/* 沒有變更不需要傳輸 */
+  if (ap->modified[0] && !strcmp(Gtime(&st.st_mtime), ap->modified))	/* 沒有變更不需要傳輸 */
     return HS_NOTMOIDIFY;
 
   fpw = out_http(ap, HS_OK, ptr);
@@ -2969,7 +2963,7 @@ cmd_rss(ap)
 
   blast = brd->blast;
 
-  if (ap->modified && !strcmp(Gtime(&blast), ap->modified))	/* 沒有變更不需要傳輸 */
+  if (ap->modified[0] && !strcmp(Gtime(&blast), ap->modified))	/* 沒有變更不需要傳輸 */
     return HS_NOTMOIDIFY;
 
   fpw = out_http(ap, HS_OK, "application/xml");
@@ -2994,7 +2988,7 @@ cmd_rss(ap)
   fprintf(fpw, "%s</lastBuildDate>\n<image>\n"
     "<title>" BBSNAME "</title>"
     "<link>http://" MYHOSTNAME "</link>\n"
-    "<url>http://" MYHOSTNAME "/img/rss.gif</url>\n"
+    "<url>http://" MYHOSTNAME "/img?rss.gif</url>\n"
     "</image>\n", ptr);
 
   /* rss item */
@@ -3054,6 +3048,7 @@ mainpage_neck(fpw, userid, logined)
     logined ? "，" : "");
 }
 
+
 static int
 cmd_mainpage(ap)
   Agent *ap;
@@ -3092,6 +3087,7 @@ static Command cmd_table_get[] =
   cmd_userlist,   "usrlist", 7,
   cmd_boardlist,  "brdlist", 7,
   cmd_favorlist,  "fvrlist", 7,
+  cmd_class,      "class",   5,
 
   cmd_postlist,   "brd",     3,
   cmd_gemlist,    "gem",     3,
@@ -3114,11 +3110,12 @@ static Command cmd_table_get[] =
 
   cmd_query,      "query",   5,
 
-  cmd_image,      "img/",    4,
-  cmd_class,      "class",   5,
+  cmd_image,      "img",     3,
   cmd_rss,        "rss",     3,
 
-  cmd_mainpage,   NULL,      0
+  cmd_mainpage,   "",        0,
+
+  NULL,           NULL,      0
 };
 
 
@@ -3206,8 +3203,7 @@ cmd_addpost(ap)
   HDR hdr;
   BRD *brd;
   FILE *fp;
-
-  out_head(ap, "文章發表");
+  FILE *fpw = out_head(ap, "文章發表");
 
   if (!acct_fetch(ap))
     return HS_ERR_LOGIN;
@@ -3245,13 +3241,15 @@ cmd_addpost(ap)
 	if (hdr.xmode & POST_OUTGO)
 	  outgo_post(&hdr, brdname);
 
-	out_reload(ap->fpw, "您的文章發表成功\");
+	out_reload(fpw, "您的文章發表成功\");
 	return HS_OK;
       }
       return HS_ERR_BOARD;
     }
   }
-  return HS_ERROR;
+
+  out_reload(fpw, "您的文章發表失敗");
+  return HS_OK;
 }
 
 
@@ -3267,8 +3265,7 @@ cmd_addmail(ap)
   char folder[64], fpath[64];
   HDR hdr;
   FILE *fp;
-
-  out_head(ap, "信件發送");
+  FILE *fpw = out_head(ap, "信件發送");
 
   /* u=userid&t=title&c=content&end= */
   if (arg_analyze(4, ap->urlp, &userid, &title, &content, &end))
@@ -3297,13 +3294,13 @@ cmd_addmail(ap)
 	strcpy(hdr.nick, ap->username);
 	rec_add(folder, &hdr, sizeof(HDR));
 
-	out_reload(ap->fpw, "您的信件發送成功\");
+	out_reload(fpw, "您的信件發送成功\");
 	return HS_OK;
       }
     }
   }
 
-  out_reload(ap->fpw, "您的信件發送失敗，也許\是因為您尚未登入或是查無此使用者");
+  out_reload(fpw, "您的信件發送失敗，也許\是因為您尚未登入或是查無此使用者");
   return HS_OK;
 }
 
@@ -3318,7 +3315,7 @@ static Command cmd_table_post[] =
   cmd_addpost,  "dopost=&", 8,
   cmd_addmail,  "domail=&", 8,
 
-  cmd_mainpage,  NULL,      0
+  NULL,         NULL,       0
 };
 
 
@@ -3350,12 +3347,108 @@ agent_fire(ap)
 /* receive request from client				 */
 /* ----------------------------------------------------- */
 
+static int		/* >=0:mode -1:結束 */
+do_cmd(ap, str, end, mode)
+  Agent *ap;
+  uschar *str, *end;		/* command line 的開頭和結尾 */
+  int mode;
+{
+  int code;
+  char *ptr;
+
+  if (!(mode & (AM_GET | AM_POST)))
+  {
+    if (!str_ncmp(str, "GET ", 4))		/* str 格式為 GET /index.htm HTTP/1.0 */
+    {
+      mode ^= AM_GET;
+      str += 4;
+
+      if (*str != '/')
+      {
+	out_error(ap, HS_BADREQUEST);
+	return -1;
+      }
+
+      if (ptr = strchr(str, ' '))
+      {
+	*ptr = '\0';
+	str_ncpy(ap->url, str + 1, sizeof(ap->url));
+      }
+      else
+      {
+	*ap->url = '\0';
+      }
+    }
+    else if (!str_ncmp(str, "POST ", 5))	/* str 格式為 POST /dopost?sysop HTTP/1.0 */
+    {
+      mode ^= AM_POST;
+    }
+  }
+  else
+  {
+    if (*str)		/* 不是空行：檔頭 */
+    {
+      /* 分析 Cookie */
+      if (!str_ncmp(str, "Cookie: user=", 13))
+	str_ncpy(ap->cookie, str + 13, LEN_COOKIE);
+
+      /* 分析 If-Modified-Since */
+      if ((mode & AM_GET) && !str_ncmp(str, "If-Modified-Since: ", 19))	/* str 格式為 If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT */
+	str_ncpy(ap->modified, str + 19, sizeof(ap->modified));
+    }
+    else		/* 空行 */
+    {
+      Command *cmd;
+      char *url;
+
+      if (mode & AM_GET)
+      {
+	cmd = cmd_table_get;
+	url = ap->url;
+      }
+      else /* if (mode & AM_POST) */
+      {
+	cmd = cmd_table_post;
+	url = end + 1;		/* 在 AM_POST 時，空行的下一行是 POST 的內容 */
+      }
+
+      for (; ptr = cmd->cmd; cmd++)
+      {
+	if (!str_ncmp(url, ptr, cmd->len))
+	  break;
+      }
+
+      /* 如果在 command_table 裡面找不到，那麼自動重新導向 */
+      if (!ptr)
+      {
+	out_http(ap, HS_REDIRECT, NULL);
+	return -1;
+      }
+
+      ap->urlp = url + cmd->len;
+
+      code = (*cmd->func) (ap);
+      if (code != HS_OK)
+      {
+	if (code != HS_END)
+	  out_error(ap, code);
+	if (code < HS_OK)
+	  out_tail(ap->fpw);
+      }
+      return -1;
+    }
+  }
+
+  return mode;
+}
+
+
 static int
 agent_recv(ap)
   Agent *ap;
 {
   int cc, mode, size, used;
-  uschar *data, *head, *ptr;
+  uschar *data, *head;
 
   used = ap->used;
   data = ap->data;
@@ -3435,127 +3528,12 @@ agent_recv(ap)
     {
       *head = '\0';
 
-      if (!(mode & (AM_GET | AM_POST)))
+      if ((mode = do_cmd(ap, data, head, mode)) < 0)
       {
-	if (!str_ncmp(data, "GET ", 4))
-	{
-	  mode ^= AM_GET;
-	  data += 4;
-	  if (*data != '/')
-	  {
-	    out_error(ap, HS_BADREQUEST);
-	    fflush(ap->fpw);
-	    return 0;
-	  }
-	  if (ptr = strchr(data, ' '))
-	  {
-	    *ptr = '\0';
-	    str_ncpy(ap->url, data + 1, sizeof(ap->url));
-	  }
-	  else
-	  {
-	    *ap->url = '\0';
-	  }
-	}
-	else if (!str_ncmp(data, "POST ", 5))
-	{
-	  mode ^= AM_POST;
-	}
+	fflush(ap->fpw);	/* do_cmd() 回傳 -1 表示結束，就 fflush 所有結果 */
+	return 0;
       }
-      else
-      {
-	if (*data)		/* 不是空行：檔頭 */
-	{
-	  /* 分析Cookie */
-	  if (!str_ncmp(data, "Cookie: user=", 13))
-	  {
-	    str_ncpy(ap->cookie, data + 13, LEN_COOKIE);
-	  }
-	  /* 分析檔案時間 */
-	  if ((mode & AM_GET) && !str_ncmp(data, "If-Modified-Since: ", 19))
-	  {
-	    ap->modified = data + 19;
-	    data[48] = '\0';
-	  }
-	}
-	else			/* 空行：下一行為內容 */
-	{
-	  Command *cmd;
-	  char *url;
 
-	  if (mode & AM_GET)
-	  {
-	    cmd = cmd_table_get;
-	    url = ap->url;
-	  }
-	  else
-	  {
-	    cmd = cmd_table_post;
-	    for (url = head + 1; cc = *url; ++url)	/* 找開頭(簡化只判斷>'9') */
-	    {
-	      if (cc != '\0' && cc > '9')
-		break;
-	    }
-	  }
-	  for (; ptr = cmd->cmd; cmd++)
-	  {
-	    if (!str_ncmp(url, ptr, cmd->len))
-	      break;
-	  }
-	  cc = cmd->len;
-
-	  /* 處理自動重新導向 */
-	  if (mode & AM_GET)
-	  {
-	    if (ptr)
-	    {
-	      if (ptr[cc - 1] == '/')
-		goto noredirect;
-	      if (ptr[cc] == '/')
-	      {
-		if (url[cc] == '/')
-		{
-		  cc++;
-		  goto noredirect;
-		}
-	      }
-	      else if (!url[cc])
-	      {
-		goto noredirect;
-	      }
-	      else if (url[cc] == '?')
-	      {
-		cc++;
-		goto noredirect;
-	      }
-	      else if (url[cc] != '/')
-	      {
-		ptr = NULL;
-	      }
-	    }
-	    else if (!*url)
-	    {
-	      goto noredirect;
-	    }
-
-	    out_http(ap, HS_REDIRECT, ptr);
-	    fflush(ap->fpw);
-	    return 0;
-	  }
-      noredirect:
-	  ap->urlp = url + cc;
-	  cc = (*cmd->func) (ap);
-	  if (cc != HS_OK)
-	  {
-	    if (cc != HS_END)
-	      out_error(ap, cc);
-	    if (cc < HS_OK)
-	      out_tail(ap->fpw);
-	  }
-	  fflush(ap->fpw);
-	  return 0;
-	}
-      }
       data = head + 1;
     }
     head++;
