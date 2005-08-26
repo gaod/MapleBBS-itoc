@@ -559,7 +559,10 @@ clear()
   cur_slp = slp = vbuf;
   while (i++ <= b_lines)
   {
-    memset(slp++, 0, 9);
+    /* memset(slp, 0, sizeof(screenline)); */
+    /* 只需 slp->data[0] = '\0' 即可，不需清整個 ANSILINELEN */
+    memset(slp, 0, sizeof(screenline) - ANSILINELEN + 1);
+    slp++;
   }
 }
 
@@ -577,7 +580,8 @@ clrtoeol()	/* clear screen to end of line (列尾) */
   }
   else
   {
-    memset((char *) slp + 1, 0, 8);
+    /* 清掉 oldlen 以後的全部；data 只需清首 byte 即可 */
+    memset((char *) slp + sizeof(slp->oldlen), 0, sizeof(screenline) - ANSILINELEN + 1 - sizeof(slp->oldlen));
   }
 }
 
@@ -598,7 +602,8 @@ clrtobot()	/* clear screen to bottom (螢幕底部) */
       j = 0;
       slp = vbuf;
     }
-    memset((char *) slp + 1, 0, 8);
+    /* 清掉 oldlen 以後的全部；data 只需清首 byte 即可 */
+    memset((char *) slp + sizeof(slp->oldlen), 0, sizeof(screenline) - ANSILINELEN + 1 - sizeof(slp->oldlen));
 
     i++;
     j++;
@@ -646,7 +651,8 @@ new_line:
     }
     else
     {
-      memset((char *) slp + 1, 0, 8);
+      /* 清掉 oldlen 以後的全部；data 只需清首 byte 即可 */
+      memset((char *) slp + sizeof(slp->oldlen), 0, sizeof(screenline) - ANSILINELEN + 1 - sizeof(slp->oldlen));
     }
 
     move(cur_row + 1, 0);

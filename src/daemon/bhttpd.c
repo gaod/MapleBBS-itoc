@@ -49,7 +49,7 @@
 
 
 #define SERVER_USAGE
-#define	LOG_VERBOSE		/* ¸Ô²Ó¬ö¿ý */
+#undef	LOG_VERBOSE		/* ¸Ô²Ó¬ö¿ý */
 
 
 #define BHTTP_PIDFILE	"run/bhttp.pid"
@@ -859,7 +859,7 @@ out_http(ap, code, type)
   int state;
 
   fpw = ap->fpw;
-  state = code & 0xFF;
+  state = code & ~HS_REFRESH;
 
   /* HTTP 1.0 ÀÉÀY */
   time(&now);
@@ -2177,7 +2177,7 @@ cmd_gemlist(ap)
 
   if (*xname == '.')
     sprintf(folder, "gem/brd/%s/%s", brdname, FN_DIR);
-  else				/* if (*xname == 'F') */
+  else /* if (*xname == 'F') */
     sprintf(folder, "gem/brd/%s/%c/%s", brdname, xname[7], xname);
 
   if ((fd = open(folder, O_RDONLY)) >= 0)
@@ -2480,7 +2480,7 @@ cmd_gemmore(ap)
 
   if (*xname == '.')
     gem_fpath(folder, brdname, FN_DIR);
-  else				/* if (*xname == 'F') */
+  else /* if (*xname == 'F') */
     sprintf(folder, "gem/brd/%s/%c/%s", brdname, xname[7], xname);
 
   if ((pos = atoi(number)) <= 0)
@@ -2661,6 +2661,7 @@ post_op(ap, title, msg)
   HDR hdr;
   usint bits;
   char *brdname, *number, *stamp, folder[64];
+  FILE *fpw;
 
   if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp, NULL) ||
     (pos = atoi(number) - 1) < 0 ||
@@ -2701,9 +2702,10 @@ post_op(ap, title, msg)
     }
 
     sprintf(folder, "/brd?%s&%d", brdname, (pos - 1) / HTML_TALL * HTML_TALL + 1);
-    out_title(out_http(ap, HS_OK | HS_REFRESH, folder), title + 1);
-    out_mesg(ap->fpw, msg);
-    fprintf(ap->fpw, "<a href=%s>¦^¤å³¹¦Cªí</a>\n", folder);
+    fpw = out_http(ap, HS_OK | HS_REFRESH, folder);
+    out_title(fpw, title + 1);
+    out_mesg(fpw, msg);
+    fprintf(fpw, "<a href=%s>¦^¤å³¹¦Cªí</a>\n", folder);
 
     return HS_END;
   }
@@ -3665,8 +3667,8 @@ servo_signal()
   sigemptyset(&act.sa_mask);
   act.sa_flags = 0;
 
-  act.sa_handler = sig_term;		/* forced termination */
-  sigaction(SIGTERM, &act, NULL);
+  act.sa_handler = sig_term;
+  sigaction(SIGTERM, &act, NULL);	/* forced termination */
   sigaction(SIGSEGV, &act, NULL);	/* if rlimit violate */
   sigaction(SIGBUS, &act, NULL);
 

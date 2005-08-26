@@ -114,9 +114,10 @@ move_post(hdr, folder, by_bm)	/* 將 hdr 從 folder 搬到別的板 */
     brd_fpath(fnew, board, fn_dir);
     hdr_stamp(fnew, HDR_LINK | 'A', &post, fpath);
 
-    /* 直接複製 trailing data */
+    /* 直接複製 trailing data：owner(含)以下所有欄位 */
 
-    memcpy(post.owner, hdr->owner, TTLEN + 140);
+    memcpy(post.owner, hdr->owner, sizeof(HDR) -
+      (sizeof(post.chrono) + sizeof(post.xmode) + sizeof(post.xid) + sizeof(post.xname)));
 
     if (by_bm)
       sprintf(post.title, "%-13s%.59s", cuser.userid, hdr->title);

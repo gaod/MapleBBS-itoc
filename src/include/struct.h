@@ -536,11 +536,11 @@ typedef struct screenline
   uschar oldlen;		/* previous line length */
   uschar len;			/* current length of line */
   uschar width;			/* padding length of ANSI codes */
-  uschar mode;			/* status of line, as far as update */
   uschar smod;			/* start of modified data */
   uschar emod;			/* end of modified data */
   uschar sso;			/* start of standout data */
   uschar eso;			/* end of standout data */
+  uschar mode;			/* status of line, as far as update */
   uschar data[ANSILINELEN];
 }          screenline;
 
