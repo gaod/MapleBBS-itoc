@@ -3341,7 +3341,8 @@ agent_fire(ap)
     close(csock);
   }
 
-  free(ap->data);
+  if (ap->data)
+    free(ap->data);
 }
 
 
@@ -3475,7 +3476,9 @@ agent_recv(ap)
 	}
 	else
 	{
-	  fprintf(flog, "ERROR\tmalloc: %d\n", size);
+#ifdef LOG_VERBOSE
+	  fprintf(flog, "ERROR\trealloc: %d\n", size);
+#endif
 	  return 0;
 	}
       }
@@ -3984,12 +3987,27 @@ main(argc, argv)
       sock = agent_accept(&ip_addr);
       if (sock > 0)
       {
-	if (agent = Mulder)
-	  Mulder = agent->anext;
-	else
-	  agent = (Agent *) malloc(sizeof(Agent));
+	Agent *anext;
 
-	*FBI = agent;
+	if (agent = Mulder)
+	{
+	  anext = agent->anext;
+	}
+	else
+	{
+	  if (!(agent = (Agent *) malloc(sizeof(Agent))))
+	  {
+	    fcntl(sock, F_SETFL, M_NONBLOCK);
+	    shutdown(sock, 2);
+	    close(sock);
+
+#ifdef LOG_VERBOSE
+	    fprintf(flog, "ERROR\tNot enough space in main()\n");
+#endif
+	    continue;
+	  }
+	  anext = NULL;
+	}
 
 	/* variable initialization */
 
@@ -4000,11 +4018,21 @@ main(argc, argv)
 
 	agent->ip_addr = ip_addr;
 
-	agent->data = (char *) malloc(MIN_DATA_SIZE);
+	if (!(agent->data = (char *) malloc(MIN_DATA_SIZE)))
+	{
+	  agent_fire(agent);
+#ifdef LOG_VERBOSE
+	  fprintf(flog, "ERROR\tNot enough space in agent->data\n");
+#endif
+	  continue;
+	}
 	agent->size = MIN_DATA_SIZE;
 	agent->used = 0;
 
 	agent->fpw = fdopen(sock, "w");
+
+	Mulder = anext;
+	*FBI = agent;
       }
     }
 
