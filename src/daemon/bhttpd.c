@@ -1058,8 +1058,9 @@ out_reload(fpw, msg)		/* God.050327: 將主視窗 reload 並關掉新開視窗 */
 #define hex2int(x)	((x >= 'A') ? (x - 'A' + 10) : (x - '0'))
 
 static int			/* 1:成功 */
-arg_analyze(argc, str, arg1, arg2, arg3, arg4)
+arg_analyze(argc, mark, str, arg1, arg2, arg3, arg4)
   int argc;			/* 有幾個參數 */
+  int mark;			/* !=0: str 要是 mark 開頭的字串 */
   char *str;			/* 引數 */
   char **arg1;			/* 參數一 */
   char **arg2;			/* 參數二 */
@@ -1069,7 +1070,7 @@ arg_analyze(argc, str, arg1, arg2, arg3, arg4)
   int i, ch;
   char *dst;
 
-  if (*str != '?' || !(ch = *(++str)))
+  if ((mark && *str++ != mark) || !(ch = *str))
   {
     *arg1 = NULL;
     return 0;
@@ -1140,7 +1141,7 @@ acct_fetch(ap)
   if (ap->cookie[0])
   {
     /* u=userid&p=passwd */
-    if (!arg_analyze(2, ap->cookie, &userid, &passwd, NULL, NULL))
+    if (!arg_analyze(2, 0, ap->cookie, &userid, &passwd, NULL, NULL))
       return 0;
 
     passwd += 2;		/* skip "p=" */
@@ -1555,7 +1556,7 @@ cmdlist_list(ap, title, list_tie, list_item)
   char *number;
   FILE *fpw;
 
-  if (!arg_analyze(1, ap->urlp, &number, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &number, NULL, NULL, NULL))
     start = 1;
   else
     start = atoi(number);
@@ -1851,7 +1852,7 @@ cmd_class(ap)
   HDR hdr;
   FILE *fpw = out_head(ap, "分類看板");
 
-  if (!arg_analyze(1, ap->urlp, &xname, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &xname, NULL, NULL, NULL))
     xname = CLASS_INIFILE;
 
   if (strlen(xname) > 12)
@@ -2036,7 +2037,7 @@ cmd_postlist(ap)
   char folder[64], *brdname, *number;
   FILE *fpw = out_head(ap, "文章列表");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL, NULL))
+  if (!arg_analyze(2, '?', ap->urlp, &brdname, &number, NULL, NULL))
   {
     if (brdname)
       number = "0";
@@ -2106,7 +2107,7 @@ cmd_mboxlist(ap)
   if (!acct_fetch(ap))
     return HS_ERR_LOGIN;
 
-  if (!arg_analyze(1, ap->urlp, &number, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &number, NULL, NULL, NULL))
     number = "0";
 
   usr_fpath(folder, ap->userid, FN_DIR);
@@ -2153,7 +2154,7 @@ cmd_gemlist(ap)
   HDR hdr;
   FILE *fpw = out_head(ap, "精華區");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &xname, NULL, NULL))
+  if (!arg_analyze(2, '?', ap->urlp, &brdname, &xname, NULL, NULL))
   {
     if (brdname)
       xname = FN_DIR;
@@ -2323,7 +2324,7 @@ cmd_brdmore(ap)
   char folder[64], *brdname, *number;
   FILE *fpw = out_head(ap, "閱\讀看板文章");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL, NULL))
+  if (!arg_analyze(2, '?', ap->urlp, &brdname, &number, NULL, NULL))
     return HS_ERROR;
 
   if (!allow_brdname(ap, brdname))
@@ -2350,7 +2351,7 @@ cmd_mboxmore(ap)
   char folder[64], *number;
   FILE *fpw = out_head(ap, "閱\讀信箱文章");
 
-  if (!arg_analyze(1, ap->urlp, &number, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &number, NULL, NULL, NULL))
     return HS_ERROR;
 
   if (!acct_fetch(ap))
@@ -2424,7 +2425,7 @@ cmd_brdmost(ap)
   HDR hdr;
   FILE *fpw = out_head(ap, "閱\讀看板同標題文章");
 
-  if (!arg_analyze(2, ap->urlp, &brdname, &number, NULL, NULL))
+  if (!arg_analyze(2, '?', ap->urlp, &brdname, &number, NULL, NULL))
     return HS_ERROR;
 
   if (!allow_brdname(ap, brdname))
@@ -2469,7 +2470,7 @@ cmd_gemmore(ap)
   HDR hdr;
   FILE *fpw = out_head(ap, "閱\讀精華區文章");
 
-  if (!arg_analyze(3, ap->urlp, &brdname, &xname, &number, NULL))
+  if (!arg_analyze(3, '?', ap->urlp, &brdname, &xname, &number, NULL))
     return HS_ERROR;
 
   if (*xname != 'F' && strlen(xname) != 8 && strcmp(xname, FN_DIR))
@@ -2530,7 +2531,7 @@ cmd_dopost(ap)
   char *brdname;
   FILE *fpw = out_head(ap, "發表文章");
 
-  if (!arg_analyze(1, ap->urlp, &brdname, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &brdname, NULL, NULL, NULL))
     return HS_ERROR;
 
   if (!(ben_perm(ap, brdname) & BRD_W_BIT))
@@ -2570,7 +2571,7 @@ cmd_domail(ap)
   if (!acct_fetch(ap))
     return HS_ERR_LOGIN;
 
-  if (!arg_analyze(1, ap->urlp, &userid, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &userid, NULL, NULL, NULL))
     userid = "";
 
   fputs("<form method=post onsubmit=\"if(u.value.length==0 || t.value.length==0 || c.value.length==0) {alert('收信人、標題、內容均不可為空白'); return false;} return true;\">\n"
@@ -2663,7 +2664,7 @@ post_op(ap, title, msg)
   char *brdname, *number, *stamp, folder[64];
   FILE *fpw;
 
-  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp, NULL) ||
+  if (!arg_analyze(3, '?', ap->urlp, &brdname, &number, &stamp, NULL) ||
     (pos = atoi(number) - 1) < 0 ||
     (chrono = atoi(stamp)) < 0)
     return HS_ERROR;
@@ -2736,7 +2737,7 @@ cmd_predelpost(ap)
   char *brdname, *number, *stamp;
   FILE *fpw = out_head(ap, "確認刪除文章");
 
-  if (!arg_analyze(3, ap->urlp, &brdname, &number, &stamp, NULL))
+  if (!arg_analyze(3, '?', ap->urlp, &brdname, &number, &stamp, NULL))
     return HS_ERROR;
 
   out_mesg(fpw, "若確定要刪除此篇文章，請再次點選以下連結；若要取消刪除，請按 [上一頁]");
@@ -2761,7 +2762,7 @@ mail_op(ap, title, msg)
   HDR hdr;
   char *number, *stamp, folder[64], fpath[64];
 
-  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL, NULL) ||
+  if (!arg_analyze(2, '?', ap->urlp, &number, &stamp, NULL, NULL) ||
     (pos = atoi(number) - 1) < 0 ||
     (chrono = atoi(stamp)) < 0)
     return HS_ERROR;
@@ -2818,7 +2819,7 @@ cmd_predelmail(ap)
   char *number, *stamp;
   FILE *fpw = out_head(ap, "確認刪除信件");
 
-  if (!arg_analyze(2, ap->urlp, &number, &stamp, NULL, NULL))
+  if (!arg_analyze(2, '?', ap->urlp, &number, &stamp, NULL, NULL))
     return HS_ERROR;
 
   out_mesg(fpw, "若確定要刪除此篇信件，請再次點選以下連結；若要取消刪除，請按 [上一頁]");
@@ -2842,7 +2843,7 @@ cmd_query(ap)
   char fpath[64], *userid;
   FILE *fpw = out_head(ap, "查詢使用者");
 
-  if (!arg_analyze(1, ap->urlp, &userid, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &userid, NULL, NULL, NULL))
     return HS_ERROR;
 
   if (!allow_userid(ap, userid))
@@ -2903,7 +2904,7 @@ cmd_image(ap)
   struct stat st;
   char *fname, *ptr, fpath[64];
 
-  if (!arg_analyze(1, ap->urlp, &fname, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &fname, NULL, NULL, NULL))
     return HS_NOTFOUND;
 
   if (!valid_path(fname) || !(ptr = strchr(fname, '.')))
@@ -2954,7 +2955,7 @@ cmd_rss(ap)
   FILE *fpw;
   int fd;
 
-  if (!arg_analyze(1, ap->urlp, &brdname, NULL, NULL, NULL))
+  if (!arg_analyze(1, '?', ap->urlp, &brdname, NULL, NULL, NULL))
     return HS_BADREQUEST;
 
   if (!(brd = brd_get(brdname)))
@@ -3151,7 +3152,7 @@ cmd_login(ap)
   ACCT acct;
 
   /* u=userid&p=passwd */
-  if (!arg_analyze(2, ap->urlp, &userid, &passwd, NULL, NULL))
+  if (!arg_analyze(2, 0, ap->urlp, &userid, &passwd, NULL, NULL))
     return HS_ERROR;
 
   userid += 2;			/* skip "u=" */
@@ -3211,7 +3212,7 @@ cmd_addpost(ap)
     return HS_ERR_LOGIN;
 
   /* b=brdname&t=title&c=content&end= */
-  if (arg_analyze(4, ap->urlp, &brdname, &title, &content, &end))
+  if (arg_analyze(4, 0, ap->urlp, &brdname, &title, &content, &end))
   {
     brdname += 2;		/* skip "b=" */
     title += 2;			/* skip "t=" */
@@ -3270,7 +3271,7 @@ cmd_addmail(ap)
   FILE *fpw = out_head(ap, "信件發送");
 
   /* u=userid&t=title&c=content&end= */
-  if (arg_analyze(4, ap->urlp, &userid, &title, &content, &end))
+  if (arg_analyze(4, 0, ap->urlp, &userid, &title, &content, &end))
   {
     userid += 2;		/* skip "u=" */
     title += 2;			/* skip "t=" */
@@ -3412,7 +3413,9 @@ do_cmd(ap, str, end, mode)
       else /* if (mode & AM_POST) */
       {
 	cmd = cmd_table_post;
-	url = end + 1;		/* 在 AM_POST 時，空行的下一行是 POST 的內容 */
+	/* 在 AM_POST 時，空行的下一行是 POST 的內容 */
+	for (url = end + 1; *url == '\r' || *url == '\n'; url++)	/* 找下一行 */
+	  ;
       }
 
       for (; ptr = cmd->cmd; cmd++)
