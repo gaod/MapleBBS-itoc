@@ -1217,7 +1217,7 @@ default_key:
     default:
 
       if (cmd >= 'a' && cmd <= 'z')
-	cmd -= 0x20;
+	cmd ^= 0x20;			/* ÅÜ¤j¼g */
 
       cc = 0;
       for (;;)

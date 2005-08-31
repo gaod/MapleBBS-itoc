@@ -692,7 +692,7 @@ pip_do_menu(menunum, menumode, cmdtable)
 #if 0
       /* itoc.010815: ´«¤p¼g */
       if (ch >= 'A' && ch <= 'Z')
-	ch &= 0x20;
+	ch |= 0x20;
 #endif
 
       cmd = cmdtable;

@@ -1414,7 +1414,7 @@ str_cpy(dst, src, n)
   {
     cc = *src;
     if (cc >= 'A' && cc <= 'Z')
-      cc += 0x20;
+      cc |= 0x20;
     *dst = cc;
     if ((len > n) || (!cc))	/* lkchu.990511: Á×§K overflow */
       break;
@@ -1467,7 +1467,7 @@ acl_add(root, filter)
   {
     cc = *filter++;
     if (cc >= 'A' && cc <= 'Z')
-      cc += 0x20;
+      cc |= 0x20;
   } while (*str++ = cc);
 
   return ax;
