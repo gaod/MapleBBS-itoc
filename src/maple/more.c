@@ -258,7 +258,7 @@ outs_line(str)			/* ¦L¥X¤@¯ë¤º®e */
     ch1 = str[2];
     outs((ch1 == QUOTE_CHAR1 || ch1 == QUOTE_CHAR2) ? "\033[33m" : "\033[36m");	/* ¤Þ¥Î¤@¼h/¤G¼h¤£¦PÃC¦â */
   }
-  else if (ch1 == '¡' && ch2 == '°')		/* ¡° ¤Þ¨¥ªÌ */
+  else if (ch1 == '\241' && ch2 == '\260')	/* ¡° ¤Þ¨¥ªÌ */
   {
     ansi = 1;
     outs("\033[1;36m");

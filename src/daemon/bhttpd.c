@@ -390,7 +390,6 @@ ansi_color(psrc)
   uschar *src, *ptr;
   int ch, value;
   int color = old_color;
-
 #ifdef HAVE_ANSIATTR
   int attr = old_attr;
 #endif
@@ -537,12 +536,10 @@ ansi_html(fpw, src)
       {
 	if (ch2 < ' ')		/* 怕出現\n */
 	  fputc(ch2, fpw);
-
 #ifdef HAVE_SAKURA
 	else if (scode = sakura2unicode((ch1 << 8) | ch2))
 	  fprintf(fpw, "&#%d;", scode);
 #endif
-
 	else
 	{
 	  fputc(ch1, fpw);
@@ -563,13 +560,9 @@ ansi_html(fpw, src)
       do
       {
 	if (ch2 == '[')		/* 顏色 */
-	{
 	  ch2 = ansi_color(&src);
-	}
 	else if (ch2 == '*')	/* 控制碼 */
-	{
 	  fputc('*', fpw);
-	}
 	else			/* 其他直接刪除 */
 	  ch2 = ansi_remove(&src);
       } while (ch2 == ANSI_TAG && (ch2 = *(++src)));
@@ -600,10 +593,8 @@ ansi_html(fpw, src)
 	ch2 = *(++src);
       }
     }
-
 #ifdef HAVE_HYPERLINK
-    /* 處理超連結 */
-    else if (linkEnd)
+    else if (linkEnd)		/* 處理超連結 */
     {
       fputc(ch1, fpw);
       if (linkEnd <= src)
@@ -612,20 +603,19 @@ ansi_html(fpw, src)
 	linkEnd = NULL;
       }
     }
+#endif
     else
     {
+#ifdef HAVE_HYPERLINK
       /* 其他的自己加吧 :) */
       if (!str_ncmp(src - 1, "http://", 7))
 	ansi_hyperlink(fpw, src - 1);
       else if (!str_ncmp(src - 1, "telnet://", 9))
 	ansi_hyperlink(fpw, src - 1);
+#endif
 
       fputc(ch1, fpw);
     }
-#else
-    else
-      fputc(ch1, fpw);
-#endif
   }
 }
 
@@ -646,7 +636,7 @@ str_html(src, len)
       in_chi = *(++src);
       while (in_chi == ANSI_TAG)
       {
-	++src;
+	src++;
 	in_chi = ansi_remove(&src);
       }
 
@@ -654,7 +644,6 @@ str_html(src, len)
       {
 	if (in_chi < ' ')	/* 可能只有半個字，前半部就不要了 */
 	  *dst++ = in_chi;
-
 #ifdef HAVE_SAKURA
 	else if (len = sakura2unicode((ch << 8) + in_chi))
 	{
@@ -662,7 +651,6 @@ str_html(src, len)
 	  dst += 8;
 	}
 #endif
-
 	else
 	{
 	  *dst++ = ch;
@@ -674,7 +662,7 @@ str_html(src, len)
     }
     else if (ch == ANSI_TAG)
     {
-      ++src;
+      src++;
       ch = ansi_remove(&src);
       continue;
     }
@@ -732,7 +720,7 @@ ansi_quote(fpw, src)		/* 如果是引言，就略過所有的 ANSI 碼 */
     else
       now_color = 0x00003640;
   }
-  else if (ch1 == 0xA1 && ch2 == 0xB0)	/* ※ 引言者 */
+  else if (ch1 == '\241' && ch2 == '\260')	/* ※ 引言者 */
   {
     now_color = 0x00013640;
   }
@@ -766,8 +754,7 @@ txt2htm(fpw, fp)
   /* 處理檔頭 */
   for (i = 0; i < LINE_HEADER; i++)
   {
-    if (!fgets(buf, ANSILINELEN, fp))	/* 雖然連檔頭都還沒印完，但是檔案已經結束，
-					 * 直接離開 */
+    if (!fgets(buf, ANSILINELEN, fp))	/* 雖然連檔頭都還沒印完，但是檔案已經結束，直接離開 */
     {
       fputs("</table>\n", fpw);
       return;
@@ -777,9 +764,7 @@ txt2htm(fpw, fp)
       break;
 
     /* 作者/看板 檔頭有二欄，特別處理 */
-    if (i == 0 && (
-	(pbrd = strstr(buf, "看板:")) ||
-	(pbrd = strstr(buf, "站內:"))))
+    if (i == 0 && ((pbrd = strstr(buf, "看板:")) || (pbrd = strstr(buf, "站內:"))))
     {
       if (board = strchr(pbrd, '\n'))
 	*board = '\0';
@@ -1003,7 +988,6 @@ static void
 out_style(fpw)
   FILE *fpw;
 {
-
 #ifdef HAVE_HYPERLINK
   fputs("<style type=text/css>\n"
     "  a:link.PRE    {COLOR: #FFFFFF}\n"
@@ -1105,7 +1089,7 @@ arg_analyze(argc, mark, str, arg1, arg2, arg3, arg4)
       if (isxdigit(ch) && isxdigit(str[1]))
       {
 	ch = (hex2int(ch) << 4) + hex2int(str[1]);
-	++str;
+	str++;
 	if (ch != '\r')		/* '\r' 就不要了 */
 	  *dst++ = ch;
       }
@@ -1218,7 +1202,6 @@ is_hisbad(up, userno)		/* 參考 pal.c:is_obad() */
   UTMP *up;
   int userno;
 {
-
 #ifdef HAVE_BADPAL
   return pertain_pal(up->pal_spool, up->pal_max, -userno);
 #else
@@ -1315,7 +1298,6 @@ is_brdbad(userno, bpal)		/* 參考 pal.c:is_bbad() */
   int userno;
   BPAL *bpal;
 {
-
 #ifdef HAVE_BADPAL
   return pertain_pal(bpal->pal_spool, bpal->pal_max, -userno);
 #else
@@ -1429,8 +1411,10 @@ ben_perm(ap, brdname)
   Agent *ap;
   char *brdname;
 {
-  if (acct_fetch(ap))
-    return Ben_Perm(brd_get(brdname), ap->userno, ap->userid, ap->userlevel);
+  BRD *brd;
+
+  if (acct_fetch(ap) && (brd = brd_get(brdname)))
+    return Ben_Perm(brd, ap->userno, ap->userid, ap->userlevel);
   return 0;
 }
 
@@ -1958,13 +1942,17 @@ postlist_list(fpw, folder, brdname, start, total)
 
       fputs("<tr onmouseover=mOver(this); onmouseout=mOut(this);>\n", fpw);
       if (brdname)
+      {
 	fprintf(fpw, "  <td><a href=/mpost?%s&%d&%d><img src=/img?mark.gif border=0></a></td>\n"
 	  "  <td><a href=/dpost?%s&%d&%d><img src=/img?del.gif border=0></a></td>\n",
 	  brdname, i, hdr.chrono, brdname, i, hdr.chrono);
+      }
       else
+      {
 	fprintf(fpw, "  <td><a href=/mmail?%d&%d><img src=/img?mark.gif border=0></a></td>\n"
 	  "  <td><a href=/dmail?%d&%d><img src=/img?del.gif border=0></a></td>\n",
 	  i, hdr.chrono, i, hdr.chrono);
+      }
 
       if (hdr.xmode & POST_BOTTOM)
 	fputs("  <td>重要</td>\n", fpw);
@@ -2626,8 +2614,9 @@ move_post(userid, hdr, folder, by_bm)	/* 將 hdr 從 folder 搬到別的板 */
     brd_fpath(fnew, board, FN_DIR);
     hdr_stamp(fnew, HDR_LINK | 'A', &post, fpath);
 
-    /* 直接複製 trailing data */
-    memcpy(post.owner, hdr->owner, TTLEN + 140);
+    /* 直接複製 trailing data：owner(含)以下所有欄位 */
+    memcpy(post.owner, hdr->owner, sizeof(HDR) -
+      (sizeof(post.chrono) + sizeof(post.xmode) + sizeof(post.xid) + sizeof(post.xname)));
 
     if (by_bm)
       sprintf(post.title, "%-13s%.59s", userid, hdr->title);
@@ -2694,7 +2683,7 @@ post_op(ap, title, msg)
       move_post(ap->userid, &hdr, folder, bits & BRD_X_BIT);
       brd_get(brdname)->btime = -1;
       /* 連線砍信 */
-      if ((hdr.xmode & POST_OUTGO) &&	/* 外轉信件 */
+      if ((hdr.xmode & POST_OUTGO) &&		/* 外轉信件 */
 	hdr.chrono > (time(0) - 7 * 86400))	/* 7 天之內有效 */
       {
 	hdr.chrono = -1;
@@ -2987,7 +2976,7 @@ cmd_rss(ap)
     str_html(brd->title, TTLEN), ptr);
   ptr += 5;
   if (*ptr == '0')
-    ++ptr;
+    ptr++;
   fprintf(fpw, "%s</lastBuildDate>\n<image>\n"
     "<title>" BBSNAME "</title>"
     "<link>http://" MYHOSTNAME "</link>\n"
@@ -2998,31 +2987,40 @@ cmd_rss(ap)
   brd_fpath(folder, brdname, FN_DIR);
   if ((fd = open(folder, O_RDONLY)) >= 0)
   {
-    int i, end;
+    int fsize;
+    struct stat st;
 
-    i = rec_num(folder, sizeof(HDR));
-    if (i > 20)
-      end = i - 20;
-    else
-      end = 0;
-    lseek(fd, (off_t) (-256), SEEK_END);
-    for (; i > end && read(fd, &hdr, sizeof(HDR)) == sizeof(HDR); --i)
+    if (!fstat(fd, &st) && (fsize = st.st_size) >= sizeof(HDR))
     {
-      ptr = Gtime(&hdr.chrono);
-      ptr[4] = '\0';
-      fprintf(fpw, "<!-- %d --><item><title>%s</title>"
-	"<link>http://" MYHOSTNAME "/bmore?%s&amp;%d</link>"
-	"<author>%s</author>"
-	"<pubDate>%s ",
-	hdr.chrono, str_html(hdr.title, TTLEN),
-	brdname, i,
-	hdr.owner,
-	ptr);
-      ptr += 5;
-      if (*ptr == '0')
-	++ptr;
-      fprintf(fpw, "%s</pubDate></item>\n", ptr);
-      lseek(fd, (off_t) (-512), SEEK_CUR);
+      int i, end;
+
+      /* 只列出最後二十篇 */
+      if (fsize > 20 * sizeof(HDR))
+	end = fsize - 20 * sizeof(HDR);
+      else
+	end = 0;
+      i = fsize / sizeof(HDR);
+
+      while ((fsize -= sizeof(HDR)) > end)
+      {
+	lseek(fd, fsize, SEEK_SET);
+	read(fd, &hdr, sizeof(HDR));
+
+	ptr = Gtime(&hdr.chrono);
+	ptr[4] = '\0';
+	fprintf(fpw, "<!-- %d --><item><title>%s</title>"
+	  "<link>http://" MYHOSTNAME "/bmore?%s&amp;%d</link>"
+	  "<author>%s</author>"
+	  "<pubDate>%s ",
+	  hdr.chrono, str_html(hdr.title, TTLEN),
+	  brdname, i,
+	  hdr.owner,
+	  ptr);
+	ptr += 5;
+	if (*ptr == '0')
+	  ptr++;
+	fprintf(fpw, "%s</pubDate></item>\n", ptr);
+      }
     }
     close(fd);
   }
@@ -3134,8 +3132,7 @@ getfromhost(pip)
 
   if (hp = gethostbyaddr((char *)pip, 4, AF_INET))
     return hp->h_name;
-  else
-    return inet_ntoa(*(struct in_addr *) pip);
+  return inet_ntoa(*(struct in_addr *) pip);
 }
 
 
@@ -3487,7 +3484,9 @@ agent_recv(ap)
       }
       else
       {
-	fprintf(flog, "ERROR\tdata too long\n");
+#ifdef LOG_VERBOSE
+	fprintf(flog, "WARN\tdata too long\n");
+#endif
 	return 0;
       }
     }
@@ -3575,7 +3574,7 @@ agent_accept(ipaddr)
     if (csock != EINTR)
     {
 #ifdef LOG_VERBOSE
-      logit("ACCEPT", strerror(csock));
+      fprintf(flog, "ACCEPT\t%s\n", strerror(csock));
 #endif
       return -1;
     }
@@ -3936,8 +3935,6 @@ main(argc, argv)
 
       FD_SET(sock, &rset);
     }
-    if (n < 0)		/* no active agent and ready to die */
-      break;
 
     /* in order to maintain history, timeout every BHTTP_PERIOD seconds in case no connections */
     tv.tv_sec = BHTTP_PERIOD;

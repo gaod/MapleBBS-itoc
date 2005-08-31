@@ -236,7 +236,7 @@ site_menu(flag)		/* 目前在選 1:起 4:迄 2:轉 站 */
 	cx = 16;
       break;
 
-    case KEY_ENTER:
+    case '\n':
     case ' ':
       if (site_choose(flag))
 	return 1;

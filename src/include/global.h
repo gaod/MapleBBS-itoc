@@ -268,7 +268,7 @@ UnAnonymous 站務 黑函滿天‧匿名現身 PERM_ALLBOARD PERM_SYSOP
 #define I_OTHERDATA	-32
 
 
-#define Ctrl(c)		(c & 037)
+#define Ctrl(c)		(c & '\037')
 #define Esc(c)		(c)		/* itoc.030824: 不 TRAP_ESC */
 #define isprint2(c)	(c >= ' ')
 
