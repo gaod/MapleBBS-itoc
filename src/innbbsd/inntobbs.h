@@ -4,7 +4,7 @@
 /* inntobbs.c */
 extern char *NODENAME;
 extern char *BODY;
-extern char *SUBJECT, *FROM, *SITE, *DATE, *PATH, *GROUP, *MSGID, *POSTHOST, *CONTROL;
+extern char *SUBJECT, *FROM, *DATE, *PATH, *GROUP, *MSGID, *SITE, *POSTHOST, *CONTROL;
 
 /* inntobbs.c */
 extern int readlines(char *data);

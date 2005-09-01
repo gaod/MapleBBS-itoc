@@ -158,7 +158,10 @@ bbspost_add(board, addr, nick)
   {
     fprintf(fp, "發信人: %.50s 看板: %s\n", FROM, board);
     fprintf(fp, "標  題: %.70s\n", SUBJECT);
-    fprintf(fp, "發信站: %.27s (%.40s)\n\n", SITE, DATE);
+    if (SITE)
+      fprintf(fp, "發信站: %.27s (%.40s)\n\n", SITE, DATE);
+    else
+      fprintf(fp, "發信站: %.40s\n\n", DATE);
 
     fprintf(fp, "%s", BODY);	/* chuan: header 跟 body 要空行格開 */
     fclose(fp);
@@ -402,7 +405,7 @@ is_spam(board, addr, nick)
       compare = MSGID;
     else if (xmode & INN_SPAMBODY)
       compare = BODY;
-    else if (xmode & INN_SPAMSITE)
+    else if (xmode & INN_SPAMSITE && SITE)		/* SITE 可以是 NULL */
       compare = SITE;
     else if (xmode & INN_SPAMPOSTHOST && POSTHOST)	/* POSTHOST 可以是 NULL */
       compare = POSTHOST;
@@ -477,7 +480,8 @@ receive_article()
 	gb2b5(BODY);
 	gb2b5(FROM);
 	gb2b5(SUBJECT);
-	gb2b5(SITE);
+	if (SITE)
+	  gb2b5(SITE);
       }
 
       strcpy(poolx, FROM);

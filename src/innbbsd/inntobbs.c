@@ -25,11 +25,12 @@ enum HeaderValue	/* 所有有用到的 header */
 {
   SUBJECT_H,
   FROM_H,
-  SITE_H,
   DATE_H,
   PATH_H,
   GROUP_H,
   MSGID_H,
+
+  SITE_H,
   POSTHOST_H,
   CONTROL_H,
 
@@ -42,13 +43,13 @@ static header_t headertable[LASTHEADER] =
 {
   "Subject",			SUBJECT_H,
   "From",			FROM_H,
-  "Organization",		SITE_H,
   "Date",			DATE_H,
   "Path",			PATH_H,
   "Newsgroups",			GROUP_H,
   "Message-ID",			MSGID_H,
 
-  /* POSTHOST_H (含) 以下為非必備檔頭 */
+  /* SITE_H (含) 以下為非必備檔頭 */
+  "Organization",		SITE_H,
   "NNTP-Posting-Host",		POSTHOST_H,
   "Control",			CONTROL_H,
 };
@@ -56,7 +57,7 @@ static header_t headertable[LASTHEADER] =
 
 char *NODENAME;
 char *BODY;
-char *SUBJECT, *FROM, *SITE, *DATE, *PATH, *GROUP, *MSGID, *POSTHOST, *CONTROL;
+char *SUBJECT, *FROM, *DATE, *PATH, *GROUP, *MSGID, *POSTHOST, *SITE, *CONTROL;
 
 
 static int 
@@ -213,15 +214,17 @@ readlines(data)		/* 讀入檔頭和內文 */
 
   SUBJECT = HEADER[SUBJECT_H];
   FROM = HEADER[FROM_H];
-  SITE = HEADER[SITE_H];
   DATE = HEADER[DATE_H];
   PATH = HEADER[PATH_H];
   GROUP = HEADER[GROUP_H];
   MSGID = HEADER[MSGID_H];
+  SITE = HEADER[SITE_H];
   POSTHOST = HEADER[POSTHOST_H];
   CONTROL = HEADER[CONTROL_H];
 
-  /* POSTHOST_H (含) 以下為非必備檔頭，但仍要檢查是否為空字串 */
+  /* SITE_H (含) 以下為非必備檔頭，但仍要檢查是否為空字串 */
+  if (SITE && !*SITE)
+    SITE = NULL;
   if (POSTHOST && !*POSTHOST)
     POSTHOST = NULL;
   if (CONTROL && !*CONTROL)
