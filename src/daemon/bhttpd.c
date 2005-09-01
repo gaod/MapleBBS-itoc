@@ -1399,7 +1399,7 @@ brd_get(bname)
   tail = bhdr + bshm->number;
   do
   {
-    if (!str_cmp(bname, bhdr->brdname))
+    if (!strcmp(bname, bhdr->brdname))
       return bhdr;
   } while (++bhdr < tail);
   return NULL;
@@ -2673,21 +2673,24 @@ post_op(ap, title, msg)
       hdr.xmode ^= POST_MARKED;
       rec_put(folder, &hdr, sizeof(HDR), pos, NULL);
     }
-    else if (!(hdr.xmode & POST_MARKED))
+    else /* if (*title == 'd') */
     {
-      if (!(bits & BRD_X_BIT) &&
-	(!(bits & BRD_W_BIT) || strcmp(ap->userid, hdr.owner)))
-	return HS_ERR_PERM;
-
-      rec_del(folder, sizeof(HDR), pos, NULL);
-      move_post(ap->userid, &hdr, folder, bits & BRD_X_BIT);
-      brd_get(brdname)->btime = -1;
-      /* 連線砍信 */
-      if ((hdr.xmode & POST_OUTGO) &&		/* 外轉信件 */
-	hdr.chrono > (time(0) - 7 * 86400))	/* 7 天之內有效 */
+      if (!(hdr.xmode & POST_MARKED))
       {
-	hdr.chrono = -1;
-	outgo_post(&hdr, brdname);
+	if (!(bits & BRD_X_BIT) &&
+	  (!(bits & BRD_W_BIT) || strcmp(ap->userid, hdr.owner)))
+	  return HS_ERR_PERM;
+
+	rec_del(folder, sizeof(HDR), pos, NULL);
+	move_post(ap->userid, &hdr, folder, bits & BRD_X_BIT);
+	brd_get(brdname)->btime = -1;
+	/* 連線砍信 */
+	if ((hdr.xmode & POST_OUTGO) &&		/* 外轉信件 */
+	  hdr.chrono > (time(0) - 7 * 86400))	/* 7 天之內有效 */
+	{
+	  hdr.chrono = -1;
+	  outgo_post(&hdr, brdname);
+	}
       }
     }
 
@@ -2768,11 +2771,14 @@ mail_op(ap, title, msg)
       hdr.xmode ^= POST_MARKED;
       rec_put(folder, &hdr, sizeof(HDR), pos, NULL);
     }
-    else if (!(hdr.xmode & POST_MARKED))
+    else /* if (*title == 'd') */
     {
-      rec_del(folder, sizeof(HDR), pos, NULL);
-      hdr_fpath(fpath, folder, &hdr);
-      unlink(fpath);
+      if (!(hdr.xmode & POST_MARKED))
+      {
+	rec_del(folder, sizeof(HDR), pos, NULL);
+	hdr_fpath(fpath, folder, &hdr);
+	unlink(fpath);
+      }
     }
 
     sprintf(folder, "/mbox?%d", (pos - 1) / HTML_TALL * HTML_TALL + 1);
