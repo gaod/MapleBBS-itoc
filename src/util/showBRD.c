@@ -54,7 +54,7 @@ main(argc, argv)
   {
     if (show_allbrd || !str_cmp(brd.brdname, argv[1]))
     {
-      printf("看板名稱：%-13s     看板標題：%s\n", brd.brdname, brd.title);
+      printf("看板名稱：%-13s     看板標題：[%s] %s\n", brd.brdname, brd.class, brd.title);
       printf("投票狀態：%-13d     看板板主：%s\n", brd.bvote, brd.BM);
       _bitmsg(MSG_READPERM, STR_PERM, brd.readlevel);
       _bitmsg(MSG_POSTPERM, STR_PERM, brd.postlevel);

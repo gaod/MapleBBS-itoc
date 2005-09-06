@@ -1176,7 +1176,7 @@ post_cross(xo)
   HDR xpost;
 
   int tag, rc, locus;
-  int method;		/* 0:轉錄文章 1:原文轉載 */
+  int method;		/* 0:原文轉載 1:轉錄文章 */
   usint tmpbattr;
   char tmpboard[BNLEN + 1];
   char fpath[64], buf[64];

@@ -121,7 +121,7 @@ Names_class(fpath)
       }
       else if (!memcmp(buf, "Path=", 5))
       {
-	ptr += 7;
+	ptr = buf + 7;
 	if (!memcmp(ptr, "../", 3) || (*ptr == '/') || !strcmp(ptr, ".index") || (*ptr == '\0'))
 	  continue;
 
@@ -369,6 +369,8 @@ int
 main()
 {
   char fpath[1024];
+
+  chdir(BBSHOME);
 
   new_class();
 
