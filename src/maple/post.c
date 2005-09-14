@@ -1916,8 +1916,8 @@ post_score(xo)
   XO *xo;
 {
   HDR *hdr;
-  int pos, cur, ans;
-  char *dir, *userid, *verb, fpath[64], reason[50], vtbuf[10];
+  int pos, cur, ans, vtlen;
+  char *dir, *userid, *verb, fpath[64], reason[50], vtbuf[12];
   FILE *fp;
 #ifdef HAVE_ANONYMOUS
   char uid[IDLEN + 1];
@@ -1939,26 +1939,28 @@ post_score(xo)
   switch (ans = vans("◎ 評分 1)推文 2)唾棄 3)自定推 4)自定呸？[Q] "))
   {
   case '1':
-    verb = "\033[31m推";
+    verb = "1m推";
+    vtlen = 2;
     break;
 
   case '2':
-    verb = "\033[32m呸";
+    verb = "2m呸";
+    vtlen = 2;
     break;
 
   case '3':
   case '4':
-    if (!vget(b_lines, 0, "請輸入動詞：", fpath, 3, DOECHO) || !fpath[1])
+    if (!vget(b_lines, 0, "請輸入動詞：", fpath, 5, DOECHO))
       return XO_FOOT;
-    verb = vtbuf;
-    sprintf(verb, "\033[3%cm%s", ans - 2, fpath);
+    vtlen = strlen(fpath);
+    sprintf(verb = vtbuf, "%cm%s", ans - 2, fpath);
     break;
 
   default:
     return XO_FOOT;
   }
 
-  if (!vget(b_lines, 0, "請輸入理由：", reason, 50, DOECHO))
+  if (!vget(b_lines, 0, "請輸入理由：", reason, 48, DOECHO))
     return XO_FOOT;
 
 #ifdef HAVE_ANONYMOUS
@@ -1987,8 +1989,8 @@ post_score(xo)
     time(&now);
     ptime = localtime(&now);
 
-    fprintf(fp, "→ \033[36m%s %s\033[m：%-*s%02d/%02d/%02d\n", 
-      userid, verb, 62 - strlen(userid), reason, 
+    fprintf(fp, "→ \033[36m%s \033[3%s\033[m：%-*s%02d/%02d/%02d\n", 
+      userid, verb, 64 - strlen(userid) - vtlen, reason, 
       ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
     fclose(fp);
   }
