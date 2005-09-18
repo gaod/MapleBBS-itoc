@@ -34,7 +34,7 @@ f_new(fold, fnew)
     {
       struct stat st;
 
-      if (stat(fnew, &st) < 0)
+      if (stat(fnew, &st))
 	break;
       if (st.st_mtime < time(NULL) - 20 * 60)	/* 假設 20 分鐘內應該處理完 */
 	unlink(fnew);

@@ -8,7 +8,7 @@ rec_num(fpath, size)
 {
   struct stat st;
 
-  if (stat(fpath, &st) == -1)
+  if (stat(fpath, &st))
     return 0;
   return (st.st_size / size);
 }
