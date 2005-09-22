@@ -11,10 +11,6 @@
 #define	_DAO_H_
 
 
-#include <stdio.h>
-#include <sys/types.h>
-
-
 #ifndef	NULL
 #define	NULL	0			/* ((char *) 0) */
 #endif
