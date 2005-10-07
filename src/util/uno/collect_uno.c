@@ -53,6 +53,8 @@ main(argc, argv)
 
   chdir(BBSHOME);
 
+  unlink("tmp/all_user_uno");
+
   for (c = 'a'; c <= 'z'; c++)
   {
     sprintf(fpath, "usr/%c", c);
