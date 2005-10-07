@@ -58,7 +58,7 @@ extern time_t mode_lastchange;
 
 
 void
-blog(mode, msg)
+blog(mode, msg)		/* BBS ¤@¯ë°O¿ý */
   char *mode, *msg;
 {
   char buf[512];

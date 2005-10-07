@@ -21,8 +21,6 @@
 
 #include "bbs.h"
 
-#undef	TRACE
-#define	TRACE	logit
 
 /* Thor.990221: 儘量 fflush 出 log */
 #undef DEBUG
@@ -1840,7 +1838,7 @@ mta_boundary(ap, str, boundary)
       /* *boundary++ = '\n'; */	/* Thor.980907: 之後會被無意間跳過 */
       *boundary = 0;
     }
-    TRACE("MULTI", base);
+    logit("MULTI", base);
   }
 
   while (cc = *str)
@@ -2113,7 +2111,7 @@ mta_mail_body:
   /* Thor.980901: decode multipart body */
   if (boundary[2])
   {
-    /* TRACE("MULTIDATA",data); */
+    /* logit("MULTIDATA",data); */
     cc = multipart(data, data, boundary);
     if (cc > 0)
       ap->used = (data - ap->data) + cc;	/* (data - ap->data) 是 header 長度，cc 是信內容的長度 */
@@ -2133,7 +2131,7 @@ mta_mail_body:
     if (cc > 0)
       ap->used = (data - ap->data) + cc;	/* (data - ap->data) 是 header 長度，cc 是信內容的長度 */
 
-    /* TRACE("DECODEDATA", data); */
+    /* logit("DECODEDATA", data); */
   }
 
   /* --------------------------------------------------- */
@@ -2706,7 +2704,7 @@ cmd_rcpt(ap)
     rcpt = (RCPT *) malloc(sizeof(RCPT) + cc);
     MYDOG;
     if (!rcpt)			/* Thor.990205: 記錄空間不夠 */
-      TRACE("ERROR", "Not enough space in cmd_rcpt()");
+      logit("ERROR", "Not enough space in cmd_rcpt()");
 
     rcpt->rnext = ap->rcpt;
     memcpy(rcpt->userid, user, cc);
@@ -3939,7 +3937,7 @@ main(argc, argv)
 	  agent = (Agent *) malloc(sizeof(Agent));
 	  MYDOG;
 	  if (!agent)		/* Thor.990205: 記錄空間不夠 */
-	    TRACE("ERROR", "Not enough space in main()");
+	    logit("ERROR", "Not enough space in main()");
 	}
 
 	*FBI = agent;
@@ -3968,7 +3966,7 @@ main(argc, argv)
 	agent->data = (char *) malloc(MIN_DATA_SIZE);
 	MYDOG;
 	if (!agent->data)	/* Thor.990205: 記錄空間不夠 */
-	  TRACE("ERROR", "Not enough space in agent->data");
+	  logit("ERROR", "Not enough space in agent->data");
 	sprintf(agent->data, "220 " MYHOSTNAME " SMTP ready %s\r\n", servo_ident);	/* Thor.981001: 不用 enhanced SMTP */
 	agent->used = strlen(agent->data);
 	agent->size = MIN_DATA_SIZE;
