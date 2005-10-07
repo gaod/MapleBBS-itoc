@@ -65,8 +65,6 @@
 
 #undef	MODE_STAT               /* 觀察及統計 user 的生態，以做為經營方針 */
 
-#define	LOG_ADMIN		/* Thor.990405: lkchu patch: 記錄更改權限 */
-
 #undef	SYSOP_CHECK_MAIL	/* itoc.001029: 站長可以讀取使用者信箱 */
 				/* itoc.註解: 偶而用這招清 guest 的信也是不錯 */
 

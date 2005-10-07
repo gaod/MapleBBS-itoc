@@ -1135,11 +1135,6 @@ main(argc, argv)
       sprintf(title, "%s本週熱門話題", date);
       keeplog("gem/@/@-week", NULL, title, 0);
 
-#ifdef LOG_ADMIN
-      sprintf(title, "%s站長修改權限", date);
-      keeplog(FN_RUN_PERM, BN_SECURITY, title, 2);
-#endif
-
       sprintf(title, "%s偷懶板主統計", date);
       keeplog(FN_RUN_LAZYBM, BN_SECURITY, title, 2);
 

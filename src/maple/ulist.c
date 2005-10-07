@@ -850,7 +850,7 @@ ulist_kick(xo)
       else
 	sleep(3);		/* 被踢的人這時候正在自我了斷 */
 
-      blog("KICK ", buf);
+      blog("KICK", buf);
       return ulist_init(xo);
     }
   }

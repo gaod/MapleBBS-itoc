@@ -17,6 +17,7 @@ void x_file(int mode, char *xlist[], char *flist[]);
 int m_trace(void);
 
 /* bbsd.c */
+void alog(char *mode, char *msg);
 void blog(char *mode, char *msg);
 void u_exit(char *mode);
 void abort_bbs(void);

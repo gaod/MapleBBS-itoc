@@ -1763,15 +1763,16 @@ mbox_sysop(xo)		/* itoc.001029.註解: 方便收 sysop/guest 的信 */
     if (HAS_PERM(PERM_SYSOP))		/* itoc.001029: 限制只有 SYSOPs 可以看 user 信箱 */
     {
       ACCT acct;
-      XO *xx;
+      XO *xt;
       char fpath[64];
 
       if (acct_get(msg_uid, &acct) > 0)
       {
+	alog("進入信箱", acct.userid);
 	usr_fpath(fpath, acct.userid, fn_dir);
-	xz[XZ_MBOX - XO_ZONE].xo = xx = xo_new(fpath);
+	xz[XZ_MBOX - XO_ZONE].xo = xt = xo_new(fpath);
 	xover(XZ_MBOX);
-	free(xx);
+	free(xt);
 	xz[XZ_MBOX - XO_ZONE].xo = xo;
       }
       return mbox_init(xo);
@@ -1779,16 +1780,17 @@ mbox_sysop(xo)		/* itoc.001029.註解: 方便收 sysop/guest 的信 */
 #else
     if (HAS_PERM(PERM_ALLADMIN))	/* itoc.030914: 讓所有 ADMINs 都可以看 sysop/guest 信箱 */
     {
-      int ch;
-      XO *xx;
+      char *userid;
+      XO *xt;
       char fpath[64];
 
       sprintf(fpath, "進入 (1)%s (2)%s 的信箱？[1] ", str_sysop, STR_GUEST);
-      ch = vans(fpath);
-      usr_fpath(fpath, (ch == '2') ? STR_GUEST : str_sysop, fn_dir);
-      xz[XZ_MBOX - XO_ZONE].xo = xx = xo_new(fpath);
+      userid = (vans(fpath) == '2') ? STR_GUEST : str_sysop;
+      alog("進入信箱", userid);
+      usr_fpath(fpath, userid, fn_dir);
+      xz[XZ_MBOX - XO_ZONE].xo = xt = xo_new(fpath);
       xover(XZ_MBOX);
-      free(xx);
+      free(xt);
       xz[XZ_MBOX - XO_ZONE].xo = xo;
       return mbox_init(xo);
     }

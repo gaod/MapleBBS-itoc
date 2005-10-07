@@ -119,9 +119,7 @@
 #define FN_RUN_NOTE_ALL	"run/note.all"	/* 留言板 */
 #define FN_RUN_PAL	"run/pal.log"	/* 朋友超過上限記錄 */
 
-#ifdef LOG_ADMIN
-#define FN_RUN_PERM	"run/perm.log"	/* 站長修改權限記錄 */
-#endif
+#define FN_RUN_ADMIN	"run/admin.log"	/* 站長行為記錄 */
 
 #ifdef LOG_SONG_USIES
 #define FN_RUN_SONGUSIES "run/song_usies" /* 點歌記錄 */

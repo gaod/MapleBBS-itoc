@@ -246,27 +246,38 @@ bm_list(userid)			/* 顯示 userid 是哪些板的板主 */
 }
 
 
-#ifdef LOG_ADMIN	/* Thor.990405: log permission modify */
 static void
-perm_log(u, oldl)
-  ACCT *u;
-  int oldl;
+adm_log(old, new)
+  ACCT *old, *new;
 {
   int i;
-  usint level;
-  char buf[128];
+  usint bit, oldl, newl;
+  char *userid, buf[80];
 
-  for (i = 0, level = 1; i < NUMPERMS; i++, level <<= 1)
+  userid = new->userid;
+  alog("異動資料", userid);
+
+  if (strcmp(old->passwd, new->passwd))
+    alog("異動密碼", userid);
+
+  if ((old->money != new->money) || (old->gold != new->gold))
   {
-    if ((u->userlevel & level) != (oldl & level))
+    sprintf(buf, "%-13s銀%d→%d 金%d→%d", userid, old->money, new->money, old->gold, new->gold);
+    alog("異動錢幣", buf);
+  }
+
+  /* Thor.990405: log permission modify */
+  oldl = old->userlevel;
+  newl = new->userlevel;
+  for (i = 0, bit = 1; i < NUMPERMS; i++, bit <<= 1)
+  {
+    if ((newl & bit) != (oldl & bit))
     {
-      sprintf(buf, "%15s %s %-15s (%s) by %s\n", u->userid, 
-	(u->userlevel & level) ? BIT_ON : BIT_OFF, perm_tbl[i], Now(), cuser.userid);
-      f_cat(FN_RUN_PERM, buf);
+      sprintf(buf, "%-13s%s %s", userid, (newl & bit) ? BIT_ON : BIT_OFF, perm_tbl[i]);
+      alog("異動權限", buf);
     }
   }
 }
-#endif
 
 
 void
@@ -553,7 +564,7 @@ set_perm:
     }
   }
 
-  if (vans(msg_sure_ny) != 'y')
+  if (!memcmp(&x, u, sizeof(ACCT)) || vans(msg_sure_ny) != 'y')
     return;
 
   if (adm)
@@ -567,10 +578,6 @@ set_perm:
       rename(buf, dst);
       /* Thor.990416: 特別注意! .USR並未一併更新, 可能有部分問題 */
     }
-#ifdef LOG_ADMIN
-    /* lkchu.981201: security log */
-    perm_log(&x, u->userlevel);
-#endif
 
     /* itoc.010811: 動態設定線上使用者 */
     /* 被站長改過資料的線上使用者(包括站長自己)，其 cutmp->status 會被加上 STATUS_DATALOCK
@@ -578,6 +585,9 @@ set_perm:
     /* 在站長修改過才上線的 ID 因為其 cutmp->status 沒有 STATUS_DATALOCK 的旗標，
        所以將可以繼續存取，所以線上如果同時有修改前、修改後的同一隻 ID multi-login，也是無妨。 */
     utmp_admset(x.userno, STATUS_DATALOCK | STATUS_COINLOCK);
+
+    /* lkchu.981201: security log */
+    adm_log(u, &x);
   }
   else
   {
@@ -589,7 +599,7 @@ set_perm:
     }
   }
 
-  memcpy(u, &x, sizeof(x));
+  memcpy(u, &x, sizeof(ACCT));
   acct_save(u);
 }
 
@@ -945,10 +955,12 @@ brd_edit(bno)
 	sprintf(newbh.title, "[%s] deleted by %s", bname, cuser.userid);
 	memcpy(bhdr, &newbh, sizeof(BRD));
 	rec_put(FN_BRD, &newbh, sizeof(BRD), bno, NULL);
-	blog("Admin", newbh.brdname);
+
 	/* itoc.050531: 砍板會造成看板不是按字母排序，所以要修正 numberOld */
 	if (bshm->numberOld > bno)
 	  bshm->numberOld = bno;
+
+	alog("刪除看板", bname);
 	vmsg("刪板完畢");
       }
     }

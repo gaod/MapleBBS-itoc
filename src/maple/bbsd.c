@@ -58,6 +58,17 @@ extern time_t mode_lastchange;
 
 
 void
+alog(mode, msg)		/* Admin 行為記錄 */
+  char *mode, *msg;
+{
+  char buf[512];
+
+  sprintf(buf, "%s %s %-13s%s\n", Now(), mode, cuser.userid, msg);
+  f_cat(FN_RUN_ADMIN, buf);
+}
+
+
+void
 blog(mode, msg)		/* BBS 一般記錄 */
   char *mode, *msg;
 {
