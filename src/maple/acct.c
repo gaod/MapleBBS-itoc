@@ -458,21 +458,21 @@ acct_setup(u, adm)
     if (!vget(i, 0, buf, buf, 3, DOECHO))
       break;
     x.year = atoi(buf);
-  } while (x.year < 1 || x.year > 99);
+  } while (x.year < 0 || x.year > 99);
   do
   {
     sprintf(buf, "生日－ %02d 月：", u->month);
     if (!vget(i, 0, buf, buf, 3, DOECHO))
       break;
     x.month = atoi(buf);
-  } while (x.month < 1 || x.month > 12);
+  } while (x.month < 0 || x.month > 12);
   do
   {
     sprintf(buf, "生日－ %02d 日：", u->day);
     if (!vget(i, 0, buf, buf, 3, DOECHO))
       break;
     x.day = atoi(buf);
-  } while (x.day < 1 || x.day > 31);
+  } while (x.day < 0 || x.day > 31);
 
   i++;
   sprintf(buf, "性別 (0)中性 (1)男性 (2)女性：[%d] ", u->sex);
