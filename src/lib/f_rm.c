@@ -19,22 +19,21 @@ rm_dir(fpath)
 
   *fname++ = '/';
 
-  readdir(dirp);
-  readdir(dirp);
-
   while (de = readdir(dirp))
   {
     fpath = de->d_name;
-    if (*fpath)
+
+    /* skip ./ ¤Î ../ */
+    if (!*fpath || (*fpath == '.' && (fpath[1] == '\0' || (fpath[1] == '.' && fpath[2] == '\0'))))
+      continue;
+
+    strcpy(fname, fpath);
+    if (!stat(buf, &st))
     {
-      strcpy(fname, fpath);
-      if (!stat(buf, &st))
-      {
-	if (S_ISDIR(st.st_mode))
-	  rm_dir(buf);
-	else
-	  unlink(buf);
-      }
+      if (S_ISDIR(st.st_mode))
+	rm_dir(buf);
+      else
+	unlink(buf);
     }
   }
   closedir(dirp);
