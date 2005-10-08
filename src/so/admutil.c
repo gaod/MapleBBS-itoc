@@ -228,6 +228,168 @@ a_resetsys()		/* 重置 */
 }
 
 
+/* ----------------------------------------------------- */
+/* 還原備份檔						 */
+/* ----------------------------------------------------- */
+
+
+static void
+show_availability(type)		/* 將 BAKPATH 裡面所有可取回備份的目錄印出來 */
+  char *type;
+{
+  int tlen, len, col;
+  char *fname, fpath[64];
+  struct dirent *de;
+  DIR *dirp;
+  FILE *fp;
+
+  if (dirp = opendir(BAKPATH))
+  {
+    col = 0;
+    tlen = strlen(type);
+
+    sprintf(fpath, "tmp/restore.%s", cuser.userid);
+    fp = fopen(fpath, "w");
+    fputs("※ 可供取回的備份有：\n\n", fp);
+
+    while (de = readdir(dirp))
+    {
+      fname = de->d_name;
+      if (!strncmp(fname, type, tlen))
+      {
+	len = strlen(fname) + 2;
+	if (SCR_WIDTH - col < len)
+	{
+	  fputc('\n', fp);
+	  col = 0;
+	}
+	else
+	{
+	  col += len;
+	}
+	fprintf(fp, "%s  ", fname);
+      }
+    }
+
+    fputc('\n', fp);
+    fclose(fp);
+    closedir(dirp);
+
+    more(fpath, (char *) -1);
+    unlink(fpath);
+  }
+}
+
+
+int
+a_restore()
+{
+  int ch;
+  char *type, *ptr;
+  char *tpool[3] = {"brd", "gem", "usr"};
+  char date[20], brdname[BNLEN + 1], src[64], cmd[256];
+  ACCT acct;
+  BPAL *bpal;
+
+  ch = vans("◎ 還原備份 1)看板 2)精華區 3)使用者：[Q] ") - '1';
+  if (ch < 0 || ch >= 3)
+    return XEASY;
+
+  type = tpool[ch];
+  show_availability(type);
+
+  if (vget(b_lines, 0, "要取回的備份目錄：", date, 20, DOECHO))
+  {
+    /* 避免站長打了一個存在的目錄，但是和 type 不合 */
+    if (strncmp(date, type, strlen(type)))
+      return 0;
+
+    sprintf(src, BAKPATH"/%s", date);
+    if (!dashd(src))
+      return 0;
+    ptr = strchr(src, '\0');
+
+    clear();
+    move(3, 0);
+    outs("欲還原備份的看板/使用者必須已存在。\n"
+      "若該看板/使用者已刪除，請先重新開設/註冊一個同名的看板/使用者。\n"
+      "還原備份時請確認該看板無人使用/使用者不在線上");
+
+    if (ch == 0 || ch == 1)
+    {
+      if (!ask_board(brdname, BRD_L_BIT, NULL))
+	return 0;
+      sprintf(ptr, "/%s%s.tgz", ch == 0 ? "" : "brd/", brdname);
+    }
+    else /* if (ch == 2) */
+    {
+      if (acct_get(msg_uid, &acct) <= 0)
+	return 0;
+      type = acct.userid;
+      str_lower(type, type);
+      sprintf(ptr, "/%c/%s.tgz", *type, type);
+    }
+
+    if (!dashf(src))
+    {
+      /* 檔案不存在，通常是因為備份點時該看板/使用者已被刪除，或是當時根本就還沒有該看板/使用者 */
+      vmsg("備份檔案不存在，請試試其他時間點的備份");
+      return 0;
+    }
+
+    if (vans("還原備份後，目前所有資料都會流失，請務必確定(Y/N)？[N] ") != 'y')
+      return 0;
+
+    alog("還原備份", src);
+
+    /* 解壓縮 */
+    if (ch == 0)
+      ptr = "brd";
+    else if (ch == 1)
+      ptr = "gem/brd";
+    else /* if (ch == 2) */
+      sprintf(ptr = date, "usr/%c", *type);
+    sprintf(cmd, "tar xfz %s -C %s/", src, ptr);
+    /* system(cmd); */
+
+#if 1	/* 讓站長手動執行 */
+    move(7, 0);
+    outs("\n請以 bbs 身分登入工作站，並於\033[1;36m家目錄\033[m執行\n\n\033[1;33m");
+    outs(cmd);
+    outs("\033[m\n\n");
+#endif
+
+    /* tar 完以後，還要做的事 */
+    if (vans("◎ 指令 Y)已成功\執行以上指令 Q)放棄執行：[Q] ") == 'y')
+    {
+      if (ch == 0)	/* 還原看板時，要更新板友 */
+      {
+	if ((ch = brd_bno(brdname)) >= 0)
+	{
+	  brd_fpath(src, brdname, fn_pal);
+	  bpal = bshm->pcache + ch;
+	  bpal->pal_max = image_pal(src, bpal->pal_spool);
+	}
+      }
+      else if (ch == 2)	/* 還原使用者時，不還原 userno */
+      {
+	ch = acct.userno;
+	if (acct_load(&acct, type) >= 0)
+	{
+	  acct.userno = ch;
+	  acct_save(&acct);
+	}
+      }
+      vmsg("還原備份成功\");
+      return 0;
+    }
+  }
+
+  vmsg(msg_cancel);
+  return 0;
+}
+
+
 #ifdef HAVE_REGISTER_FORM
 
 /* ----------------------------------------------------- */

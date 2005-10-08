@@ -434,6 +434,9 @@ static MENU menu_admin[] =
   "bin/admutil.so:a_resetsys", PERM_ALLADMIN, - M_SYSTEM,
   "BBSreset   ◤ 重置系統 ◢",
 
+  "bin/admutil.so:a_restore", PERM_SYSOP, - M_SYSTEM,
+  "TRestore   ◤ 還原備份 ◢",
+
   menu_main, PERM_MENU + Ctrl('A'), M_AMENU,
   "系統維護"
 };

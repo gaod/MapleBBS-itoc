@@ -1143,7 +1143,7 @@ post_switch(xo)
 {
   int bno;
   BRD *brd;
-  char bname[16];
+  char bname[BNLEN + 1];
 
   if (brd = ask_board(bname, BRD_R_BIT, NULL))
   {
