@@ -947,6 +947,8 @@ brd_edit(bno)
       bname = bhdr->brdname;
       if (*bname)	/* itoc.000512: 同時砍除同一個看板會造成精華區、看板全毀 */
       {
+	alog("刪除看板", bname);
+
 	gem_fpath(src, bname, NULL);
 	f_rm(src);
 	f_rm(src + 4);
@@ -960,7 +962,6 @@ brd_edit(bno)
 	if (bshm->numberOld > bno)
 	  bshm->numberOld = bno;
 
-	alog("刪除看板", bname);
 	vmsg("刪板完畢");
       }
     }

@@ -205,7 +205,7 @@ main(argc, argv)
       close(fd);
     }
 
-    closedir(dirp);    
+    closedir(dirp);
   }
 
   return 0;
