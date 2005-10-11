@@ -584,9 +584,6 @@ main()
     due_occupy = start - DAY_OCCUPY * 86400;
   }
 
-  /* itoc.011124: kulu 不砍帳號: 所有人的 acct.lastlogin 都 >= 0 */
-  due_newusr = due_forfun = due_occupy = 0;
-
 #ifdef CHECK_LAZYBM
   due_lazybm = start - DAY_LAZYBM * 86400;
 #endif
