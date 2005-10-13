@@ -720,6 +720,7 @@ cmd_user(cn)
   int fd;
   ACCT acct;
   char *userid, *ptr, fpath[80], msg[128];
+  char *msg_no_user = "-ERR no such user in our server";
 
   MYDOG;
 
@@ -743,7 +744,7 @@ cmd_user(cn)
   {
     if (strcmp(ptr, ".bbs"))
     {
-      client_flush(cn, "-ERR no such user in our server");
+      client_flush(cn, msg_no_user);
       return;
     }
     *ptr = '\0';
@@ -757,7 +758,7 @@ cmd_user(cn)
   /* Thor.990122: check §¹ *.bbs ¦A¬Ý idlen */
   if (strlen(userid) > IDLEN)
   {
-    client_flush(cn, "-ERR no such user in our server");
+    client_flush(cn, msg_no_user);
     return;
   }
 
@@ -788,6 +789,10 @@ cmd_user(cn)
       /* sprintf(msg, "+OK Password required for %s%s", acct.userid, POP3_FQDN); */
       sprintf(msg, "+OK Password required for %s.", acct.userid);
     }
+  }
+  else
+  {
+    strcpy(msg, msg_no_user);
   }
 
   client_flush(cn, msg);
