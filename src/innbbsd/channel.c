@@ -780,7 +780,7 @@ inndchannel()
 
       channelcreate(clientp, fd, nodename, hostname);
 
-      fprintf(clientp->Argv.out, "200 %s INNBBSD %s (%s)\r\n", MYBBSID, VERSION, hostname);
+      fprintf(clientp->Argv.out, "200 INNBBSD %s (%s)\r\n", VERSION, hostname);
       fflush(clientp->Argv.out);
     }
 

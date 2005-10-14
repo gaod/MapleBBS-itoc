@@ -1722,3 +1722,5 @@
 
 [2005/10/08] admutil.c 還原備份。
 
+[2005/10/15] config.h innbbsd/* 把 BBSNAME2、TAG_VALID、bbsname.bbs 整合在一起。
+

@@ -27,9 +27,9 @@
 
 #define SCHOOLNAME	"台南一中"		/* 組織名稱 */
 #define BBSNAME		"與南共舞"		/* 中文站名 */
-#define BBSNAME2	"TNFSH.Wolf.BBS"	/* 英文站名 */
+#define BBSNAME2	"WolfBBS"		/* 英文站名 */
 #define SYSOPNICK	"狼人長老"		/* sysop 的暱稱 */
-#define TAG_VALID       "[WolfBBS]To"		/* 身分認證函 token */
+#define TAG_VALID       "["BBSNAME2"]To"	/* 身分認證函 token */
 
 #define MYIPADDR	"210.70.137.5"		/* IP address */
 #define MYHOSTNAME	"bbs.tnfsh.tn.edu.tw"	/* 網路地址 FQDN */

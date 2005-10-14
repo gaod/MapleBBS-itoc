@@ -23,6 +23,8 @@
 
 #define VERSION		"0.8-MapleBBS"		/* 版本宣告 */
 
+#define MYBBSID		BBSNAME2		/* Path: 用英文站名 */
+
 #define LOGFILE		"innd/innbbs.log"	/* 記錄檔路徑 */
 
 

@@ -6,9 +6,8 @@
 
 schoolname="台南一中"
 bbsname="與南共舞"
-bbsname2="TNFSH.Wolf.BBS"
+bbsname2="WolfBBS"
 sysopnick="狼人長老"
-tag_valid="WolfBBS"
 myipaddr="210.70.137.5"
 myhostname="bbs.tnfsh.tn.edu.tw"
 msg_bmw="水球"
@@ -22,7 +21,6 @@ echo "您所設定的 SCHOOLNAME 是 $schoolname"
 echo "您所設定的 BBSNAME    是 $bbsname"
 echo "您所設定的 BBSNAME2   是 $bbsname2"
 echo "您所設定的 SYSOPNICK  是 $sysopnick"
-echo "您所設定的 TAG_VALID  是 $tag_valid"
 echo "您所設定的 MYIPADDR   是 $myipaddr"
 echo "您所設定的 MYHOSTNAME 是 $myhostname"
 echo "您所設定的 MSG_BMW    是 $msg_bmw"
@@ -49,13 +47,10 @@ do
   cat $i | sed 's/與南共舞/'$bbsname'/g' > $i.sed;
   mv -f $i.sed $i
 
-  cat $i | sed 's/TNFSH.Wolf.BBS/'$bbsname2'/g' > $i.sed;
+  cat $i | sed 's/WolfBBS/'$bbsname2'/g' > $i.sed;
   mv -f $i.sed $i
 
   cat $i | sed 's/狼人長老/'$sysopnick'/g' > $i.sed;
-  mv -f $i.sed $i
-
-  cat $i | sed 's/WolfBBS/'$tag_valid'/g' > $i.sed;
   mv -f $i.sed $i
 
   cat $i | sed 's/210.70.137.5/'$myipaddr'/g' > $i.sed;

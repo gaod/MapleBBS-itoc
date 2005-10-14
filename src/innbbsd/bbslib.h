@@ -2,9 +2,6 @@
 #define _BBSLIB_H_
 
 /* bbslib.c */
-extern char MYBBSID[];
-
-/* bbslib.c */
 extern int NLCOUNT;
 extern nodelist_t *NODELIST;
 extern int nl_bynamecmp();

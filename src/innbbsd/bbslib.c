@@ -20,38 +20,6 @@
 
 
 /* ----------------------------------------------------- */
-/* read bbsname.bbs					 */
-/* ----------------------------------------------------- */
-
-
-char MYBBSID[16];
-
-
-static int		/* 0:success  -1:fail */
-read_bbsname()
-{
-  char *ptr;
-  FILE *fp;
-
-  MYBBSID[0] = '\0';
-
-  if (fp = fopen("innd/bbsname.bbs", "r"))
-  {
-    fgets(MYBBSID, sizeof(MYBBSID), fp);
-    fclose(fp);
-
-    if (ptr = strchr(MYBBSID, '\n'))
-      *ptr = '\0';
-
-    if (strlen(MYBBSID) >= 2)	/* 至少要二個字 */
-      return 0;
-  }
-
-  return -1;
-}
-
-
-/* ----------------------------------------------------- */
 /* read nodelist.bbs					 */
 /* ----------------------------------------------------- */
 
@@ -255,13 +223,7 @@ initial_bbs()
 {
   chdir(BBSHOME);		/* chdir to bbs_home first */
 
-  /* 依序載入 MYBBSID、nodelist.bbs、newsfeeds.bbs、ncmperm.bbs、spamrule.bbs */
-
-  if (read_bbsname() < 0)
-  {
-    printf("請檢查 bbsname.bbs，MYBBSID 至少 2 個字母，至多 15 個字母\n");
-    return 0;
-  }
+  /* 依序載入 nodelist.bbs、newsfeeds.bbs、ncmperm.bbs、spamrule.bbs */
 
   if (read_nodelist() < 0)
   {
