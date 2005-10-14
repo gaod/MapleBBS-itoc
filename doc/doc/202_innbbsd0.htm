@@ -24,11 +24,7 @@
 
     0. 以下全部是用 bbs 的身分執行
 
-    1. 首先先為自己的 BBS 站命名個 token，假設是 WOLF
-
-    2. 編輯 innd/bbsname.bbs，內容就只有 WOLF
-
-    3. crontab -e 加入這二行 (應該原本就有了)
+    1. crontab -e 加入這二行 (應該原本就有了)
 
 # 每小時對其他 BBS 及 news server 轉信五次
 10,22,34,46,58 * * * * innd/bbslink > /dev/null 2>&1
