@@ -51,7 +51,7 @@ nl_add(fpath, old, pos)
   int ch, port;
   char ans[8];
   char msg1[] = "協定：(1)IHAVE (2)POST [1] ";
-  char msg2[] = "被此站台餵信嗎(Y/N)？[N] ";
+  char msg2[] = "此站台會主動餵信給本站嗎(Y/N)？[N] ";
 
   if (old)
     memcpy(&nl, old, sizeof(nodelist_t));
@@ -80,10 +80,10 @@ nl_add(fpath, old, pos)
       if ((port = atoi(ans)) <= 0)
 	port = 119;
 
-      msg2[22] = (old && old->xmode & INN_FEEDED) ? 'Y' : 'N';	/* 新增資料預設不餵信 */
+      msg2[32] = (old && old->xmode & INN_FEEDED) ? 'Y' : 'N';	/* 新增資料預設不餵信 */
       ch = vans(msg2);
       if (ch != 'y' && ch != 'n')
-	ch = msg2[22] | 0x20;
+	ch = msg2[32] | 0x20;
 
       if (ch == 'y')
 	nl.xmode |= INN_FEEDED;
@@ -174,7 +174,7 @@ nf_query(nf)
   if (!rc)
   {
     memset(&nl, 0, sizeof(nodelist_t));
-    strcpy(nl.host, "此站台不在 nodelist.bbs 中");
+    strcpy(nl.host, "\033[1;33m此站台不在 nodelist.bbs 中\033[m");
   }
 
   /* 看板狀態 */
@@ -506,7 +506,10 @@ a_innbbs()
   void (*item_func)(), (*query_func)();
   int (*add_func)(), (*sync_func)(), (*search_func)();
 
-  switch (vans("◎ 轉信設定 1)nodelist 2)newsfeeds 3)ncmperm 4)spamrule：[Q] "))
+  vs_bar("轉信設定");
+  more("etc/innbbs.hlp", (char *) -1);
+
+  switch (vans("請選擇 1)轉文站台列表 2)轉文看板列表 3)NoCeM擋文規則 4)廣告文名單：[Q] "))
   {
   case '1':
     fpath = "innd/nodelist.bbs";
@@ -549,7 +552,7 @@ a_innbbs()
     break;
 
   default:
-    return XEASY;
+    return 0;
   }
 
   dirty = 0;	/* 1:有新增/刪除資料 */

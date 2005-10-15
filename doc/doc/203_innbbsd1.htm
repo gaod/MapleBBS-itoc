@@ -31,19 +31,25 @@
     如果想把 cancel 的文章都記錄下來，那麼請 #define 這項。
 
 
-  * 設定 innd/nodelist.bbs
+  * 設定「轉文站台列表」 (innd/nodelist.bbs)
 
-    允許連線的站台資訊。
-
-
-  * 設定 innd/newsfeeds.bbs
-
-    轉信的站台/群組/看板對照列表。
+    只有在這個檔案裡面的站台，才允許該站台連線至本站。
 
 
-  * 設定 innd/ncmperm.bbs
+  * 設定「轉文看板列表」 (innd/newsfeeds.bbs)
 
-    NoCeM 擋信機制的控制。
+    這個檔案裡面記載了所有要和別台交換文章的看板，其轉信的站台/群組/看板
+    對照列表。
+
+
+  * 設定「NoCeM擋文規則」 (innd/ncmperm.bbs)
+
+    NoCeM 擋信機制的控制，可以選擇是否接收 NoCeM notice 的砍文。
+
+
+  * 設定「廣告文名單」 (innd/spamrule.bbs)
+
+    滿足這個檔案裡面所列規則的文章，將被本站拒收。
 
   <a name='2'></a>
   <font color="#000080"><u>二、常見問題 (FAQ)</u></font>
@@ -64,7 +70,8 @@
     2. node-name 是該站的短名，隨便您命名。
     3. host 是該站的 hostname，可以是 ip/fqdn，即使不是正解，像
        xxx.twbbs.org 也是被接受的。
-    4. 目前支援的 protocol 有 IHAVE POST 二種。
+    4. 目前支援的 protocol 有 IHAVE POST 二種，一般 BBS 使用 IHAVE，
+       news-server 使用 POST。
     5. port 為對方開的連接埠，一般 BBS 使用 7777，news-server 使用 119。
     6. 只有把對方站台的資訊加入 nodelist.bbs 以後，對方才可以 access 我們。
 
@@ -74,7 +81,7 @@
     1. newsfeeds.bbs 的格式如下：
 
        Maple        nthu.cs.bbs.plan        <-> plan   big5
-       ^^^^^        ^^^^^^^^^^^^^^^         ^^^ ^^^^^  ^^^^
+       ^^^^^        ^^^^^^^^^^^^^^^^        ^^^ ^^^^^  ^^^^
        node-name    newsgroup               way board  charset
 
        這表示：本站的 plan 板與 Maple 站的 nthu.cs.bbs.plan 做雙向轉信，
@@ -111,15 +118,41 @@
 
     1. ncmperm.bbs 的格式如下：
 
-       House        [來源] 包含 hinet.net
-       ^^^^^         ^^^^       ^^^^^^^^^
-       board         type       detail
+       Maple        House        [來源] 包含 hinet.net
+       ^^^^^        ^^^^^         ^^^^       ^^^^^^^^^
+       path         board         type       detail
 
-       這表示：若來源包含 hinet.net 的文章將無法轉信進入 House 板。
+       這表示：在 Maple 這個站轉來的文章中，若來源包含 hinet.net 將無法轉
+       信進入 House 板。
 
-    2. board 是這條規則適用於哪些看板。
-    3. type 是這條規則檢查哪一欄位。
-    4. detail 是這條規則的內容。
+    2. path 是這條規則適用於哪些站轉來的文章，也可以選擇所有站台。
+    3. board 是這條規則適用於哪些看板，也可以選擇所有看板。
+    4. type 是這條規則檢查哪一欄位。
+    5. detail 是這條規則的內容。
+
+
+  * 我可以跟哪些 news-server 轉信？
+
+    在此列出一些常見的 news-server：
+
+    1. 交通大學  netnews.nctu.edu.tw   POST(119)
+    2. 交大資科  news.cis.nctu.edu.tw  POST(119)
+    3. 交大應數  news.math.nctu.edu.tw POST(119)
+    4. 中山大學  news.nsysu.edu.tw     POST(119)
+    5. 中興大學  news.nchu.edu.tw      POST(119)
+    6. Hinet     news.hinet.net        POST(119)
+
+    然而這些 news-server 往往都有其存取限制，例如 Hinet 的伺服器僅限 Hinet
+    的用戶存取。
+
+    若您不知道貴單位專屬的 news-server，請恰計算機中心等相關單位。
+
+
+  * 我要怎麼得知哪個 newsgroup 是對應哪個討論區？
+
+    對於一般的大眾轉信板，在許多 news-server 上都有其對應的群組。一些常見
+    的 tw.bbs.* 群組對照表請參考這個網站：
+    http://www.csie.nctu.edu.tw/~cdsheen/pnews/index.php
 
 
   * 我要怎麼得知 news-server 上有什麼 newsgroup？
@@ -132,7 +165,7 @@
     上的所有 newsgroup 了。
 
 
-  * 如何一次抓許多信？
+  * 如何一次抓許多篇文章？
 
     bbslink 預設一次只抓 100 封信，如果要抓超過 100 封的話，請使用 -a
     這個參數。
@@ -140,7 +173,7 @@
     其中 site 是記錄在 nodelist.bbs 裡的英文站名。
 
 
-  * 如果抓過去的信？
+  * 如果抓過去的文章？
 
     如果您想收過去已經抓過的信，那麼請修改 newsfeeds.bbs 中的 high-number
     (將這數字變小，至於要減小多少，取決於您要抓幾封過去的信)。
