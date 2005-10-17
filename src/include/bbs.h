@@ -46,6 +46,10 @@
 
 #endif				/* SYSV */
 
+#ifndef INT_MAX
+#define INT_MAX		0x7FFFFFFF
+#endif
+
 
 #define	BMIN(a,b)	((a<b)?a:b)
 #define	BMAX(a,b)	((a>b)?a:b)
