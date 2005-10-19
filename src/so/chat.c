@@ -26,10 +26,6 @@ static FILE *frec;
 
 extern char *bmode();
 
-#ifdef EVERY_Z
-extern int vio_fd, holdon_fd;
-#endif
-
 
 static void
 chat_topic()
@@ -82,21 +78,17 @@ chat_record()
   else
   {
 #ifdef EVERY_Z
-    /* Thor.980602: 由於 tbf_ask需問檔名, 此時會用到igetch,
-                    為防 I_OTHERDATA造成當住, 在此用 ctrlZ_everywhere方式,
-                    保存vio_fd, 待問完後再還原 */
+    /* Thor.980602: 由於 tbf_ask() 需問檔名，此時會用到 igetch()，
+       為了防止 I_OTHERDATA 造成當住，在此用 every_Z() 的方式，
+       先保存 vio_fd，待問完後再還原 */
 
-    /* Thor.980602: 暫存 vio_fd */
-    holdon_fd = vio_fd;
-    vio_fd = 0;
+    vio_save();		/* Thor.980602: 暫存 vio_fd */
 #endif
 
     usr_fpath(buf, cuser.userid, tbf_ask());
 
 #ifdef EVERY_Z
-    /* Thor.980602: 還原 vio_fd */
-    vio_fd = holdon_fd;
-    holdon_fd = 0;
+    vio_restore();	/* Thor.980602: 還原 vio_fd */
 #endif
 
     move(b_lines, 0);
@@ -456,7 +448,7 @@ t_chat()
 
 #ifdef EVERY_Z
   /* Thor.980725: 為 talk & chat 可用 ^z 作準備 */
-  if (holdon_fd)
+  if (vio_holdon())
   {
     vmsg("您講話講一半還沒講完耶");
     return -1;
@@ -764,13 +756,11 @@ t_chat()
       /* Thor.980731: 暫存 mateid, 因為出去時可能會用掉 mateid */
       strcpy(buf, cutmp->mateid);
 
-      holdon_fd = vio_fd;	/* Thor.980727: 暫存 vio_fd */
-      vio_fd = 0;
+      vio_save();	/* Thor.980727: 暫存 vio_fd */
       vs_save(slt);
       every_Z(0);
       vs_restore(slt);
-      vio_fd = holdon_fd;	/* Thor.980727: 還原 vio_fd */
-      holdon_fd = 0;
+      vio_restore();	/* Thor.980727: 還原 vio_fd */
 
       /* Thor.980731: 還原 mateid, 因為出去時可能會用掉 mateid */
       strcpy(cutmp->mateid, buf);

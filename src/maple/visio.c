@@ -1116,11 +1116,35 @@ static int vi_size;
 static int vi_head;
 
 
-/* static int vio_fd; */
-int vio_fd;			/* Thor.980725: 為以後在talk & chat 進 ^z 作準備 */
+static int vio_fd;
+
 
 #ifdef EVERY_Z
-int holdon_fd;			/* Thor.980727: 跳出chat&talk暫存vio_fd用 */
+
+static int holdon_fd;		 /* Thor.980727: 跳出chat&talk暫存vio_fd用 */
+
+
+void
+vio_save()
+{
+  holdon_fd = vio_fd;
+  vio_fd = 0;
+}
+
+
+void
+vio_restore()
+{
+  vio_fd = holdon_fd;
+  holdon_fd = 0;
+}
+
+
+int
+vio_holdon()
+{
+  return holdon_fd;
+}
 #endif
 
 

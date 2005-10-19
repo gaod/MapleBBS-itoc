@@ -19,12 +19,6 @@
 extern UCACHE *ushm;
 
 
-#ifdef EVERY_Z
-extern int vio_fd;		/* Thor.980725: 為talk, chat可用^z作準備 */
-extern int holdon_fd;
-#endif
-
-
 typedef struct
 {
   int curcol, curln;
@@ -635,13 +629,11 @@ talk_speak(fd)
       /* Thor.980731: 暫存 mateid, 因為出去時可能會用掉 mateid */
       strcpy(buf, cutmp->mateid);
 
-      holdon_fd = vio_fd;	/* Thor.980727: 暫存 vio_fd */
-      vio_fd = 0;
+      vio_save();	/* Thor.980727: 暫存 vio_fd */
       vs_save(slt);
       every_Z(0);
       vs_restore(slt);
-      vio_fd = holdon_fd;	/* Thor.980727: 還原 vio_fd */
-      holdon_fd = 0;
+      vio_restore();	/* Thor.980727: 還原 vio_fd */
 
       /* Thor.980731: 還原 mateid, 因為出去時可能會用掉 mateid */
       strcpy(cutmp->mateid, buf);
@@ -866,7 +858,7 @@ talk_page(up)
 
 #ifdef EVERY_Z
   /* Thor.980725: 為 talk & chat 可用 ^z 作準備 */
-  if (holdon_fd)
+  if (vio_holdon())
   {
     vmsg("您講話講一半還沒講完耶");
     return 0;
@@ -1239,7 +1231,7 @@ talk_rqst()
 #ifdef EVERY_Z
   /* Thor.980725: 為 talk & chat 可用 ^z 作準備 */
 
-  if (holdon_fd)
+  if (vio_holdon())
   {
     sprintf(buf, "%s 想和您聊，不過您只有一張嘴", page_requestor);
     vmsg(buf);

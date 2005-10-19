@@ -19,9 +19,6 @@
 
 extern char lastcmd[MAXLASTCMD][80];
 
-#ifdef EVERY_Z
-extern int vio_fd, holdon_fd;
-#endif
 
 enum
 {
@@ -2281,13 +2278,11 @@ main_board(sock, later)
       /* Thor.980731: 暫存 mateid, 因為出去時可能會用掉 mateid */
       strcpy(buf, cutmp->mateid);
 
-      holdon_fd = vio_fd;	/* Thor.980727: 暫存 vio_fd */
-      vio_fd = 0;
+      vio_save();	/* Thor.980727: 暫存 vio_fd */
       vs_save(slt);
       every_Z(0);
       vs_restore(slt);
-      vio_fd = holdon_fd;	/* Thor.980727: 還原 vio_fd */
-      holdon_fd = 0;
+      vio_restore();	/* Thor.980727: 還原 vio_fd */
 
       /* Thor.980731: 還原 mateid, 因為出去時可能會用掉 mateid */
       strcpy(cutmp->mateid, buf);
