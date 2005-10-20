@@ -1176,7 +1176,7 @@ post_cross(xo)
   HDR xpost;
 
   int tag, rc, locus;
-  int method;		/* 0:原文轉載 1:轉錄文章 */
+  int method;		/* 0:原文轉載 1:從公開看板/精華區/信箱轉錄文章 2:從秘密看板轉錄文章 */
   usint tmpbattr;
   char tmpboard[BNLEN + 1];
   char fpath[64], buf[64];
@@ -1220,6 +1220,14 @@ post_cross(xo)
   if (rc != 'l' && rc != 's')
 #endif
     return XO_HEAD;
+
+  if (method && *dir == 'b')	/* 從看板轉出，先檢查此看板是否為秘密板 */
+  {
+    /* 借用 tmpbattr */
+    tmpbattr = (bshm->bcache + currbno)->readlevel;
+    if (tmpbattr == PERM_SYSOP || tmpbattr == PERM_BOARD)
+      method = 2;
+  }
 
   xbno = brd_bno(xboard);
   xbattr = (bshm->bcache + xbno)->battr;
@@ -1277,7 +1285,7 @@ post_cross(xo)
       /* itoc.040228: 如果是從精華區轉錄出來的話，會顯示轉錄自 [currboard] 看板，
 	 然而 currboard 未必是該精華區的看板。不過不是很重要的問題，所以就不管了 :p */
       fprintf(fp, "※ 本文轉錄自 [%s] %s\n\n", 
-	*dir == 'u' ? cuser.userid : tmpboard, 
+	*dir == 'u' ? cuser.userid : method == 2 ? "秘密" : tmpboard, 
 	*dir == 'u' ? "信箱" : "看板");
 
       f_suck(fp, fpath);
