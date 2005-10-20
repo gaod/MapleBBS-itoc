@@ -1724,3 +1724,10 @@
 
 [2005/10/15] config.h innbbsd/* 把 BBSNAME2、TAG_VALID、bbsname.bbs 整合在一起。
 
+[2005/10/19] visio.c talk.c chat.c bwboard.c 修正 vio_fd 與 mysql 命名衝突。
+
+[2005/10/20] post.c 從秘密看板轉錄出去的文章不顯示來源看板。
+
+
+
+
