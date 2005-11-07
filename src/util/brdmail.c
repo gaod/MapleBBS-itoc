@@ -110,6 +110,7 @@ mail2brd(brd)
 
   while (fgets(buf, sizeof(buf), stdin))
   {
+start:
     if (!memcmp(buf, "From", 4))
     {
       if ((str = strchr(buf, '<')) && (ptr = strrchr(str, '>')))
@@ -175,7 +176,21 @@ mail2brd(brd)
     else if (!memcmp(buf, "Subject: ", 9))
     {
       str_ansi(title, buf + 9, sizeof(title));
-      str_decode(title);
+      /* str_decode(title); */
+      /* LHD.051106: 若可能經 RFC 2047 QP encode 則有可能多行 subject */
+      if (strstr(buf + 9, "=?"))
+      {
+	while (fgets(buf, sizeof(buf), stdin))
+	{
+	  if (buf[0] == ' ' || buf[0] == '\t')  /* 第二行以後會以空白或 TAB 開頭 */
+	    str_ansi(title + strlen(title), strstr(buf, "=?"), sizeof(title));
+	  else
+	  {
+	    str_decode(title);
+	    goto start;
+	  }
+	}
+      }
     }
 
     else if (!memcmp(buf, "Content-Type: ", 14))
