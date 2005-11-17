@@ -1179,8 +1179,8 @@ post_cross(xo)
   int method;		/* 0:原文轉載 1:從公開看板/精華區/信箱轉錄文章 2:從秘密看板轉錄文章 */
   usint tmpbattr;
   char tmpboard[BNLEN + 1];
-  char fpath[64], buf[64];
-  FILE *fp;
+  char fpath[64], buf[ANSILINELEN];
+  FILE *fpr, *fpw;
 
   if (!cuser.userlevel)	/* itoc.000213: 避免 guest 轉錄去 sysop 板 */
     return XO_NONE;
@@ -1203,7 +1203,7 @@ post_cross(xo)
 
   if (!tag)	/* lkchu.981201: 整批轉錄就不要一一詢問 */
   {
-    if (method)
+    if (method && strncmp(hdr->title, "[轉錄]", 6))	/* 已有[轉錄]字樣就不要一直加了 */
       sprintf(ve_title, "[轉錄]%.66s", hdr->title);
     else
       strcpy(ve_title, hdr->title);
@@ -1279,17 +1279,36 @@ post_cross(xo)
     if (method)		/* 一般轉錄 */
     {
       /* itoc.030325: 一般轉錄要重新加上 header */
-      fp = fdopen(hdr_stamp(xfolder, 'A', &xpost, buf), "w");
-      ve_header(fp);
+      fpw = fdopen(hdr_stamp(xfolder, 'A', &xpost, buf), "w");
+      ve_header(fpw);
 
       /* itoc.040228: 如果是從精華區轉錄出來的話，會顯示轉錄自 [currboard] 看板，
 	 然而 currboard 未必是該精華區的看板。不過不是很重要的問題，所以就不管了 :p */
-      fprintf(fp, "※ 本文轉錄自 [%s] %s\n\n", 
+      fprintf(fpw, "※ 本文轉錄自 [%s] %s\n\n", 
 	*dir == 'u' ? cuser.userid : method == 2 ? "秘密" : tmpboard, 
 	*dir == 'u' ? "信箱" : "看板");
 
-      f_suck(fp, fpath);
-      fclose(fp);
+      /* Kyo.051117: 若是從秘密看板轉出的文章，刪除文章第一行所記錄的看板名稱 */
+      if ((method == 2) && (fpr = fopen(fpath, "r")))
+      {
+	if (fgets(buf, sizeof(buf), fpr) && 
+	  ((dir = strstr(buf, str_post1)) || (dir = strstr(buf, str_post2))) && (dir > buf))
+	{
+	  dir[-1] = '\n';
+	  *dir = '\0';
+	  dir = NULL;	/* 借用 dir，順便當是否得 f_suck 的驗證變數 */
+
+	  do
+	  {
+	    fputs(buf, fpw);
+	  } while (fgets(buf, sizeof(buf), fpr));
+	}
+	fclose(fpr);
+      }
+      if (dir)
+	f_suck(fpw, fpath);
+
+      fclose(fpw);
 
       strcpy(xpost.owner, cuser.userid);
       strcpy(xpost.nick, cuser.username);
