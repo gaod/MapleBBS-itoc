@@ -128,58 +128,25 @@ mread(fd, len)
 #define	STR_ANSICODE	"[0123456789;"
 
 
-static off_t more_off;		/* more_base 對應是在 fd 的 off_t 多少 */
-
-
-static void
-more_goto(fd, off)
-  int fd;
-  off_t off;		/* off 要比 more_off 小 */
-{
-  off_t diff;
-
-  diff = more_off - off;
-  if (diff <= more_base)	/* 要前去的地方在 more_pool[] 裡面，不需要重新 read */
-  {
-    more_base -= diff;
-    more_size += diff;
-  }
-  else
-  {
-    lseek(fd, off, SEEK_SET);
-    more_base = more_size = 0;
-  }
-  more_off = off;
-}
+static uschar *fimage;		/* file image begin */
+static uschar *fend;		/* file image end */
+static uschar *foff;		/* 目前讀到哪裡 */
 
 
 static int
-more_line(fd, buf)
-  int fd;
+more_line(buf)
   char *buf;
 {
-  uschar *pool, *base, *tail;
   int ch, len, bytes, in_ansi, in_chi;
-
-  pool = more_pool;
-  base = pool + more_base;
-  tail = base + more_size;
 
   len = bytes = in_ansi = in_chi = 0;
 
   for (;;)
   {
-    if (base >= tail)
-    {
-      ch = read(fd, pool, MORE_BUFSIZE);
-      if (ch <= 0)			/* end of file or error */
-	break;
+    if (foff >= fend)
+      break;
 
-      base = pool;
-      tail = pool + ch;
-    }
-
-    ch = *base;
+    ch = *foff;
 
     /* weiyu.040802: 如果這碼是中文字的首碼，但是只剩下一碼的空間可以印，那麼不要印這碼 */
     if (in_chi || ch & 0x80)
@@ -187,7 +154,7 @@ more_line(fd, buf)
     if (in_chi && (len >= b_cols - 1 || bytes >= ANSILINELEN - 2))
       break;
 
-    base++;
+    foff++;
     bytes++;
 
     if (ch == '\n')
@@ -218,13 +185,13 @@ more_line(fd, buf)
     if (len >= b_cols || bytes >= ANSILINELEN - 1)
     {
       /* itoc.031123: 如果是控制碼，即使不含控制碼的長度已達 b_cols 了，還可以繼續吃 */
-      if ((in_ansi || (base < tail && *base == KEY_ESC)) && bytes < ANSILINELEN - 1)
+      if ((in_ansi || (foff < fend && *foff == KEY_ESC)) && bytes < ANSILINELEN - 1)
 	continue;
 
-      /* itoc.031123: 再檢查下一個字是不是 '\n'，避免恰好是 b_cols 或 ANSILINELEN-1 時，會多跳一行空白行 */
-      if (base < tail && *base == '\n')
+      /* itoc.031123: 再檢查下一個字是不是 '\n'，避免恰好是 b_cols 或 ANSILINELEN-1 時，會多跳一列空白 */
+      if (foff < fend && *foff == '\n')
       {
-	base++;
+	foff++;
 	bytes++;
       }
       break;
@@ -232,10 +199,6 @@ more_line(fd, buf)
   }
 
   *buf = '\0';
-
-  more_base = base - pool;
-  more_size = tail - base;
-  more_off += bytes;
 
   return bytes;
 }
@@ -306,7 +269,7 @@ outs_line(str)			/* 印出一般內容 */
 }
 
 
-#define LINE_HEADER	3	/* 檔頭有三行 */
+#define LINE_HEADER	3	/* 檔頭有三列 */
 
 static void
 outs_header(str, header_len)	/* 印出檔頭 */
@@ -362,16 +325,16 @@ static inline void
 outs_footer(buf, lino, fsize)
   char *buf;
   int lino;
-  off_t fsize;
+  int fsize;
 {
   int i;
 
   /* P.1 有 (PAGE_SCROLL + 1) 列，其他 Page 都是 PAGE_SCROLL 列 */
 
-  /* prints(FOOTER_MORE, (lino - 2) / PAGE_SCROLL + 1, (more_off * 100) / fsize); */
+  /* prints(FOOTER_MORE, (lino - 2) / PAGE_SCROLL + 1, ((foff - fimage) * 100) / fsize); */
 
   /* itoc.010821: 為了和 FOOTER 對齊 */
-  sprintf(buf, FOOTER_MORE, (lino - 2) / PAGE_SCROLL + 1, (more_off * 100) / fsize);
+  sprintf(buf, FOOTER_MORE, (lino - 2) / PAGE_SCROLL + 1, ((foff - fimage) * 100) / fsize);
   outs(buf);
 
   for (i = b_cols + sizeof(COLOR1) + sizeof(COLOR2) - strlen(buf); i > 3; i--)
@@ -449,9 +412,9 @@ more(fpath, footer)
   char *footer;
 {
   char buf[ANSILINELEN];
-  struct stat st;
-  int fd;
   int i;
+
+  uschar *headend;		/* 檔頭結束 */
 
   int shift;			/* 還需要往下移動幾列 */
   int lino;			/* 目前 line number */
@@ -459,21 +422,37 @@ more(fpath, footer)
   int key;			/* 按鍵 */
   int cmd;			/* 中斷時所按的鍵 */
 
-  off_t fsize;			/* 檔案大小 */
+  int fsize;			/* 檔案大小 */
   static off_t block[MAXBLOCK];	/* 每 32 列為一個 block，記錄此 block 的 offset */
 
-  if ((fd = open(fpath, O_RDONLY)) < 0)
+  if (!(fimage = f_img(fpath, &fsize)))
     return -1;
 
-  more_base = more_size = 0;
-  more_off = 0;
+  foff = fimage;
+  fend = fimage + fsize;
 
-  /* 讀出檔案第一行，來判斷站內信還是站外信 */
-  if (fstat(fd, &st) || (fsize = st.st_size) <= 0 || !more_line(fd, buf))
+  /* 找檔頭結束的地方 */
+  for (i = 0; i < LINE_HEADER; i++)
   {
-    close(fd);
-    return -1;
+    if (!more_line(buf))
+      break;
+
+    /* 讀出檔案第一列，來判斷站內信還是站外信 */
+    if (i == 0)
+    {
+      header_len = 
+        !memcmp(buf, str_author1, LEN_AUTHOR1) ? LEN_AUTHOR1 :	/* 「作者:」表站內文章 */
+        !memcmp(buf, str_author2, LEN_AUTHOR2) ? LEN_AUTHOR2 : 	/* 「發信人:」表轉信文章 */
+        0;							/* 沒有檔頭 */
+    }
+
+    if (!*buf)	/* 第一次 "\n\n" 是檔頭的結尾 */
+      break;
   }
+  headend = foff;
+
+  /* 歸零 */
+  foff = fimage;
 
   lino = cmd = 0;
   block[0] = 0;
@@ -492,26 +471,16 @@ more(fpath, footer)
     shift = b_lines;
   }
 
-  header_len = 
-    !memcmp(buf, str_author1, LEN_AUTHOR1) ? LEN_AUTHOR1 :	/* 「作者:」表站內文章 */
-    !memcmp(buf, str_author2, LEN_AUTHOR2) ? LEN_AUTHOR2 : 	/* 「發信人:」表轉信文章 */
-    0;								/* 沒有檔頭 */
-
-  /* 歸零 */
-  more_base = 0;
-  more_size += more_off;
-  more_off = 0;
-
   clear();
 
-  while (more_line(fd, buf))
+  while (more_line(buf))
   {
     /* ------------------------------------------------- */
     /* 印出一列的文字					 */
     /* ------------------------------------------------- */
 
     /* 首頁前幾列才需要處理檔頭 */
-    if (lino < LINE_HEADER || (shift < 0 && lino <= b_lines + LINE_HEADER - 1))
+    if (foff <= headend)
       outs_header(buf, header_len);
     else
       outs_line(buf);
@@ -523,8 +492,8 @@ more(fpath, footer)
     /* ------------------------------------------------- */
 
     /* itoc.030303.註解: shift 在此的意義
-       >0: 還需要往下移幾行
-       <0: 還需要往上移幾行
+       >0: 還需要往下移幾列
+       <0: 還需要往上移幾列
        =0: 結束這頁，等待使用者按鍵 */
 
     if (shift > 0)		/* 還要下移 shift 列 */
@@ -535,7 +504,7 @@ more(fpath, footer)
       lino++;
 
       if ((lino % 32 == 0) && ((i = lino >> 5) < MAXBLOCK))
-	block[i] = more_off;
+	block[i] = foff - fimage;
 
 
       if (!(shift & (HUNT_MASK | END_MASK)))	/* 一般資料讀取 */
@@ -572,11 +541,11 @@ more(fpath, footer)
 
 	/* 剩下 b_lines+shift 列是 rscroll，offsect 去正確位置；這裡的 i 是總共要 shift 的列數 */
 	for (i += b_lines; i > 0; i--)
-	  more_line(fd, buf);
+	  more_line(buf);
       }
     }
 
-    if (more_off >= fsize)	/* 已經讀完全部的檔案 */
+    if (foff >= fend)		/* 已經讀完全部的檔案 */
     {
       /* 倘若是按 End 移到最後一頁，那麼停留在 100% 而不結束；否則一律結束 */
       if (!(shift & END_MASK))
@@ -713,28 +682,28 @@ re_key:
 	   會造成前面循序印 shift 列的程式就得一直翻，直到找到最後一頁，這樣會做太多 outs_line() 白工，
 	   所以在此特別檢查超長文章時，就先去找最後一頁所在 */
 
-	if ((shift & END_MASK) && (fsize - more_off >= MORE_BUFSIZE))	/* 還有一堆沒讀過，才特別處理 */
+	if ((shift & END_MASK) && (fend - foff >= MORE_BUFSIZE))	/* 還有一堆沒讀過，才特別處理 */
 	{
 	  int totallino = lino;
 
 	  /* 先讀到最後一列看看全部有幾列 */
-	  while (more_line(fd, buf))
+	  while (more_line(buf))
 	  {
 	    totallino++;
 	    if ((totallino % 32 == 0) && ((i = totallino >> 5) < MAXBLOCK))
-	      block[i] = more_off;
+	      block[i] = foff - fimage;
 	  }
 
 	  /* 先位移到上一個 block 的尾端 */
 	  i = (totallino - b_lines) >> 5;
 	  if (i >= MAXBLOCK)
 	    i = MAXBLOCK - 1;
-	  more_goto(fd, (off_t) block[i]);
+	  foff = fimage + block[i];
 	  i = i << 5;
 
 	  /* 再從上一個 block 的尾端位移到 totallino-b_lines+1 列 */
 	  for (i = totallino - b_lines - i; i > 0; i--)
-	    more_line(fd, buf);
+	    more_line(buf);
 
 	  lino = totallino - b_lines;
 	}
@@ -744,7 +713,7 @@ re_key:
       {
 	/* '/' 從頭開始搜尋 */
 	lino = 0;
-	more_goto(fd, (off_t) 0);
+	foff = fimage;
 	clear();
       }
     }
@@ -765,12 +734,12 @@ re_key:
 	i = (lino - b_lines) >> 5;
 	if (i >= MAXBLOCK)
 	  i = MAXBLOCK - 1;
-	more_goto(fd, (off_t) block[i]);
+	foff = fimage + block[i];
 	i = i << 5;
 
 	/* 再從上一個 block 的尾端位移到 lino-b_lines+1 列 */
 	for (i = lino - b_lines - i; i > 0; i--)
-	  more_line(fd, buf);
+	  more_line(buf);
 
 	for (i = shift; i < 0; i++) 
 	{
@@ -788,7 +757,7 @@ re_key:
 
 	clear();
 
-	more_goto(fd, (off_t) 0);
+	foff = fimage;
 	lino = 0;
 	shift = b_lines;
       }
@@ -805,7 +774,7 @@ re_key:
   /* 檔案已經秀完 (cmd = 0) 或 使用者中斷 (cmd != 0)	 */
   /* --------------------------------------------------- */
 
-  close(fd);
+  free(fimage);
 
   if (!cmd)	/* 檔案正常秀完，要處理 footer */
   {
