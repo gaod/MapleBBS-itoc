@@ -1536,9 +1536,8 @@ every_Z(zone)
     break;
 
   case 'b':
-    if (xz[XZ_POST - XO_ZONE].xo)	/* 若已選定看板，進入看板，否則到看板列表 */
+    if (currbno >= 0)	/* 若已選定看板，進入看板，否則到看板列表 */
     {
-      XoPost(currbno);
       cmd = XZ_POST;
       break;
     }
@@ -1574,6 +1573,9 @@ every_Z(zone)
     z_status--;
     return XO_FOOT;		/* 若在 xover() 中取消呼叫 every_Z() 則送回 XO_FOOT 即可重繪 */
   }
+
+  if (cmd == XZ_POST)
+    XoPost(currbno);
 
 #ifdef MY_FAVORITE
   if (zone == XZ_POST && (cmd == XZ_CLASS || cmd == XZ_MF))
