@@ -1730,6 +1730,7 @@
 
 [2005/11/17] xover.c 修正在文章列表按 ^Z 選看板時，會多做一次 XoPost()。
 
+[2005/11/18] more.c 捨棄 buffered file read 的方式，而採 full file read。
 
-
+[2005/11/23] bmw.c 提供刪除所有水球的功能。
 
