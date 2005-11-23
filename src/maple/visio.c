@@ -1900,7 +1900,7 @@ vget(line, col, prompt, data, max, echo)
     }
   }
 
-  if (len > 2 && echo)
+  if (len >= 2 && echo)
   {
     for (line = MAXLASTCMD - 1; line; line--)
       strcpy(lastcmd[line], lastcmd[line - 1]);
