@@ -1912,7 +1912,7 @@ vget(line, col, prompt, data, max, echo)
 
   ch = data[0];
   if ((echo & LCECHO) && (ch >= 'A' && ch <= 'Z'))
-    data[0] = (ch += 32);
+    data[0] = (ch |= 0x20);
 
   return ch;
 }
