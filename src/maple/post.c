@@ -1166,7 +1166,7 @@ post_cross(xo)
   XO *xo;
 {
   /* 來源看板 */
-  char *dir;
+  char *dir, *ptr;
   HDR *hdr, xhdr;
 
   /* 欲轉去的看板 */
@@ -1175,7 +1175,7 @@ post_cross(xo)
   char xboard[BNLEN + 1], xfolder[64];
   HDR xpost;
 
-  int tag, rc, locus;
+  int tag, rc, locus, finish;
   int method;		/* 0:原文轉載 1:從公開看板/精華區/信箱轉錄文章 2:從秘密看板轉錄文章 */
   usint tmpbattr;
   char tmpboard[BNLEN + 1];
@@ -1289,23 +1289,24 @@ post_cross(xo)
 	*dir == 'u' ? "信箱" : "看板");
 
       /* Kyo.051117: 若是從秘密看板轉出的文章，刪除文章第一行所記錄的看板名稱 */
+      finish = 0;
       if ((method == 2) && (fpr = fopen(fpath, "r")))
       {
 	if (fgets(buf, sizeof(buf), fpr) && 
-	  ((dir = strstr(buf, str_post1)) || (dir = strstr(buf, str_post2))) && (dir > buf))
+	  ((ptr = strstr(buf, str_post1)) || (ptr = strstr(buf, str_post2))) && (ptr > buf))
 	{
-	  dir[-1] = '\n';
-	  *dir = '\0';
-	  dir = NULL;	/* 借用 dir，順便當是否得 f_suck 的驗證變數 */
+	  ptr[-1] = '\n';
+	  *ptr = '\0';
 
 	  do
 	  {
 	    fputs(buf, fpw);
 	  } while (fgets(buf, sizeof(buf), fpr));
+	  finish = 1;
 	}
 	fclose(fpr);
       }
-      if (dir)
+      if (!finish)
 	f_suck(fpw, fpath);
 
       fclose(fpw);
