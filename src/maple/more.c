@@ -269,8 +269,6 @@ outs_line(str)			/* 印出一般內容 */
 }
 
 
-#define LINE_HEADER	3	/* 檔頭有三列 */
-
 static void
 outs_header(str, header_len)	/* 印出檔頭 */
   char *str;

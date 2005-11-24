@@ -359,6 +359,7 @@
 #define MAXQUERYLINES	17		/* talk.c xchatd.c 顯示 Query/Plan 訊息最大行數 */
 #define	MAX_CHOICES	32		/* vote.c 投票時最多有 32 種選擇 */
 #define	TAG_MAX		256		/* xover.c TagList 標籤數目之上限 */
+#define LINE_HEADER	3		/* more.c bhttpd.c 檔頭有三列 */
 
 /* bbsd.c mail.c 整理週期 */
 

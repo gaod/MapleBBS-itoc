@@ -737,8 +737,6 @@ ansi_quote(fpw, src)		/* 如果是引言，就略過所有的 ANSI 碼 */
 }
 
 
-#define LINE_HEADER	3	/* 檔頭有三行 */
-
 static void
 txt2htm(fpw, fp)
   FILE *fpw;
