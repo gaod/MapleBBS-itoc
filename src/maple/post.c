@@ -1943,8 +1943,8 @@ post_score(xo)
   XO *xo;
 {
   HDR *hdr;
-  int pos, cur, ans, vtlen;
-  char *dir, *userid, *verb, fpath[64], reason[50], vtbuf[12];
+  int pos, cur, ans, vtlen, maxlen;
+  char *dir, *userid, *verb, fpath[64], reason[80], vtbuf[12];
   FILE *fp;
 #ifdef HAVE_ANONYMOUS
   char uid[IDLEN + 1];
@@ -1987,7 +1987,14 @@ post_score(xo)
     return XO_FOOT;
   }
 
-  if (!vget(b_lines, 0, "請輸入理由：", reason, 48, DOECHO))
+#ifdef HAVE_ANONYMOUS
+  if (currbattr & BRD_ANONYMOUS)
+    maxlen = 64 - IDLEN - vtlen;
+  else
+#endif
+    maxlen = 64 - strlen(cuser.userid) - vtlen;
+
+  if (!vget(b_lines, 0, "請輸入理由：", reason, maxlen, DOECHO))
     return XO_FOOT;
 
 #ifdef HAVE_ANONYMOUS
@@ -2017,7 +2024,7 @@ post_score(xo)
     ptime = localtime(&now);
 
     fprintf(fp, "→ \033[36m%s \033[3%s\033[m：%-*s%02d/%02d/%02d\n", 
-      userid, verb, 64 - strlen(userid) - vtlen, reason, 
+      userid, verb, maxlen, reason, 
       ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
     fclose(fp);
   }
