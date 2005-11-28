@@ -438,6 +438,7 @@ extern void talk_rqst();
 extern void bmw_rqst();
 
 
+#ifdef HAVE_WHERE
 static int		/* 1:在list中 0:不在list中 */
 belong_list(filelist, key, desc)
   char *filelist, *key, *desc;
@@ -475,6 +476,7 @@ belong_list(filelist, key, desc)
   }
   return rc;
 }
+#endif
 
 
 static void
