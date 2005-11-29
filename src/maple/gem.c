@@ -663,7 +663,7 @@ gem_browse(xo)
 
 	/* itoc.011217: [userA/userB 的多位小板主模式也適用 */
 	if ((ptr = strrchr(title, '[')) && is_bm(ptr + 1, cuser.userid))
-	  op |= GEM_W_BIT;
+	  op |= GEM_W_BIT | GEM_M_BIT;
       }
 
       XoGem(fpath, title, op);
