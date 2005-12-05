@@ -104,7 +104,7 @@ int m_verify(void);
 usint m_quota(void);
 usint m_query(char *userid);
 void m_biff(int userno);
-void mail_hold(char *fpath, char *rcpt, int hold);
+void mail_hold(char *fpath, char *rcpt, char *title, int hold);
 int mail_external(char *addr);
 int mail_send(char *rcpt);
 int my_send(char *userid);

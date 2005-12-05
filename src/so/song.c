@@ -527,7 +527,7 @@ song_send(xo)
   sprintf(xpost.title, "%s 點歌給您", cuser.userid);
   rec_add(fpath, &xpost, sizeof(HDR));
 
-  mail_hold(buf, acct.userid, 0);
+  mail_hold(buf, acct.userid, xpost.title, 0);
   m_biff(acct.userno);		/* 若對方在線上，則要通知有新信 */
 
   return song_head(xo);				/* acct_get 可能會 clear，所以要重繪 */
@@ -585,7 +585,7 @@ song_internet(xo)
   rc = bsmtp(fpath, "點歌給您", rcpt, 0);
   vmsg(rc >= 0 ? msg_sent_ok : "信件無法寄達，底稿備份在信箱");
 
-  mail_hold(fpath, rcpt, rc);
+  mail_hold(fpath, rcpt, hdr->title, rc);
   unlink(fpath);
 
   return XO_FOOT;

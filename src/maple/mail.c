@@ -712,19 +712,20 @@ m_biff(userno)
 
 
 void
-mail_hold(fpath, rcpt, hold)
+mail_hold(fpath, rcpt, title, hold)
   char *fpath;
   char *rcpt;
+  char *title;
   int hold;		/* -1:當寄信失敗時可以強迫保留 */
 {
-  char title[256];
-
   if (hold < 0 || vans("是否自存底稿(Y/N)？[N] ") == 'y')
   {
-    sprintf(title, "<%s> %s", rcpt, ve_title);
-    title[TTLEN] = '\0';
+    char buf[256];
 
-    mail_self(fpath, "[備 忘 錄]", title, MAIL_READ | MAIL_NOREPLY);
+    sprintf(buf, "<%s> %s", rcpt, title);
+    buf[TTLEN] = '\0';
+
+    mail_self(fpath, "[備 忘 錄]", buf, MAIL_READ | MAIL_NOREPLY);
   }
 }
 
@@ -837,7 +838,7 @@ mail_send(rcpt)
 
     msg = msg_sent_ok;
     m_biff(userno);
-    mail_hold(fpath, rcpt, 0);
+    mail_hold(fpath, rcpt, ve_title, 0);
   }
   else
   {
@@ -856,7 +857,7 @@ mail_send(rcpt)
       refresh();
       userno = bsmtp(fpath, ve_title, rcpt, 0);
       msg = (userno >= 0) ? msg_sent_ok : "信件無法寄達，底稿備份在信箱";
-      mail_hold(fpath, rcpt, userno);
+      mail_hold(fpath, rcpt, ve_title, userno);
     }
   }
 
@@ -1219,7 +1220,7 @@ multi_send(title)
 	fclose(fp);
       }
 
-      mail_hold(fpath, "群組寄信", 0);
+      mail_hold(fpath, "群組寄信", title, 0);
       unlink(fpath);
       vmsg(msg_sent_ok);
     }
