@@ -686,9 +686,6 @@ static MENU menu_net[] =
   "bin/railway.so:main_railway", 0, - M_XMODE,
   "Railway    ♂ 台鐵時刻 ♀",
 
-  "bin/bbsnet.so:x_bbsnet", PERM_VALID, - M_XMODE,
-  "BBSnet     ♂ 雲遊四海 ♀",
-
   menu_tool, PERM_MENU + 'R', M_XMENU,
   "網路服務"
 };
