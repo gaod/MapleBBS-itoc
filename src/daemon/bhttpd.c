@@ -1381,7 +1381,7 @@ Ben_Perm(brd, uno, uid, ulevel)	/* 參考 board.c:Ben_Perm() */
 
   /* itoc.030515: 看板總管重新判斷 */
   else if (ulevel & PERM_ALLBOARD)
-    bits = BRD_L_BIT | BRD_R_BIT | BRD_W_BIT | BRD_X_BIT | BRD_M_BIT;
+    bits = BRD_L_BIT | BRD_R_BIT | BRD_W_BIT | BRD_X_BIT;
 
   return bits;
 }
@@ -2972,20 +2972,38 @@ cmd_rss(ap)
   ptr = Gtime(&blast);
   ptr[4] = '\0';
   fprintf(fpw, "<title>" BBSNAME "-%s板</title>\n"
+#if BHTTP_PORT == 80
     "<link>http://" MYHOSTNAME "/brd?%s</link>\n"
+#else
+    "<link>http://" MYHOSTNAME ":%d/brd?%s</link>\n"
+#endif
     "<description>%s</description>\n"
     "<language>zh-tw</language>\n"
     "<lastBuildDate>%s ",
-    brdname, brdname,
+    brdname,
+#if BHTTP_PORT != 80
+    BHTTP_PORT,
+#endif
+    brdname,
     str_html(brd->title, TTLEN), ptr);
   ptr += 5;
   if (*ptr == '0')
     ptr++;
   fprintf(fpw, "%s</lastBuildDate>\n<image>\n"
     "<title>" BBSNAME "</title>"
+#if BHTTP_PORT == 80
     "<link>http://" MYHOSTNAME "</link>\n"
     "<url>http://" MYHOSTNAME "/img?rss.gif</url>\n"
-    "</image>\n", ptr);
+#else
+    "<link>http://" MYHOSTNAME ":%d</link>\n"
+    "<url>http://" MYHOSTNAME ":%d/img?rss.gif</url>\n"
+#endif
+    "</image>\n",
+#if BHTTP_PORT == 80
+    ptr);
+#else
+    ptr, BHTTP_PORT, BHTTP_PORT);
+#endif
 
   /* rss item */
   brd_fpath(folder, brdname, FN_DIR);
