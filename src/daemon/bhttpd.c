@@ -3031,10 +3031,17 @@ cmd_rss(ap)
 	ptr = Gtime(&hdr.chrono);
 	ptr[4] = '\0';
 	fprintf(fpw, "<!-- %d --><item><title>%s</title>"
+#if BHTTP_PORT == 80
 	  "<link>http://" MYHOSTNAME "/bmore?%s&amp;%d</link>"
+#else
+	  "<link>http://" MYHOSTNAME ":%d/bmore?%s&amp;%d</link>"
+#endif
 	  "<author>%s</author>"
 	  "<pubDate>%s ",
 	  hdr.chrono, str_html(hdr.title, TTLEN),
+#if BHTTP_PORT != 80
+	  BHTTP_PORT,
+#endif
 	  brdname, i,
 	  hdr.owner,
 	  ptr);
