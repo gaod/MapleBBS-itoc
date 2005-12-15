@@ -533,7 +533,7 @@ utmp_setup(mode)
    * 如果把 140.112. 寫入 etc/host 中，就不用把 ntu.edu.tw *
    * 重覆寫入 etc/fqdn 裡了                                */
 
-    char name[40];
+    char name[48];
 
     /* 先比對 FQDN */
     str_lower(name, fromhost);	/* itoc.011011: 大小寫均可，etc/fqdn 裡面都要寫小寫 */
