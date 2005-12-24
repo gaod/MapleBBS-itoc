@@ -266,10 +266,10 @@ static int
 post_changeBM(xo)
   XO *xo;
 {
-  char buf[80], uid[IDLEN + 1], *blist;
+  char buf[80], userid[IDLEN + 2], *blist;
   BRD *oldbrd, newbrd;
   ACCT acct;
-  int dirty, len;
+  int BMlen, len;
 
   oldbrd = bshm->bcache + currbno;
 
@@ -286,25 +286,48 @@ post_changeBM(xo)
   prints("目前板主為 %s\n請輸入新的板主名單，或按 [Return] 不改", oldbrd->BM);
 
   strcpy(buf, oldbrd->BM);
-  dirty = strlen(buf);
+  BMlen = strlen(buf);
 
-  while (vget(10, 0, "請輸入副板主，結束請按 Enter，清掉所有副板主請打「無」：", uid, IDLEN + 1, DOECHO))
+  while (vget(10, 0, "請輸入副板主，結束請按 Enter，清掉所有副板主請打「無」：", userid, IDLEN + 1, DOECHO))
   {
-    if (!strcmp(uid, "無"))
+    if (!strcmp(userid, "無"))
     {
       strcpy(buf, cuser.userid);
-      dirty = strlen(buf);
+      BMlen = strlen(buf);
     }
-    else if (acct_load(&acct, uid) >= 0 && !is_bm(buf, acct.userid))   /* 輸入新板主 */
+    else if (is_bm(buf, userid))	/* 刪除舊有的板主 */
     {
-      len = strlen(acct.userid) + 1;  /* '/' + userid */
-      if (dirty + len > BMLEN)
+      len = strlen(userid);
+      if (BMlen == len)
+      {
+	vmsg("不可以將自己移出板主名單");
+	continue;
+      }
+      else if (!str_cmp(buf + BMlen - len, userid))	/* 名單上最後一位，ID 後面不接 '/' */
+      {
+	buf[BMlen - len - 1] = '\0';			/* 刪除 ID 及前面的 '/' */
+	len++;
+      }
+      else						/* ID 後面會接 '/' */
+      {
+	str_lower(userid, userid);
+	strcat(userid, "/");
+	len++;
+	blist = str_str(buf, userid);
+	strcpy(blist, blist + len);
+      }
+      BMlen -= len;
+    }
+    else if (acct_load(&acct, userid) >= 0 && !is_bm(buf, userid))	/* 輸入新板主 */
+    {
+      len = strlen(userid) + 1;	/* '/' + userid */
+      if (BMlen + len > BMLEN)
       {
 	vmsg("板主名單過長，無法將這 ID 設為板主");
 	continue;
       }
-      sprintf(buf + dirty, "/%s", acct.userid);
-      dirty += len;
+      sprintf(buf + BMlen, "/%s", acct.userid);
+      BMlen += len;
 
       acct_setperm(&acct, PERM_BM, 0);
     }
