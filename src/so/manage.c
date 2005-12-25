@@ -298,7 +298,7 @@ post_changeBM(xo)
     else if (is_bm(buf, userid))	/* 刪除舊有的板主 */
     {
       len = strlen(userid);
-      if (BMlen == len)
+      if (!str_cmp(cuser.userid, userid))
       {
 	vmsg("不可以將自己移出板主名單");
 	continue;

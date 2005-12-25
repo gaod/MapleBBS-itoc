@@ -1736,3 +1736,5 @@
 
 [2005/12/09] bbsnet.c connlist 移除 BBSNET。
 
+[2005/12/25] acct.c manage.c 板主名單輸入同樣 ID 時可移除該 ID。
+
