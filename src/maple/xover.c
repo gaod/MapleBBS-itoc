@@ -885,19 +885,19 @@ xo_thread(xo, op)
   const int origpos = xo->pos, origtop = xo->top, max = xo->max;
   int pos, match, near, neartop;	/* Thor: neartop 與 near 成對用 */
   int top, bottom, step, len;
-  HDR *pool, *fhdr;
+  HDR *pool, *hdr;
 
   match = XO_NONE;
   pos = origpos;
   top = origtop;
   pool = (HDR *) xo_pool;
-  fhdr = pool + (pos - top);
+  hdr = pool + (pos - top);
   near = 0;
   step = (op & RS_FORWARD) - 1;		/* (op & RS_FORWARD) ? 1 : -1 */
 
   if (op & RS_RELATED)
   {
-    tag = fhdr->title;
+    tag = hdr->title;
     if (op & RS_CURRENT)
     {
       query = currtitle;
@@ -990,16 +990,16 @@ xo_thread(xo, op)
       if (bottom > max)
 	bottom = max;
 
-      fhdr = pool + (pos - top);
+      hdr = pool + (pos - top);
     }
     else
     {
-      fhdr += step;
+      hdr += step;
     }
 
 #ifdef HAVE_REFUSEMARK
-    if ((fhdr->xmode & POST_RESTRICT) &&
-      strcmp(fhdr->owner, cuser.userid) && !(bbstate & STAT_BM))
+    if ((hdr->xmode & POST_RESTRICT) &&
+      strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))
       continue;
 #endif
 
@@ -1013,7 +1013,7 @@ xo_thread(xo, op)
 
     if (op & RS_MARKED)
     {
-      if (fhdr->xmode & POST_MARKED)
+      if (hdr->xmode & POST_MARKED)
       {
 	match = -1;
 	break;
@@ -1025,7 +1025,7 @@ xo_thread(xo, op)
 
     if (op & RS_UNREAD)
     {
-#define UNREAD_FUNC()   (op & RS_BOARD ? brh_unread(fhdr->chrono) : !(fhdr->xmode & MAIL_READ))
+#define UNREAD_FUNC()   (op & RS_BOARD ? brh_unread(hdr->chrono) : !(hdr->xmode & MAIL_READ))
       if (op & RS_FIRST)	/* 首篇未讀 */
       {
 	if (UNREAD_FUNC())
@@ -1052,7 +1052,7 @@ xo_thread(xo, op)
 
     if (op & (RS_TITLE | RS_THREAD))
     {
-      title = fhdr->title;	/* title 指向 [title] field */
+      title = hdr->title;	/* title 指向 [title] field */
       tag = str_ttl(title);	/* tag 指向 thread's subject */
 
       if (op & RS_THREAD)
@@ -1067,7 +1067,7 @@ xo_thread(xo, op)
     }
     else
     {
-      tag = fhdr->owner;	/* tag 指向 [owner] field */
+      tag = hdr->owner;	/* tag 指向 [owner] field */
     }
 
     if (((op & RS_RELATED) && !strncmp(tag, query, 40)) ||

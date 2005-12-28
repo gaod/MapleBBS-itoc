@@ -758,15 +758,15 @@ post_load(xo)
 
 
 static int
-post_attr(fhdr)
-  HDR *fhdr;
+post_attr(hdr)
+  HDR *hdr;
 {
   int mode, attr;
 
-  mode = fhdr->xmode;
+  mode = hdr->xmode;
 
   /* 由於置底文沒有閱讀記錄，所以視為已讀 */
-  attr = !(mode & POST_BOTTOM) && brh_unread(fhdr->chrono) ? 0 : 0x20;	/* 已閱讀為小寫，未閱讀為大寫 */  
+  attr = !(mode & POST_BOTTOM) && brh_unread(hdr->chrono) ? 0 : 0x20;	/* 已閱讀為小寫，未閱讀為大寫 */  
 
 #ifdef HAVE_REFUSEMARK
   if (mode & POST_RESTRICT)
@@ -823,7 +823,7 @@ static int
 post_body(xo)
   XO *xo;
 {
-  HDR *fhdr;
+  HDR *hdr;
   int num, max, tail;
 
   max = xo->max;
@@ -841,7 +841,7 @@ post_body(xo)
     return XO_QUIT;
   }
 
-  fhdr = (HDR *) xo_pool;
+  hdr = (HDR *) xo_pool;
   num = xo->top;
   tail = num + XO_TALL;
   if (max > tail)
@@ -850,7 +850,7 @@ post_body(xo)
   move(3, 0);
   do
   {
-    post_item(++num, fhdr++);
+    post_item(++num, hdr++);
   } while (num < max);
   clrtobot();
 
@@ -907,19 +907,19 @@ post_visit(xo)
 
 
 static void
-post_history(xo, fhdr)		/* 將 fhdr 這篇加入 brh */
+post_history(xo, hdr)		/* 將 hdr 這篇加入 brh */
   XO *xo;
-  HDR *fhdr;
+  HDR *hdr;
 {
   time_t prev, chrono, next;
   int pos, top;
   char *dir;
   HDR buf;
 
-  if (fhdr->xmode & POST_BOTTOM)	/* 置底文不加入閱讀記錄 */
+  if (hdr->xmode & POST_BOTTOM)	/* 置底文不加入閱讀記錄 */
     return;
 
-  chrono = fhdr->chrono;
+  chrono = hdr->chrono;
   if (!brh_unread(chrono))	/* 如果已在 brh 中，就無需動作 */
     return;
 
@@ -930,7 +930,7 @@ post_history(xo, fhdr)		/* 將 fhdr 這篇加入 brh */
   pos--;
   if (pos >= top)
   {
-    prev = fhdr[-1].chrono;
+    prev = hdr[-1].chrono;
   }
   else
   {
@@ -944,7 +944,7 @@ post_history(xo, fhdr)		/* 將 fhdr 這篇加入 brh */
   pos += 2;
   if (pos < top + XO_TALL && pos < xo->max)
   {
-    next = fhdr[1].chrono;
+    next = hdr[1].chrono;
   }
   else
   {
@@ -1807,16 +1807,16 @@ post_edit(xo)
 
 
 void
-header_replace(xo, fhdr)	/* itoc.010709: 修改文章標題順便修改內文的標題 */
+header_replace(xo, hdr)		/* itoc.010709: 修改文章標題順便修改內文的標題 */
   XO *xo;
-  HDR *fhdr;
+  HDR *hdr;
 {
   FILE *fpr, *fpw;
   char srcfile[64], tmpfile[64], buf[ANSILINELEN];
   
-  hdr_fpath(srcfile, xo->dir, fhdr);
+  hdr_fpath(srcfile, xo->dir, hdr);
   strcpy(tmpfile, "tmp/");
-  strcat(tmpfile, fhdr->xname);
+  strcat(tmpfile, hdr->xname);
   f_cp(srcfile, tmpfile, O_TRUNC);
 
   if (!(fpr = fopen(tmpfile, "r")))
@@ -1835,7 +1835,7 @@ header_replace(xo, fhdr)	/* itoc.010709: 修改文章標題順便修改內文的標題 */
   if (!str_ncmp(buf, "標", 2))		/* 如果有 header 才改 */
   {
     strcpy(buf, buf[2] == ' ' ? "標  題: " : "標題: ");
-    strcat(buf, fhdr->title);
+    strcat(buf, hdr->title);
     strcat(buf, "\n");
   }
   fputs(buf, fpw);
