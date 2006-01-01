@@ -2008,6 +2008,7 @@ post_score(xo)
       userid = cuser.userid;
     else
       strcat(userid, ".");		/* 自定的話，最後加 '.' */
+    maxlen = 64 - strlen(userid) - vtlen;
   }
   else
 #endif
