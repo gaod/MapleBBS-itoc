@@ -235,17 +235,17 @@ lunar_calendar(key, now, ptime)	/* itoc.050528: 由陽曆算農曆日期 */
 }
 
 
-static void
-do_today(fshm)
-  FCACHE *fshm;
+static char *
+do_today()
 {
   FILE *fp;
-  char buf[80], *str, *today;
+  char buf[80], *ptr1, *ptr2, *ptr3, *today;
   char key1[6];			/* mm/dd: 陽曆 mm月dd日 */
   char key2[6];			/* mm/#A: 陽曆 mm月的第#個星期A */
   char key3[6];			/* MM\DD: 農曆 MM月DD日 */
   time_t now;
   struct tm *ptime;
+  static char feast[64];
 
   time(&now);
   ptime = localtime(&now);
@@ -253,7 +253,7 @@ do_today(fshm)
   sprintf(key2, "%02d/%d%c", ptime->tm_mon + 1, (ptime->tm_mday - 1) / 7 + 1, ptime->tm_wday + 'A');
   lunar_calendar(key3, &now, ptime);
 
-  today = fshm->today;
+  today = image.today;
   sprintf(today, "%s %.2s", key1, "日一二三四五六" + (ptime->tm_wday << 1));
 
   if (fp = fopen(FN_ETC_FEAST, "r"))
@@ -263,24 +263,25 @@ do_today(fshm)
       if (buf[0] == '#')
 	continue;
 
-      if (str = (char *) strchr(buf, ' '))
+      if ((ptr1 = strtok(buf, " \t\n")) && (ptr2 = strtok(NULL, " \t\n")))
       {
-	*str = '\0';
-	if (!strcmp(key1, buf) || !strcmp(key2, buf) || !strcmp(key3, buf))
+	if (!strcmp(ptr1, key1) || !strcmp(ptr1, key2) || !strcmp(ptr1, key3))
 	{
-	  /* 跳過空白分隔 */
-	  for (str++; *str && isspace(*str); str++)
-	    ;
+	  str_ncpy(today, ptr2, sizeof(image.today));
 
-	  str_ncpy(today, str, sizeof(fshm->today));
-	  if (str = (char *) strchr(today, '\n'))	/* 最後的 '\n' 不要 */
-	    *str = '\0';
+	  if (ptr3 = strtok(NULL, " \t\n"))
+	    sprintf(feast, "etc/feasts/%s", ptr3);
+	  if (!dashf(feast))
+	    feast[0] = '\0';
+
 	  break;
 	}
       }
     }
     fclose(fp);
   }
+
+  return feast;
 }
 
 
@@ -288,7 +289,7 @@ int
 main()
 {
   int i;
-  char *fname, *str, fpath[64];
+  char *fname, *str, *feast, fpath[64];
   FCACHE *fshm;
 
   setgid(BBSGID);
@@ -299,6 +300,12 @@ main()
   tail = 0;
 
   /* --------------------------------------------------- */
+  /* 今天節日					 	 */
+  /* --------------------------------------------------- */
+
+  feast = do_today();
+
+  /* --------------------------------------------------- */
   /* 載入常用的文件及 help			 	 */
   /* --------------------------------------------------- */
 
@@ -307,8 +314,15 @@ main()
 
   for (i = 0; str = list[i]; i++)
   {
-    strcpy(fname, str);
-    mirror(fpath, 0);
+    if (i >= FILM_OPENING0 && i <= FILM_OPENING2 && feast[0])	/* 若是節日，開頭畫面用該節日的畫面 */
+    {
+      mirror(feast, 0);
+    }
+    else
+    {
+      strcpy(fname, str);
+      mirror(fpath, 0);
+    }
   }
 
   /* itoc.註解: 到這裡以後，應該已有 FILM_MOVIE 篇 */
@@ -337,8 +351,6 @@ main()
   fshm->shot[0] = number;	/* 總共有幾片 */
 
   /* printf("%d/%d films, %d/%d bytes\n", number, MOVIE_MAX, tail, MOVIE_SIZE); */
-
-  do_today(fshm);
 
   exit(0);
 }
