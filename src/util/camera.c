@@ -345,10 +345,10 @@ main()
   /* resolve shared memory				 */
   /* --------------------------------------------------- */
 
+  image.shot[0] = number;	/* 總共有幾片 */
+
   fshm = (FCACHE *) shm_new(FILMSHM_KEY, sizeof(FCACHE));
-  memcpy(fshm, &image, sizeof(image.shot) + tail);
-  /* Thor.980805: 再加上 shot的部分 */
-  fshm->shot[0] = number;	/* 總共有幾片 */
+  memcpy(fshm, &image, sizeof(FCACHE));
 
   /* printf("%d/%d films, %d/%d bytes\n", number, MOVIE_MAX, tail, MOVIE_SIZE); */
 
