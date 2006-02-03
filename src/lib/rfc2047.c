@@ -39,6 +39,7 @@ output_rfc2047_qp(fp, prefix, str, charset, suffix)
   char *suffix;
 {
   int i, ch;
+  int blank;	/* 1:全由空白組成 */
   static char tbl[16] = {'0','1','2','3','4','5','6','7','8','9', 'A','B','C','D','E','F'};
 
   fputs(prefix, fp);
@@ -47,7 +48,16 @@ output_rfc2047_qp(fp, prefix, str, charset, suffix)
   for (i = 0; ch = str[i]; i++)
   {
     if (ch != '=' && ch != '?' && ch != '_' && ch > '\x1f' && ch < '\x7f')
+    {
+      if (blank)
+      {
+	if (ch != ' ')
+	  blank = 0;
+	else if (str[i + 1] == '\0')	/* 若全是空白，最後一個要轉碼 */
+	  break;
+      }
       fprintf(fp, "%c", ch);
+    }
     else
       break;
   }
