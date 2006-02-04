@@ -880,7 +880,7 @@ out_http(ap, code, type)
     else
       fprintf(fpw, "Content-Type: %s\r\n", type);
 
-    if (ap->setcookie)		/* acct_login() 完以後才需要 Set-Cookie */
+    if (ap->setcookie)		/* cmd_login() 完以後才需要 Set-Cookie */
       fprintf(fpw, "Set-Cookie: user=%s; path=/\r\n", ap->cookie);
   }
 
@@ -1112,6 +1112,19 @@ arg_analyze(argc, mark, str, arg1, arg2, arg3, arg4)
 /* 由 Cookie 看使用者是否登入				 */
 /* ----------------------------------------------------- */
 
+static int guestuno = 0;
+
+static void
+guest_userno()
+{
+  char fpath[64];
+  ACCT acct;
+
+  usr_fpath(fpath, STR_GUEST, FN_ACCT);
+  if (!rec_get(fpath, &acct, sizeof(ACCT), 0))
+    guestuno = acct.userno;
+}
+
 static int			/* 1:登入成功 0:登入失敗 */
 acct_fetch(ap)
   Agent *ap;
@@ -1145,7 +1158,7 @@ acct_fetch(ap)
   }
 
   /* 沒有登入、登入失敗 */
-  ap->userno = 3;		/* 填入實際guest的userno，以便做pal檢查 */
+  ap->userno = guestuno;		/* 填入實際guest的userno，以便做pal檢查 */
   ap->userlevel = 0;
   strcpy(ap->userid, STR_GUEST);
   strcpy(ap->username, STR_GUEST);
@@ -3885,6 +3898,8 @@ main(argc, argv)
   init_bshm();
   init_ushm();
   init_fshm();
+
+  guest_userno();
 
   servo_signal();
 
