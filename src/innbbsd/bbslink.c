@@ -457,8 +457,8 @@ send_outgoing(node, sover)
   nodelist_t *node;
   soverview_t *sover;
 {
-  int status;
-  char *msgid, *body, *bodyp;
+  int cc, status;
+  char *msgid, *str;
 
   msgid = sover->msgid;
 
@@ -511,20 +511,22 @@ send_outgoing(node, sover)
   fputs("\r\n", SERVERwfp);	/* 檔頭和內文空一行 */
 
   /* 寫入文章的內容 */
-  for (body = BODY, bodyp = strchr(body, '\n'); body && *body; bodyp = strchr(body, '\n'))
+  for (str = BODY; cc = *str; str++)
   {
-    /* itoc.030127.註解: 之所以要一行一行寫入，是因為要把 \n 換成 \r\n */
-
-    if (bodyp)
-      *bodyp = '\0';
-    if (body[0] == '.' && body[1] == '\0')
-      fputs(".", SERVERwfp);
-    fputs(body, SERVERwfp);
-    fputs("\r\n", SERVERwfp);
-    if (!bodyp)
-      break;
-    *bodyp = '\n';
-    body = bodyp + 1;
+    if (cc == '\n')
+    {
+      /* itoc.030127.註解: 把 "\n" 換成 "\r\n" */
+      fputc('\r', SERVERwfp);
+    }
+    else if (cc == '.')
+    {
+      /* If the text contained a period as the first character of the text 
+         line in the original, that first period is doubled. */
+      if (str == BODY || str[-1] == '\n')
+        fputc('.', SERVERwfp);
+    }
+      
+    fputc(cc, SERVERwfp);
   }
 
   /* IHAVE/POST 結束 */
@@ -627,8 +629,11 @@ my_post()
     size = read(rel, data, size);
     close(rel);
 
-    if (data[size - 2] == '\n')	/* 把最後重覆的 '\n' 換成 '\0' */
-      size--;
+    if (size >= 2)
+    {
+      if (data[size - 2] == '\n')	/* 把最後重覆的 '\n' 換成 '\0' */
+        size--;
+    }
     data[size] = '\0';		/* 補上 '\0' */
 
     rel = readlines(data - 1);

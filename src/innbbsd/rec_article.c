@@ -22,7 +22,7 @@
 
 
 /* ----------------------------------------------------- */
-/* board：shm 部份須與 cache.c 相容                      */
+/* board：shm 部份須與 cache.c 相容			 */
 /* ----------------------------------------------------- */
 
 
@@ -146,6 +146,8 @@ static void
 bbspost_add(board, addr, nick)
   char *board, *addr, *nick;
 {
+  int cc;
+  char *str;
   char folder[64], fpath[64];
   HDR hdr;
   FILE *fp;
@@ -163,7 +165,22 @@ bbspost_add(board, addr, nick)
     else
       fprintf(fp, "發信站: %.40s\n\n", DATE);
 
-    fprintf(fp, "%s", BODY);	/* chuan: header 跟 body 要空行格開 */
+    /* chuan: header 跟 body 要空行隔開 */
+
+    /* fprintf(fp, "%s", BODY); */
+
+    for (str = BODY; cc = *str; str++)
+    {
+      if (cc == '.')
+      {
+	/* for line beginning with a period, collapse the doubled period to a single one. */
+	if (str >= BODY + 2 && str[-1] == '.' && str[-2] == '\n')
+	  continue;
+      }
+
+      fputc(cc, fp);
+    }
+
     fclose(fp);
   }
 
