@@ -1070,9 +1070,6 @@ static KeyFunc ulist_cb[] =
 };
 
 
-extern KeyFunc bmw_cb[];
-
-
 void
 talk_main()
 {
@@ -1084,5 +1081,4 @@ talk_main()
   /* itoc.010715: 由於 erevy_Z 可以直接進入 bmw，所以一上站就要載入 */
   usr_fpath(fpath, cuser.userid, fn_bmw);
   xz[XZ_BMW - XO_ZONE].xo = xo_new(fpath);
-  xz[XZ_BMW - XO_ZONE].cb = bmw_cb;
 }
