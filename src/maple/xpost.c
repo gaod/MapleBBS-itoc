@@ -86,7 +86,7 @@ static int
 XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
   XO *xo;
   HDR *hdr;		/* 搜尋的條件 */
-  int on, off;		/* 搜尋的範圍 */
+  int on, off;		/* 搜尋的範圍 (on~off-1) */
   int (*fchk) ();	/* 搜尋的函式 */
 {
   int *list, fsize, max, locus, count, i;
@@ -118,17 +118,15 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
 
   count = 0;			/* 總共有幾篇滿足條件 */
 
-  for (i = 0; i < max; i++)
+  if (max > off)
+    max = off;
+
+  for (i = on; i < max; i++)
   {
     if (xpostIndex)		/* 增加條件再次搜尋時，只需要找在 xpostIndex[] 裡面的 */
       locus = xpostIndex[i];
     else			/* 整個 xo->dir 都掃一次 */
       locus = i;
-
-    if (locus < on)
-      continue;
-    if (locus > off)
-      break;
 
     head = (HDR *) fimage + locus;
 
@@ -289,7 +287,7 @@ XoXselect(xo)
   if (!hdr.title[0] && !hdr.xid)
     return XO_FOOT;
 
-  return XoXpost(xo, &hdr, -1, INT_MAX, filter_select);
+  return XoXpost(xo, &hdr, 0, INT_MAX, filter_select);
 }
 
 
@@ -324,7 +322,7 @@ XoXauthor(xo)
   str_lower(author, author);
   hdr.xid = strlen(author);
 
-  return XoXpost(xo, &hdr, -1, INT_MAX, filter_select);
+  return XoXpost(xo, &hdr, 0, INT_MAX, filter_select);
 }
 
 
@@ -358,7 +356,7 @@ XoXtitle(xo)
   str_lowest(title, title);
   hdr.xid = 0;
 
-  return XoXpost(xo, &hdr, -1, INT_MAX, filter_select);
+  return XoXpost(xo, &hdr, 0, INT_MAX, filter_select);
 }
 
 
@@ -408,7 +406,7 @@ XoXsearch(xo)
 
   str_lowest(hdr.title, title);
 
-  return XoXpost(xo, &hdr, -1, INT_MAX, filter_search);
+  return XoXpost(xo, &hdr, 0, INT_MAX, filter_search);
 }
 
 
@@ -500,7 +498,6 @@ XoXfull(xo)
     tail = INT_MAX;
 
   head--;
-  tail--;
 
   sprintf(HintWord, "[全文搜尋] %s", key);
   HintAuthor[0] = '\0';
@@ -543,7 +540,7 @@ XoXmark(xo)
   strcpy(HintWord, "\033[1;33m所有 mark 文章\033[m");
   HintAuthor[0] = '\0';
 
-  return XoXpost(xo, NULL, -1, INT_MAX, filter_mark);
+  return XoXpost(xo, NULL, 0, INT_MAX, filter_mark);
 }
 
 
@@ -582,7 +579,7 @@ XoXlocal(xo)
   strcpy(HintWord, "\033[1;33m所有非轉進文章\033[m");
   HintAuthor[0] = '\0';
 
-  return XoXpost(xo, NULL, -1, INT_MAX, filter_local);
+  return XoXpost(xo, NULL, 0, INT_MAX, filter_local);
 }
 
 
