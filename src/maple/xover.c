@@ -1508,8 +1508,8 @@ xover(cmd)
 /* ----------------------------------------------------- */
 
 
-#ifdef	EVERY_Z
-static int z_status = 0;	/* 進入幾層 */
+#ifdef EVERY_Z
+int z_status = 0;	/* 進入幾層 */
 
 int
 every_Z(zone)

@@ -1920,6 +1920,14 @@ KeyFunc xmbox_cb[] =
 
   't', mbox_tag,
 
+  '~', XoXselect,
+  'S', XoXsearch,
+  'a', XoXauthor,
+  '/', XoXtitle,
+  'f', XoXfull,
+  'G', XoXmark,
+  'L', XoXlocal,
+
   Ctrl('Q'), xo_uquery,
   Ctrl('O'), xo_usetup,
 

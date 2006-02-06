@@ -44,23 +44,42 @@ extern char xo_pool[];
   不提供任何區段刪除動作, 避免混亂
 -------------------------------------------------------------------------*/
 
+#if 0	/* itoc.060206.註解 */
+
+  當使用者輸入搜尋條件後，會進入 XoXpost() 將 xo->dir 這檔案中所記錄的所有 HDR
+  一一瀏覽，然後將滿足條件的 HDR 在 xo->dir 中所對應位置記錄在 xpostIndex[]，
+  接著進入 xover(XZ_XPOST) 會呼叫 xpost_init()，再於 xpost_pick() 將 xpostIndex[]
+  所記錄的位置從 xo->dir 抄到 xo_pool[]。
+
+  當增加條件做二次搜尋時，此時不需要掃整個 xo->dir 內的所有 HDR，只瀏覽記錄在
+  xpostIndex[] 裡面的那些。由於二次搜尋時要看同一個 xo->dir，所以 every_Z 時
+  要禁止進入 XZ_XPOST 二次。
+
+  已知問題是：當使用者還在 XZ_XPOST 裡面時，若 xo->dir 的順序有異動時 (例如刪除)，
+  而使用者要求 xpick_pick() 時 (例如翻頁、二次搜尋)，由於 xpostIndex[] 記錄的是在 
+  xo->dir 的位置，此時結果會出錯。
+
+#endif
 
 /* ----------------------------------------------------- */
 /* 串列搜尋主程式					 */
 /* ----------------------------------------------------- */
 
 
+#ifdef EVERY_Z
 #define MSG_XYDENY	"請先退出使用 ^Z 以前的串接/新聞功\能"
+extern int z_status;
+#endif
 
 extern KeyFunc xpost_cb[];
 extern KeyFunc xmbox_cb[];
 
-static int *xypostI;		/* Thor: first ypost pos in ypost_xo.key */
-static int comebackPos;		/* Thor: first xpost pos in xpost_xo.key */
+static int *xpostIndex;		/* Thor: first ypost pos in ypost_xo.key */
+static int comebackPos;		/* 記錄最後 */
 
 
-static char xypostHintword[TTLEN + 1];
-static char xypostHintauthor[IDLEN + 1];
+static char HintWord[TTLEN + 1];
+static char HintAuthor[IDLEN + 1];
 
 
 static int
@@ -70,15 +89,15 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
   int on, off;		/* 搜尋的範圍 */
   int (*fchk) ();	/* 搜尋的函式 */
 {
-  int *xlist, fsize, max, locus;
+  int *list, fsize, max, locus, count, i;
   char *fimage;
-  HDR *head, *tail;
+  HDR *head;
   XO *xt;
 #ifdef HAVE_XYNEWS
   int returnPos;
 #endif
 
-  if ((max = xo->max) <= 0)	/* Thor.980911: 註解: 以防萬一 */
+  if (xo->max <= 0)	/* Thor.980911: 註解: 以防萬一 */
     return XO_FOOT;
   
   /* build index according to input condition */
@@ -94,21 +113,24 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
   /* allocate index memory, remember free first */
 
   /* Thor.990113: 怕問title, author的瞬間又有人post */
-  max = fsize / sizeof(HDR);
-  xlist = xypostI = (int *) malloc(sizeof(int) * max);
+  max = xpostIndex ?  xo->max : fsize / sizeof(HDR);
+  list = (int *) malloc(sizeof(int) * max);
 
-  max = 0;
-  head = (HDR *) fimage;
-  tail = (HDR *) (fimage + fsize);
+  count = 0;			/* 總共有幾篇滿足條件 */
 
-  locus = -1;
-  do
+  for (i = 0; i < max; i++)
   {
-    locus++;
+    if (xpostIndex)		/* 增加條件再次搜尋時，只需要找在 xpostIndex[] 裡面的 */
+      locus = xpostIndex[i];
+    else			/* 整個 xo->dir 都掃一次 */
+      locus = i;
+
     if (locus < on)
       continue;
     if (locus > off)
       break;
+
+    head = (HDR *) fimage + locus;
 
 #ifdef HAVE_REFUSEMARK
     if ((head->xmode & POST_RESTRICT) && 
@@ -117,22 +139,35 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
 #endif
 
     /* check condition */
-
     if (!(* fchk) (head, hdr))
       continue;
 
-    xlist[max++] = locus;
-  } while (++head < tail);
+    list[count++] = locus;
+  }
 
   munmap(fimage, fsize);
 
-  if (max <= 0)
+  if (count <= 0)
   {
-    free(xlist);
-    xypostI = NULL;
+    free(list);
     vmsg(MSG_XY_NONE);
     return XO_FOOT;
   }
+
+  /* 增加條件再次搜尋 */
+  if (xpostIndex)
+  {
+    free(xpostIndex);
+    xpostIndex = list;
+
+    xo->pos = 0;
+    xo->max = count;
+
+    return xpost_init(xo);
+  }
+
+  /* 首次搜尋 */
+  xpostIndex = list;
 
   /* build XO for xpost_xo */
 
@@ -144,7 +179,7 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
   xz[XZ_XPOST - XO_ZONE].xo = xt = xo_new(xo->dir);
   xz[XZ_XPOST - XO_ZONE].cb = (xo->dir[0] == 'b') ? xpost_cb : xmbox_cb;
   xt->pos = 0;
-  xt->max = max;
+  xt->max = count;
   xt->xyz = xo->xyz;
   xt->key = XZ_XPOST;
 
@@ -157,7 +192,7 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
     xo->pos = returnPos;	/* 從 XZ_XPOST 回到 XZ_NEWS 游標移去原來的地方 */
   else
 #endif
-    xo->pos = comebackPos;	/* 從 XZ_XPOST 回到 XZ_POST 游標移去所選取文章的真正位置 */
+    xo->pos = comebackPos;	/* 從 XZ_XPOST 回到 XZ_POST 游標移去原來的地方或所閱讀文章的真正位置 */
 
   /* free xpost_xo */
 
@@ -169,10 +204,10 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
 
   /* free index memory, remember check free pointer */
 
-  if (xlist = xypostI)
+  if (list)
   {
-    free(xlist);
-    xypostI = NULL;
+    free(list);
+    xpostIndex = NULL;
   }
 
   return XO_INIT;
@@ -217,35 +252,37 @@ XoXselect(xo)
   HDR hdr;
   char *key;
 
-  if (xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
+#ifdef EVERY_Z
+  if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
   /* input condition */
 
   key = hdr.title;
   if (vget(b_lines, 0, MSG_XYPOST1, key, 30, DOECHO))
   {
-    strcpy(xypostHintword, key);
+    strcpy(HintWord, key);
     str_lowest(key, key);
   }
   else
   {
-    xypostHintword[0] = '\0';
+    HintWord[0] = '\0';
   }
 
   key = hdr.owner;
   if (vget(b_lines, 0, MSG_XYPOST2, key, IDLEN + 1, DOECHO))
   {
-    strcpy(xypostHintauthor, key);
+    strcpy(HintAuthor, key);
     str_lower(key, key);
     hdr.xid = strlen(key);
   }
   else
   {
-    xypostHintauthor[0] = '\0';
+    HintAuthor[0] = '\0';
     hdr.xid = 0;
   }
   
@@ -268,18 +305,20 @@ XoXauthor(xo)
   HDR hdr;
   char *author;
 
-  if (xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
+#ifdef EVERY_Z
+  if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
   author = hdr.owner;
   if (!vget(b_lines, 0, MSG_XYPOST2, author, IDLEN + 1, DOECHO))
     return XO_FOOT;
 
-  xypostHintword[0] = '\0';
-  strcpy(xypostHintauthor, author);
+  HintWord[0] = '\0';
+  strcpy(HintAuthor, author);
 
   hdr.title[0] = '\0';
   str_lower(author, author);
@@ -301,18 +340,20 @@ XoXtitle(xo)
   HDR hdr;
   char *title;
 
-  if (xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
+#ifdef EVERY_Z
+  if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
   title = hdr.title;
   if (!vget(b_lines, 0, MSG_XYPOST1, title, 30, DOECHO))
     return XO_FOOT;
 
-  strcpy(xypostHintword, title);
-  xypostHintauthor[0] = '\0';
+  strcpy(HintWord, title);
+  HintAuthor[0] = '\0';
 
   str_lowest(title, title);
   hdr.xid = 0;
@@ -348,11 +389,13 @@ XoXsearch(xo)
   HDR hdr, *mhdr;
   char *title;
 
-  if (xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
+#ifdef EVERY_Z
+  if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
   mhdr = (HDR *) xo_pool + (xo->pos - xo->top);
 
@@ -360,8 +403,8 @@ XoXsearch(xo)
   if (STR4(title) == STR4(STR_REPLY))
     title += 4;
 
-  strcpy(xypostHintword, title);
-  xypostHintauthor[0] = '\0';
+  strcpy(HintWord, title);
+  HintAuthor[0] = '\0';
 
   str_lowest(hdr.title, title);
 
@@ -434,11 +477,13 @@ XoXfull(xo)
   char *key, ans[8];
   int head, tail;
 
-  if (xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
+#ifdef EVERY_Z
+  if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
   /* input condition */
 
@@ -457,8 +502,8 @@ XoXfull(xo)
   head--;
   tail--;
 
-  sprintf(xypostHintword, "[全文搜尋] %s", key);
-  xypostHintauthor[0] = '\0';
+  sprintf(HintWord, "[全文搜尋] %s", key);
+  HintAuthor[0] = '\0';
   str_lowest(key, key);
 
   search_folder = xo->dir;
@@ -487,14 +532,16 @@ int
 XoXmark(xo)
   XO *xo;
 {
-  if (xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
+#ifdef EVERY_Z
+  if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
-  strcpy(xypostHintword, "\033[1;33m所有 mark 文章\033[m");
-  xypostHintauthor[0] = '\0';
+  strcpy(HintWord, "\033[1;33m所有 mark 文章\033[m");
+  HintAuthor[0] = '\0';
 
   return XoXpost(xo, NULL, -1, INT_MAX, filter_mark);
 }
@@ -524,14 +571,16 @@ XoXlocal(xo)
     return XO_FOOT;
   }
 
-  if (xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
+#ifdef EVERY_Z
+  if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
-  strcpy(xypostHintword, "\033[1;33m所有非轉進文章\033[m");
-  xypostHintauthor[0] = '\0';
+  strcpy(HintWord, "\033[1;33m所有非轉進文章\033[m");
+  HintAuthor[0] = '\0';
 
   return XoXpost(xo, NULL, -1, INT_MAX, filter_local);
 }
@@ -550,10 +599,10 @@ xpost_head(xo)
 
   /* itoc.010323: 同時提示作者/主題 */
   outs("[串接系列] ");
-  if (*xypostHintauthor)
-    prints("作者：%-13s   ", xypostHintauthor);
-  if (*xypostHintword)
-    prints("標題：%.30s", xypostHintword);
+  if (*HintAuthor)
+    prints("作者：%-13s   ", HintAuthor);
+  if (*HintWord)
+    prints("標題：%.30s", HintWord);
 
   prints(NECKER_XPOST, d_cols, "", currbattr & BRD_NOSCORE ? "╳" : "○");
 
@@ -562,10 +611,10 @@ xpost_head(xo)
 
 
 static void
-xypost_pick(xo)
+xpost_pick(xo)
   XO *xo;
 {
-  int *xyp, fsize, pos, max, top, num;
+  int *list, fsize, pos, max, top, num;
   HDR *fimage, *hdr;
 
   fimage = (HDR *) f_map(xo->dir, &fsize);
@@ -573,7 +622,7 @@ xypost_pick(xo)
     return;
 
   hdr = (HDR *) xo_pool;
-  xyp = xypostI;
+  list = xpostIndex;
 
   pos = xo->pos;
   xo->top = top = (pos / XO_TALL) * XO_TALL;
@@ -585,10 +634,10 @@ xypost_pick(xo)
 
   do
   {
-    pos = xyp[top++];
+    pos = list[top++];
     if (pos >= num)	/* hightman.030528: 避免 .DIR 被刪減時，會沒有文章可以顯示 */
       continue;
-    *hdr = fimage[pos];
+    memcpy(hdr, fimage + pos, sizeof(HDR));
     hdr->xid = pos;		/* 用 hdr->xid 來記錄其原先在看板中的 pos */
     hdr++;
   } while (top < max);
@@ -603,7 +652,7 @@ xpost_init(xo)
 {
   /* load into pool */
 
-  xypost_pick(xo);
+  xpost_pick(xo);
 
   return xpost_head(xo);
 }
@@ -615,7 +664,7 @@ xpost_load(xo)
 {
   /* load into pool */
 
-  xypost_pick(xo);
+  xpost_pick(xo);
 
   return XO_BODY;
 }
@@ -708,7 +757,7 @@ re_key:
 	xo->pos = pos;
 
 	if (pos <= xo->top)
-	  xypost_pick(xo);
+	  xpost_pick(xo);
   
 	continue;
       }
@@ -729,7 +778,7 @@ re_key:
 	xo->pos = pos;
 
 	if (pos >= xo->top + XO_TALL)
-  	  xypost_pick(xo);
+  	  xpost_pick(xo);
 
 	continue;
       }
@@ -840,7 +889,7 @@ re_key:
 	xo->pos = pos;
 
 	if (pos <= xo->top)
-	  xypost_pick(xo);
+	  xpost_pick(xo);
   
 	continue;
       }
@@ -861,7 +910,7 @@ re_key:
 	xo->pos = pos;
 
 	if (pos >= xo->top + XO_TALL)
-  	  xypost_pick(xo);
+  	  xpost_pick(xo);
 
 	continue;
       }
@@ -929,7 +978,7 @@ re_key:
 #endif
 
 
-static int *xynewsI;
+static int *newsIndex;
 
 extern KeyFunc news_cb[];
 
@@ -948,7 +997,7 @@ static void
 news_pick(xo)
   XO *xo;
 {
-  int *xyp, fsize, pos, max, top;
+  int *list, fsize, pos, max, top;
   HDR *fimage, *hdr;
 
   fimage = (HDR *) f_map(xo->dir, &fsize);
@@ -956,7 +1005,7 @@ news_pick(xo)
     return;
 
   hdr = (HDR *) xo_pool;
-  xyp = xynewsI;
+  list = newsIndex;
 
   pos = xo->pos;
   xo->top = top = (pos / XO_TALL) * XO_TALL;
@@ -967,8 +1016,8 @@ news_pick(xo)
 
   do
   {
-    pos = xyp[top++];
-    *hdr = fimage[pos];
+    pos = list[top++];
+    memcpy(hdr, fimage + pos, sizeof(HDR));
     /* hdr->xid = pos; */	/* 在 XZ_NEWS 沒用到 xid，可以考慮保留給 reply 篇數 */
     hdr++;
   } while (top < max);
@@ -1002,20 +1051,21 @@ XoNews(xo)			/* itoc: News reader : call from post_cb */
   XO *xo;
 {
   int returnPos;
-  int *xlist, fsize, max, locus;
+  int *list, fsize, max, count, i;
   char *fimage;
-  HDR *head, *tail;
+  HDR *head;
   XO *xt;
 
-  if ((max = xo->max) <= 0)	/* Thor.980911: 註解: 以防萬一 */
+  if (xo->max <= 0)		/* Thor.980911: 註解: 以防萬一 */
     return XO_FOOT;
 
-  /* itoc.020308: 不得累積進入二次 */
-  if (xz[XZ_NEWS - XO_ZONE].xo)
+#ifdef EVERY_Z		/* itoc.060206: 只有用 ^Z 才可能從不同看板進入新聞模式 */
+  if (xz[XZ_NEWS - XO_ZONE].xo)		/* itoc.020308: 不得累積進入二次 */
   {
     vmsg(MSG_XYDENY);
     return XO_FOOT;
   }
+#endif
 
   /* build index according to input condition */
 
@@ -1031,16 +1081,13 @@ XoNews(xo)			/* itoc: News reader : call from post_cb */
 
   /* Thor.990113: 怕問title, author的瞬間又有人post */
   max = fsize / sizeof(HDR);
-  xlist = xynewsI = (int *) malloc(sizeof(int) * max);
-  
-  max = 0;
-  head = (HDR *) fimage;
-  tail = (HDR *) (fimage + fsize);
+  list = (int *) malloc(sizeof(int) * max);
 
-  locus = -1;
-  do
+  count = 0;
+
+  for (i = 0; i < max; i++)
   {
-    locus++;
+    head = (HDR *) fimage + i;
 
 #ifdef HAVE_REFUSEMARK
     if ((head->xmode & POST_RESTRICT) && 
@@ -1049,30 +1096,30 @@ XoNews(xo)			/* itoc: News reader : call from post_cb */
 #endif
 
     /* check condition */
-
     if (STR4(head->title) == STR4(STR_REPLY)) /* reply 的文章不要 */
       continue;
 
-    xlist[max++] = locus;
-  } while (++head < tail);
+    list[count++] = i;
+  }
 
   munmap(fimage, fsize);
 
-  if (max <= 0)
+  if (count <= 0)
   {
-    free(xlist);
-    xynewsI = NULL;
+    free(list);
     vmsg(MSG_XY_NONE);
     return XO_FOOT;
   }
 
+  newsIndex = list;
+
   /* build XO for news_xo */
 
-  returnPos = xo->pos;	/* Thor: record pos, future use */
+  returnPos = xo->pos;		/* Thor: record pos, future use */
   xz[XZ_NEWS - XO_ZONE].xo = xt = xo_new(xo->dir);
   xz[XZ_NEWS - XO_ZONE].cb = news_cb;
   xt->pos = 0;
-  xt->max = max;
+  xt->max = count;
   xt->xyz = xo->xyz;
   xt->key = XZ_NEWS;
 
@@ -1080,7 +1127,7 @@ XoNews(xo)			/* itoc: News reader : call from post_cb */
 
   /* set xo->pos for new location */
 
-  xo->pos = returnPos;
+  xo->pos = returnPos;		/* 從 XZ_NEWS 回到 XZ_POST 游標移去原來的地方 */
 
   /* free news_xo */
 
@@ -1092,11 +1139,8 @@ XoNews(xo)			/* itoc: News reader : call from post_cb */
 
   /* free index memory, remember check free pointer */
 
-  if (xlist = xynewsI)
-  {
-    free(xlist);
-    xynewsI = NULL;
-  }
+  if (list)
+    free(list);
 
   return XO_INIT;
 }

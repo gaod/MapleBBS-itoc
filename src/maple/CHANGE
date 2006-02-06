@@ -1740,3 +1740,5 @@
 
 [2006/01/23] camera.c etc/feasts 特殊節日的開頭畫面。
 
+[2006/02/06] xpost.c post.c mail.c xover.c 串列搜尋允許增加條件再度搜尋。
+

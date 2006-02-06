@@ -2166,6 +2166,14 @@ KeyFunc xpost_cb[] =
   'n', post_label,
 #endif
 
+  '~', XoXselect,
+  'S', XoXsearch,
+  'a', XoXauthor,
+  '/', XoXtitle,
+  'f', XoXfull,
+  'G', XoXmark,
+  'L', XoXlocal,
+
   Ctrl('P'), post_add,
   Ctrl('D'), post_prune,
   Ctrl('Q'), xo_uquery,
