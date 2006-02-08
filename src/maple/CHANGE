@@ -1742,3 +1742,5 @@
 
 [2006/02/06] xpost.c post.c mail.c xover.c 串列搜尋允許增加條件再度搜尋。
 
+[2006/02/08] struct.h innbbs.c bbslink.c 在 newsfeeds 裡面顯示找不到群組。
+

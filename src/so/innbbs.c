@@ -134,9 +134,16 @@ nf_item(num, nf)
 
   if ((bno = brd_bno(nf->board)) >= 0)
   {
-    brd = bshm->bcache + bno;
-    outgo = brd->battr & BRD_NOTRAN ? ' ' : '<';
-    income = nf->xmode & INN_NOINCOME ? ' ': '>';
+    if (nf->xmode & INN_ERROR)
+    {
+      outgo = income = '?';
+    }
+    else
+    {
+      brd = bshm->bcache + bno;
+      outgo = brd->battr & BRD_NOTRAN ? ' ' : '<';
+      income = nf->xmode & INN_NOINCOME ? ' ': '>';
+    }
   }
   else
   {
@@ -193,9 +200,10 @@ nf_query(nf)
   move(3, 0);
   clrtobot();
   prints("\n\n轉信站台：%s\n站台位址：%s\n站台協定：%s(%d)\n"
-    "轉信群組：%s\n本站看板：%s (%s%s)\n使用字集：%s", 
+    "轉信群組：%s%s\n本站看板：%s (%s%s)\n使用字集：%s", 
     nf->path, nl.host, nl.xmode & INN_USEIHAVE ? "IHAVE" : "POST", nl.port, 
-    nf->newsgroup, nf->board, outgo, income, nf->charset);
+    nf->newsgroup, nf->xmode & INN_ERROR ? " (\033[1;33m此群組不存在\033[m)" : "", 
+    nf->board, outgo, income, nf->charset);
   if (rc && !(nl.xmode & INN_FEEDED))
     prints("\n目前篇數：%d", nf->high);
   vmsg(NULL);

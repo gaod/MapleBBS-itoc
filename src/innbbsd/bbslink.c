@@ -693,7 +693,15 @@ static void
 changehigh(hdd, ram)
   newsfeeds_t *hdd, *ram;
 {
-  hdd->high = ram->high;
+  if (ram->high >= 0)
+  {
+    hdd->high = ram->high;
+    hdd->xmode &= ~INN_ERROR;
+  }
+  else
+  {
+    hdd->xmode |= INN_ERROR;
+  }
 }
 
 
@@ -701,7 +709,7 @@ static void
 updaterc(nf, pos, high)
   newsfeeds_t *nf;
   int pos;			/* 於 newsfeeds.bbs 裡面的位置 */
-  int high;
+  int high;			/* >=0:目前抓到哪一篇 <0:error */
 {
   nf->high = high;
   GROUP = nf->newsgroup;
@@ -738,6 +746,7 @@ readnews(node)
     /* 取得 news server 上的 high */
     if ((high = NNRPgroup(newsgroup)) < 0)
     {
+      updaterc(nf, i, -1);
       DEBUG(("│└<readnews> 無法取得此群組的 high-number 或此群組不存在\n"));
       continue;
     }

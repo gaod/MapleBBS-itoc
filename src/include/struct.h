@@ -665,6 +665,7 @@ typedef struct
 
 
 #define INN_NOINCOME	0x0001
+#define INN_ERROR	0x0004
 
 typedef struct
 {
