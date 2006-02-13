@@ -89,7 +89,7 @@ cancel_post(hdr)
 }
 
 
-static inline int
+static inline int		/* 回傳文章 size 去扣錢 */
 move_post(hdr, folder, by_bm)	/* 將 hdr 從 folder 搬到別的板 */
   HDR *hdr;
   char *folder;
@@ -121,12 +121,12 @@ move_post(hdr, folder, by_bm)	/* 將 hdr 從 folder 搬到別的板 */
 
     if (by_bm)
       sprintf(post.title, "%-13s%.59s", cuser.userid, hdr->title);
-    else if (!stat(fpath, &st))
-      by_bm = st.st_size;
 
     rec_bot(fnew, &post, sizeof(HDR));
     btime_update(brd_bno(board));
   }
+
+  by_bm = stat(fpath, &st) ? 0 : st.st_size;
 
   unlink(fpath);
   btime_update(currbno);
