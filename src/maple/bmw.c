@@ -612,7 +612,7 @@ bmw_rqst()
       rec_add(buf, mptr, sizeof(BMW));
 
       /* itoc.020126: ¥[¤J FN_AMW */
-      fprintf(fp, BMW_FORMAT " %s\n", mptr->userid, mptr->msg, Btime(&(mptr->btime)));
+      fprintf(fp, BMW_FORMAT " %s\n", mptr->userid, mptr->msg, Btime(&mptr->btime));
 
       bmw_lslot[locus++] = *mptr;	/* structure copy */
     } while (++i < j);

@@ -869,7 +869,7 @@ brd_new(brd)
   if (vans(msg_sure_ny) != 'y')
     return -1;
 
-  time(&(brd->bstamp));
+  time(&brd->bstamp);
   if ((bno = brd_bno("")) >= 0)
   {
     rec_put(FN_BRD, brd, sizeof(BRD), bno, NULL);

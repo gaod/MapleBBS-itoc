@@ -397,22 +397,6 @@ a_restore()
 /* ----------------------------------------------------- */
 
 
-static void
-biff_user(userno)
-  int userno;
-{
-  UTMP *utmp, *uceil;
-
-  utmp = ushm->uslot;
-  uceil = (void *) utmp + ushm->offset;
-  do
-  {
-    if (utmp->userno == userno)
-      utmp->status |= STATUS_BIFF;
-  } while (++utmp <= uceil);
-}
-
-
 static int
 scan_register_form(fd)
   int fd;
@@ -430,11 +414,12 @@ scan_register_form(fd)
 
   ACCT acct;
   RFORM rform;
-  HDR fhdr;
+  HDR hdr;
   FILE *fout;
 
   int op, n;
-  char buf[128], msg[256], *agent, *userid, *str;
+  char buf[256], *agent, *userid, *str;
+  char folder[64], fpath[64];
 
   vs_bar("審核使用者註冊資料");
   agent = cuser.userid;
@@ -484,24 +469,24 @@ scan_register_form(fd)
     case 'y':
 
       /* 提升權限 */
-      sprintf(msg, "REG: %s:%s:%s:by %s", rform.phone, rform.career, rform.address, agent);
-      justify_log(acct.userid, msg);
-      time(&(acct.tvalid));
+      sprintf(buf, "REG: %s:%s:%s:by %s", rform.phone, rform.career, rform.address, agent);
+      justify_log(acct.userid, buf);
+      time(&acct.tvalid);
       /* itoc.041025: 這個 acct_setperm() 並沒有緊跟在 acct_load() 後面，中間隔了一個 vans()，
          這可能造成拿舊 acct 去覆蓋新 .ACCT 的問題。不過因為是站長才有的權限，所以就不改了 */
       acct_setperm(&acct, PERM_VALID, 0);
 
       /* 寄信通知使用者 */
-      usr_fpath(buf, userid, fn_dir);
-      hdr_stamp(buf, HDR_LINK, &fhdr, FN_ETC_JUSTIFIED);
-      strcpy(fhdr.title, msg_reg_valid);
-      strcpy(fhdr.owner, str_sysop);
-      rec_add(buf, &fhdr, sizeof(fhdr));
+      usr_fpath(folder, userid, fn_dir);
+      hdr_stamp(folder, HDR_LINK, &hdr, FN_ETC_JUSTIFIED);
+      strcpy(hdr.title, msg_reg_valid);
+      strcpy(hdr.owner, str_sysop);
+      rec_add(folder, &hdr, sizeof(HDR));
 
       strcpy(rform.agent, agent);
       rec_add(logfile, &rform, sizeof(RFORM));
 
-      biff_user(rform.userno);
+      m_biff(rform.userno);
 
       break;
 
@@ -526,23 +511,21 @@ scan_register_form(fd)
       if (op = vget(b_lines, 0, "退回原因：", buf, 60, DOECHO))
       {
 	int i;
-	char folder[80], fpath[80];
-	HDR fhdr;
 
 	i = op - '0';
 	if (i >= 0 && i < n)
 	  strcpy(buf, reason[i]);
 
 	usr_fpath(folder, acct.userid, fn_dir);
-	if (fout = fdopen(hdr_stamp(folder, 0, &fhdr, fpath), "w"))
+	if (fout = fdopen(hdr_stamp(folder, 0, &hdr, fpath), "w"))
 	{
 	  fprintf(fout, "\t由於您提供的資料不夠詳實，無法確認身分，"
 	    "\n\n\t請重新填寫註冊表單：%s。\n", buf);
 	  fclose(fout);
 
-	  strcpy(fhdr.owner, agent);
-	  strcpy(fhdr.title, "[退件] 請您重新填寫註冊表單");
-	  rec_add(folder, &fhdr, sizeof(fhdr));
+	  strcpy(hdr.owner, agent);
+	  strcpy(hdr.title, "[退件] 請您重新填寫註冊表單");
+	  rec_add(folder, &hdr, sizeof(HDR));
 	}
 
 	strcpy(rform.reply, buf);	/* 理由 */

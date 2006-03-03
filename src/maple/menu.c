@@ -114,7 +114,7 @@ pad_draw()
       return 0;
   } while (cc == 'e');
 
-  time(&(pad.tpad));
+  time(&pad.tpad);
 
   /* itoc.020812.註解: 改版面的時候要注意 struct Pad.msg[] 是否夠大 */
   str = pad.msg;
@@ -130,7 +130,7 @@ pad_draw()
     "│  \033[1;%dm%-70s\033[m  │\n"
     "│  \033[1;%dm%-70s\033[m  │\n"
     "╰  \033[1;%dm%-70s\033[m  ╯\n",
-    Btime(&(pad.tpad)),
+    Btime(&pad.tpad),
     pcolors[color], buf[0],
     pcolors[color], buf[1],
     pcolors[color], buf[2]);

@@ -3036,7 +3036,7 @@ cmd_rss(ap)
 	end = 0;
       i = fsize / sizeof(HDR);
 
-      while ((fsize -= sizeof(HDR)) > end)
+      while ((fsize -= sizeof(HDR)) >= end)
       {
 	lseek(fd, fsize, SEEK_SET);
 	read(fd, &hdr, sizeof(HDR));
@@ -3062,6 +3062,8 @@ cmd_rss(ap)
 	if (*ptr == '0')
 	  ptr++;
 	fprintf(fpw, "%s</pubDate></item>\n", ptr);
+
+	i--;
       }
     }
     close(fd);

@@ -213,7 +213,7 @@ do_pop3(addr)		/* itoc.010821: §ï¼g¤@¤U :) */
       strcpy(cuser.email, addr);
       if (acct_load(&acct, cuser.userid) >= 0)
       {
-	time(&(acct.tvalid));
+	time(&acct.tvalid);
 	acct_setperm(&acct, PERM_VALID, 0);
       }
 
@@ -431,7 +431,7 @@ u_verify()
 	justify_log(cuser.userid, buf);
 	if (acct_load(&acct, cuser.userid) >= 0)
 	{
-	  time(&(acct.tvalid));
+	  time(&acct.tvalid);
 	  acct_setperm(&acct, PERM_VALID, 0);
 	}
 
