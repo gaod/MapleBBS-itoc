@@ -602,13 +602,6 @@ brh_load()
 
   *base = 0;
   brh_tail = base;
-
-  /* --------------------------------------------------- */
-  /* 設定 default board					 */
-  /* --------------------------------------------------- */
-
-  strcpy(currboard, BN_NULL);
-  currbno = -1;
 }
 
 
@@ -1931,6 +1924,10 @@ board_main()
     class_flag = cuser.ufo & UFO_BRDPOST;	/* 看板列表 1:文章數 0:編號 */
     if (!cuser.userlevel)			/* guest yank all boards */
       class_flag |= BFO_YANK;
+
+    /* 設定 default board */
+    strcpy(currboard, BN_NULL);
+    currbno = -1;
   }
 
   /* class_img = f_img(CLASS_IMGFILE, &fsize); */

@@ -1206,7 +1206,6 @@ vote_all()		/* itoc.010414: щ布いみ */
     char title[BTLEN + 1];
     char BM[BMLEN + 1];
     char bvote;
-    int is_BM;			/* 磷狾Τ STAT_BOARD ㄓщ布いみヴ狾跑狾 */
   } vbrd_t;
 
   extern char brd_bits[];
@@ -1235,7 +1234,6 @@ vote_all()		/* itoc.010414: щ布いみ */
       strcpy(vb->title, bhead->title);
       strcpy(vb->BM, bhead->BM);
       vb->bvote = bhead->bvote;
-      vb->is_BM = ch & BRD_X_BIT;
       num++;
     }
     cur++;
@@ -1289,21 +1287,40 @@ vote_all()		/* itoc.010414: щ布いみ */
     case '\n':
     case ' ':
     case 'r':
-      redraw = cur + pageno * XO_TALL;	/* ノ redraw */
+      vb = vbrd + (cur + pageno * XO_TALL);
 
-      vb = vbrd + redraw;
-      strcpy(currboard, vb->brdname);
-      str = vb->BM;
+      /* itoc.060324: 单秈穝狾XoPost() Τ暗ㄆ硂柑碭常璶暗 */
+      if (!vb->brdname[0])	/* 埃狾 */
+	break;
+
+      redraw = brd_bno(vb->brdname);	/* ノ redraw */
+      if (currbno != redraw)
+      {
+	if (currbno >= 0 && bshm->mantime[currbno] > 0)
+	  bshm->mantime[currbno]--;	/* 癶狾 */
+	bshm->mantime[redraw]++;	/* 秈穝狾 */
+      }
+
+      currbno = redraw;
+      bhead = bshm->bcache + currbno;
+      currbattr = bhead->battr;
+      strcpy(currboard, bhead->brdname);
+
+      str = bhead->BM;
       sprintf(currBM, "狾%s", *str <= ' ' ? "紉―い" : str);
-      currbno = brd_bno(currboard);
-      currbattr = (bshm->bcache + currbno)->battr;
 
-      if (vb->is_BM)
+#ifdef HAVE_BRDMATE
+      strcpy(cutmp->reading, currboard);
+#endif
+
+      str = &brd_bits[currbno];
+      ch = *str;
+      if (ch & BRD_X_BIT)
 	bbstate |= STAT_BOARD;
       else
 	bbstate &= ~STAT_BOARD;
 
-      sprintf(fpath, "brd/%s/%s", vb->brdname, FN_VCH);
+      sprintf(fpath, "brd/%s/%s", currboard, FN_VCH);
       xz[XZ_VOTE - XO_ZONE].xo = xo = xo_new(fpath);
       xz[XZ_VOTE - XO_ZONE].cb = vote_cb;
       xover(XZ_VOTE);
