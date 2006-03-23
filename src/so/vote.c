@@ -1294,31 +1294,29 @@ vote_all()		/* itoc.010414: 投票中心 */
 	break;
 
       redraw = brd_bno(vb->brdname);	/* 借用 redraw */
-      if (currbno != redraw)
-      {
-	if (currbno >= 0 && bshm->mantime[currbno] > 0)
-	  bshm->mantime[currbno]--;	/* 退出上一個板 */
-	bshm->mantime[redraw]++;	/* 進入新的板 */
-      }
+      ch = brd_bits[redraw];
+
+      /* 處理權限 */
+      if (ch & BRD_X_BIT)
+	bbstate |= STAT_BOARD;
+      else
+	bbstate &= ~STAT_BOARD;
+
+      /* itoc.050613.註解: 人氣的減少不是在離開看板時，而是在進入新的看板或是離站時，
+         這是為了避免 switch 跳看板會算錯人氣 */
+      if (currbno >= 0)
+	bshm->mantime[currbno]--;	/* 退出上一個板 */
+      bshm->mantime[redraw]++;		/* 進入新的板 */
 
       currbno = redraw;
       bhead = bshm->bcache + currbno;
       currbattr = bhead->battr;
       strcpy(currboard, bhead->brdname);
-
       str = bhead->BM;
       sprintf(currBM, "板主：%s", *str <= ' ' ? "徵求中" : str);
-
 #ifdef HAVE_BRDMATE
       strcpy(cutmp->reading, currboard);
 #endif
-
-      str = &brd_bits[currbno];
-      ch = *str;
-      if (ch & BRD_X_BIT)
-	bbstate |= STAT_BOARD;
-      else
-	bbstate &= ~STAT_BOARD;
 
       sprintf(fpath, "brd/%s/%s", currboard, FN_VCH);
       xz[XZ_VOTE - XO_ZONE].xo = xo = xo_new(fpath);

@@ -1744,3 +1744,5 @@
 
 [2006/02/08] struct.h innbbs.c bbslink.c 在 newsfeeds 裡面顯示找不到群組。
 
+[2006/03/24] board.c vote.c 修正看板人氣計算錯誤。
+

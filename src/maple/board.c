@@ -783,67 +783,64 @@ XoPost(bno)
   bbstate = STAT_STARTED;
 
   brd = bshm->bcache + bno;
-  str = &brd_bits[bno];
-  bits = *str;
-
-#ifdef HAVE_MODERATED_BOARD
-  if (!(bits & BRD_R_BIT))
-  {
-    vmsg("對不起，此板只准板友進入，請向板主申請入境許\可");
-    return -1;
-  }
-#endif
-
   if (!brd->brdname[0])	/* 已刪除的看板 */
     return -1;
 
-  if (currbno != bno)
+  if (currbno != bno)	/* 看板沒換通常是因為 every_Z() 回原看板 */
   {
+    bits = brd_bits[bno];
+
+#ifdef HAVE_MODERATED_BOARD
+    if (!(bits & BRD_R_BIT))
+    {
+      vmsg("對不起，此板只准板友進入，請向板主申請入境許\可");
+      return -1;
+    }
+#endif
+
+    /* 處理權限 */
+    if (bits & BRD_M_BIT)
+      bbstate |= (STAT_BM | STAT_BOARD | STAT_POST);
+    else if (bits & BRD_X_BIT)
+      bbstate |= (STAT_BOARD | STAT_POST);
+    else if (bits & BRD_W_BIT)
+      bbstate |= STAT_POST;
+
     /* itoc.050613.註解: 人氣的減少不是在離開看板時，而是在進入新的看板或是離站時，
        這是為了避免 switch 跳看板會算錯人氣 */
-    if (currbno >= 0 && bshm->mantime[currbno] > 0)
-      bshm->mantime[currbno]--;	/* 退出上一個板 */
-    bshm->mantime[bno]++;	/* 進入新的板 */
-  }
+    if (currbno >= 0)
+      bshm->mantime[currbno]--;		/* 退出上一個板 */
+    bshm->mantime[bno]++;		/* 進入新的板 */
 
-  if (bits & BRD_M_BIT)
-    bbstate |= (STAT_BM | STAT_BOARD | STAT_POST);
-  else if (bits & BRD_X_BIT)
-    bbstate |= (STAT_BOARD | STAT_POST);
-  else if (bits & BRD_W_BIT)
-    bbstate |= STAT_POST;
+    currbno = bno;
+    currbattr = brd->battr;
+    strcpy(currboard, brd->brdname);
+    str = brd->BM;
+    sprintf(currBM, "板主：%s", *str <= ' ' ? "徵求中" : str);
+#ifdef HAVE_BRDMATE
+    strcpy(cutmp->reading, currboard);
+#endif
 
-  currbno = bno;
-  currbattr = brd->battr;
-  strcpy(currboard, brd->brdname);
-
-  brh_get(brd->bstamp, bno);
-
-  /* itoc.011113: 改成第一次進板要看備忘錄 */
-  if (!(bits & BRD_V_BIT) || (cuser.ufo & UFO_BRDNOTE))
-  {
-    *str = bits | BRD_V_BIT;
-    brd_fpath(fpath, currboard, fn_note);
-    more(fpath, NULL);
-  }
-
-  brd_fpath(fpath, currboard, fn_dir);
+    brd_fpath(fpath, currboard, fn_dir);
 
 #ifdef AUTO_JUMPPOST
-  xz[XZ_POST - XO_ZONE].xo = xo = xo_get_post(fpath, brd);	/* itoc.010910: 為 XoPost 量身打造一支 xo_get() */
+    xz[XZ_POST - XO_ZONE].xo = xo = xo_get_post(fpath, brd);	/* itoc.010910: 為 XoPost 量身打造一支 xo_get() */
 #else
-  xz[XZ_POST - XO_ZONE].xo = xo = xo_get(fpath);
+    xz[XZ_POST - XO_ZONE].xo = xo = xo_get(fpath);
 #endif
-  xo->key = XZ_POST;
-  xo->xyz = brd->title;
-  str = brd->BM;
-  if (*str <= ' ')
-    str = "徵求中";
-  sprintf(currBM, "板主：%s", str);
+    xo->key = XZ_POST;
+    xo->xyz = brd->title;
 
-#ifdef HAVE_BRDMATE
-  strcpy(cutmp->reading, currboard);
-#endif
+    /* itoc.011113: 改成第一次進板要看備忘錄 */
+    if (!(bits & BRD_V_BIT) || (cuser.ufo & UFO_BRDNOTE))
+    {
+      brd_bits[bno] = bits | BRD_V_BIT;
+      brd_fpath(fpath, currboard, fn_note);
+      more(fpath, NULL);
+    }
+  }
+
+  brh_get(brd->bstamp, bno);
 
   return 0;
 }
