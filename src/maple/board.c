@@ -780,8 +780,6 @@ XoPost(bno)
   int bits;
   char *str, fpath[64];
 
-  bbstate = STAT_STARTED;
-
   brd = bshm->bcache + bno;
   if (!brd->brdname[0])	/* 已刪除的看板 */
     return -1;
@@ -799,6 +797,7 @@ XoPost(bno)
 #endif
 
     /* 處理權限 */
+    bbstate = STAT_STARTED;
     if (bits & BRD_M_BIT)
       bbstate |= (STAT_BM | STAT_BOARD | STAT_POST);
     else if (bits & BRD_X_BIT)
