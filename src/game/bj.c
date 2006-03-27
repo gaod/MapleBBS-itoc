@@ -290,13 +290,13 @@ check_condition:
 	    {
 	      cuser.money -= money;
 	      money *= 2;
-	      out_song();
 	    }
 	    else
 	    {
 	      money += cuser.money;	/* 錢不夠二倍，就全梭了 */
 	      cuser.money = 0;
 	    }
+	    out_song();
 	  }
 	} while (ch != 'y' && ch != 'n');
 

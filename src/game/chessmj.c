@@ -652,8 +652,11 @@ main_chessmj()
 
     vget(2, 0, "請問要下注多少呢？(1 ~ 50000) ", ans, 6, DOECHO);
     money = atoi(ans);
-    if (money < 1 || money > 50000 || money > cuser.money)
+    if (money < 1 || money > 50000 || money * 10 > cuser.money)
+    {
+      vmsg("要有十倍的賭金才可以進來喔...！");	/* 賠錢最多賠十倍 */
       break;			/* 離開賭場 */
+    }
     cuser.money -= money;	/* 扣一份賭金，玩家如果中途離開將拿不回賭金 */
 
     move(2, 0);
