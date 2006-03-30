@@ -34,6 +34,7 @@
   http://my.domain/img?filename                顯示圖檔
   http://my.domain/rss?brdname                 各看板的RSS Feed
   http://my.domain/class?folder                列出分類中 [folder] 這個卷宗下的所有看板
+  http://my.domain/robot.txt                   Robot Exclusion
 
 #endif
 
@@ -46,6 +47,8 @@
 #include <sys/wait.h>
 #include <netinet/tcp.h>
 #include <sys/resource.h>
+
+#undef	ROBOT_EXCLUSION		/* robot exclusion */
 
 
 #define SERVER_USAGE
@@ -3075,6 +3078,27 @@ cmd_rss(ap)
 
 
   /* --------------------------------------------------- */
+  /* Robot Exclusion					 */
+  /* --------------------------------------------------- */
+
+#ifdef ROBOT_EXCLUSION
+static int
+cmd_robot(ap)
+  Agent *ap;
+{
+  FILE *fpw = out_http(ap, HS_OK, NULL);
+
+  fprintf(fpw, "Content-Length: 28\r\n");	/* robot.txt 的長度 */
+  fprintf(fpw, "Last-Modified: Sat, 01 Jan 2000 00:02:21 GMT\r\n\r\n");	/* 隨便給個時間 */
+
+  fprintf(fpw, "User-agent: *\r\nDisallow: /\r\n");
+      
+  return HS_OK;        
+}
+#endif
+
+
+  /* --------------------------------------------------- */
   /* 首頁						 */
   /* --------------------------------------------------- */
 
@@ -3129,38 +3153,42 @@ cmd_mainpage(ap)
 
 static Command cmd_table_get[] =
 {
-  cmd_userlist,   "usrlist", 7,
-  cmd_boardlist,  "brdlist", 7,
-  cmd_favorlist,  "fvrlist", 7,
-  cmd_class,      "class",   5,
+  cmd_userlist,    "usrlist",   7,
+  cmd_boardlist,   "brdlist",   7,
+  cmd_favorlist,   "fvrlist",   7,
+  cmd_class,       "class",     5,
 
-  cmd_postlist,   "brd",     3,
-  cmd_gemlist,    "gem",     3,
-  cmd_mboxlist,   "mbox",    4,
+  cmd_postlist,    "brd",       3,
+  cmd_gemlist,     "gem",       3,
+  cmd_mboxlist,    "mbox",      4,
 
-  cmd_brdmore,    "bmore",   5,
-  cmd_brdmost,    "bmost",   5,
-  cmd_gemmore,    "gmore",   5,
-  cmd_mboxmore,   "mmore",   5,
+  cmd_brdmore,     "bmore",     5,
+  cmd_brdmost,     "bmost",     5,
+  cmd_gemmore,     "gmore",     5,
+  cmd_mboxmore,    "mmore",     5,
 
-  cmd_dopost,     "dopost",  6,
-  cmd_domail,     "domail",  6,
+  cmd_dopost,      "dopost",    6,
+  cmd_domail,      "domail",    6,
 
-  cmd_delpost,    "delpost", 7,
-  cmd_predelpost, "dpost",   5,
-  cmd_delmail,    "delmail", 7,
-  cmd_predelmail, "dmail",   5,
-  cmd_markpost,   "mpost",   5,
-  cmd_markmail,   "mmail",   5,
+  cmd_delpost,     "delpost",   7,
+  cmd_predelpost,  "dpost",     5,
+  cmd_delmail,     "delmail",   7,
+  cmd_predelmail,  "dmail",     5,
+  cmd_markpost,    "mpost",     5,
+  cmd_markmail,    "mmail",     5,
 
-  cmd_query,      "query",   5,
+  cmd_query,       "query",     5,
 
-  cmd_image,      "img",     3,
-  cmd_rss,        "rss",     3,
+  cmd_image,       "img",       3,
+  cmd_rss,         "rss",       3,
 
-  cmd_mainpage,   "",        0,
+#ifdef ROBOT_EXCLUSION
+  cmd_robot,       "robot.txt", 9,
+#endif
 
-  NULL,           NULL,      0
+  cmd_mainpage,    "",          0,
+
+  NULL,            NULL,        0
 };
 
 
