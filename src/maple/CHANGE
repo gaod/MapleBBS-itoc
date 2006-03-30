@@ -1746,3 +1746,6 @@
 
 [2006/03/24] board.c vote.c 修正看板人氣計算錯誤。
 
+[2006/03/30] bhttpd.c 提供 robot exclusion。
+             ats2*.c 提供 ATS 轉換程式。
+
