@@ -13,7 +13,7 @@
 
 
 EXE =	brd2gem transacct transbrd \
-	ats2bmw ats2brd ats2gem ats2mf ats2pal ats2usr.c \
+	ats2bmw ats2brd ats2gem ats2mf ats2pal ats2usr \
 	cola2brd cola2gem cola2post cola2usr \
 	fb2brd fb2gem fb2pal fb2usr \
 	mag2brd mag2gem mag2usr \
