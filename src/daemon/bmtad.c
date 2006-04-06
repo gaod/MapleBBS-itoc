@@ -298,6 +298,7 @@ agent_reply(ap, msg)
 /* ----------------------------------------------------- */
 
 
+#ifdef EMAIL_JUSTIFY
 static int
 is_badid(userid)
   char *userid;
@@ -344,6 +345,7 @@ acct_fetch(userid, acct)
   }
   return fd;
 }
+#endif
 
 
 /* ----------------------------------------------------- */
