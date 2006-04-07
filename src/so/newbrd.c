@@ -272,9 +272,9 @@ nbrd_add(xo)
     numbers = NBRD_NUM_BRD;
 
 #ifdef SYSOP_START_COSIGN
-    nbrd.mode = NBRD_NEWBOARD | NBRD_START;
-#else
     nbrd.mode = NBRD_NEWBOARD;
+#else
+    nbrd.mode = NBRD_NEWBOARD | NBRD_START;
 #endif
   }
   else			/* ¨ä¥L³s¸p */
