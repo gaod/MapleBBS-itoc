@@ -1705,6 +1705,36 @@ class_switch(xo)
 /* ----------------------------------------------------- */
 
 
+static inline int
+in_favor(brdname)
+  char *brdname;
+{
+  MF mf;
+  int fd;
+  int rc = 0;
+  char fpath[64];
+
+  if (brdname[0])
+  {
+    mf_fpath(fpath, cuser.userid, FN_MF);
+
+    if ((fd = open(fpath, O_RDONLY)) >= 0)
+    {
+      while (read(fd, &mf, sizeof(MF)) == sizeof(MF))
+      {
+	if (!strcmp(brdname, mf.xname))
+	{
+	  rc = 1;
+	  break;
+	}
+      }
+    }
+    close(fd);
+  }
+  return rc;
+}
+
+
 static int 
 class_addMF(xo)
   XO *xo;  
@@ -1724,7 +1754,7 @@ class_addMF(xo)
 
     bhdr = bshm->bcache + chn;
 
-    if (bhdr->brdname[0])	/* 不是已刪除的看板 */
+    if (!in_favor(bhdr->brdname))
     {
       MF mf;
       char fpath[64];
@@ -1737,6 +1767,10 @@ class_addMF(xo)
       mf_fpath(fpath, cuser.userid, FN_MF);
       rec_add(fpath, &mf, sizeof(MF));
       vmsg("已加入我的最愛");
+    }
+    else
+    {
+      vmsg("此看板已在最愛中。若要重覆加入，請進我的最愛裡新增");
     }
   }
 
