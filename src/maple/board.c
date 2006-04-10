@@ -784,10 +784,10 @@ XoPost(bno)
   if (!brd->brdname[0])	/* 已刪除的看板 */
     return -1;
 
+  bits = brd_bits[bno];
+
   if (currbno != bno)	/* 看板沒換通常是因為 every_Z() 回原看板 */
   {
-    bits = brd_bits[bno];
-
 #ifdef HAVE_MODERATED_BOARD
     if (!(bits & BRD_R_BIT))
     {
@@ -829,14 +829,14 @@ XoPost(bno)
 #endif
     xo->key = XZ_POST;
     xo->xyz = brd->title;
+  }
 
-    /* itoc.011113: 改成第一次進板要看備忘錄 */
-    if (!(bits & BRD_V_BIT) || (cuser.ufo & UFO_BRDNOTE))
-    {
-      brd_bits[bno] = bits | BRD_V_BIT;
-      brd_fpath(fpath, currboard, fn_note);
-      more(fpath, NULL);
-    }
+  /* itoc.011113: 第一次進板一定要看進板畫面，第二次以後則取決 ufo 設定 */
+  if (!(bits & BRD_V_BIT) || (cuser.ufo & UFO_BRDNOTE))
+  {
+    brd_bits[bno] = bits | BRD_V_BIT;
+    brd_fpath(fpath, currboard, fn_note);
+    more(fpath, NULL);
   }
 
   brh_get(brd->bstamp, bno);
