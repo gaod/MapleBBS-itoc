@@ -1749,3 +1749,6 @@
 [2006/03/30] bhttpd.c 提供 robot exclusion。
              ats2*.c 提供 ATS 轉換程式。
 
+[2006/04/10] board.c 在看板列表將看板加入我的最愛不會重覆加入。
+             visio.c vget() 時按空白鍵儘量補完板名。
+

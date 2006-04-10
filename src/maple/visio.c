@@ -1447,15 +1447,18 @@ vget_match(prefix, len, op)
   int op;
 {
   char *data, *hit;
+  char newprefix[BNLEN + 1];	/* 繼續補完的板名 */
   int row, col, match;
+  int rlen;			/* 可補完的剩餘長度 */
 
   row = 3;
-  col = match = 0;
+  col = match = rlen = 0;
 
   if (op & GET_BRD)
   {
     usint perm;
-    char *bits;
+    int i;
+    char *bits, *n, *b;
     BRD *head, *tail;
 
     extern BCACHE *bshm;
@@ -1490,7 +1493,23 @@ vget_match(prefix, len, op)
 	  continue;
 
 	if (match == 1)
+	{
 	  match_title();
+	  if (data[len])
+	  {
+	    strcpy(newprefix, data);
+	    rlen = strlen(data + len);
+	  }
+	}
+	else if (rlen)	/* LHD.051014: 還有可補完的餘地 */
+	{
+	  n = newprefix + len;
+	  b = data + len;
+	  for (i = 0; i < rlen && ((*n | 0x20) == (*b | 0x20)); i++, n++, b++)
+	    ;
+	  *n = '\0';
+	  rlen = i;
+	}
 
 	move(row, col);
 	outs(data);
@@ -1608,6 +1627,11 @@ vget_match(prefix, len, op)
   {
     strcpy(prefix, hit);
     return strlen(hit);
+  }
+  else if (rlen)
+  {
+    strcpy(prefix, newprefix);
+    return len + rlen;
   }
 
   return 0;
