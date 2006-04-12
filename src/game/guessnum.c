@@ -120,6 +120,25 @@ finish(msg)
 }
 
 
+static int
+valid_guess(num)
+  char *num;
+{
+  const char n0 = num[0];
+  const char n1 = num[1];
+  const char n2 = num[2];
+  const char n3 = num[3];
+
+  if (n0 >= '0' && n0 <= '9' && n1 >= '0' && n1 <= '9' &&
+    n2 >= '0' && n2 <= '9' && n3 >= '0' && n3 <= '9' &&
+    n0 != n1 && n0 != n2 && n0 != n3 && n1 != n2 && n1 != n3 && n2 != n3)
+  {
+    return 1;
+  }
+  return 0;
+}
+
+
 static int 
 mainNum(fighting)
   int fighting;	/* Thor.990317: 對戰模式 */
@@ -158,8 +177,7 @@ mainNum(fighting)
       int i;
       char tmp[50];
       vget(b_lines - 3, 0, "您猜我的數字是[????]：", tmp, 5, DOECHO);
-      /* Thor.990317: 為簡化, 不作checking */
-      if (!tmp[0])
+      if (!valid_guess(tmp))
 	goto abort_game;
 
       for (i = 0; i < 4; i++)
