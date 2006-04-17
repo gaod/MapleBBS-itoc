@@ -450,7 +450,7 @@ belong_list(filelist, key, desc)
   rc = 0;
   if (fp = fopen(filelist, "r"))
   {
-    while (fgets(buf, 80, fp))
+    while (fgets(buf, sizeof(buf), fp))
     {
       if (buf[0] == '#')
 	continue;
