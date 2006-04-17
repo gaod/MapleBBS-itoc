@@ -32,90 +32,130 @@ static char *list[] = 		/* src/include/struct.h */
 };
 
 
-static FCACHE image;
-static int number;
-static int tail;
-
-
-static int		/* 1:成功 0:已超過容量 */
-play(data, movie, size)
-  char *data;
-  int movie;
-  int size;
+static void
+str_strip(str)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
+  char *str;
 {
-  int line, ch;
-  char *head;
+  int ch, ansi, len;
 
-  head = data;
+  /* 若動態看板有一列的寬度超過 SCR_WIDTH，會顯示二列，造成排版錯誤 (主要是點歌的部分)
+     所以就乾脆把超過 SCR_WIDTH 的部分刪除 (在此不考慮寬螢幕) */
+  /* 若本列中有 \033*s 或 \033*n，顯示出來會更長，所以要特別處理 */
 
-  if (movie)		/* 動態看板，要限制行數 */
+  ansi = len = 0;
+  while (ch = *str++)
   {
-    line = 0;
-    while (ch = *data)		/* at most MOVIE_LINES lines */
+    if (ch == '\n')
     {
-      data++;
-      if (ch == '\n')
+      break;
+    }
+    else if (ch == '\033')
+    {
+      ansi = 1;
+    }
+    else if (ansi)
+    {
+      if (ch == '*')	/* KEY_ESC + * + s/n 秀出 ID/username，考慮最大長度 */
       {
-	if (++line >= MOVIE_LINES)
+	ansi = 0;
+	len += BMAX(IDLEN, UNLEN) - 1;
+	if (len >= SCR_WIDTH)
+	{
+	  *str = '\0';
 	  break;
+	}
+      }
+      else if ((ch < '0' || ch > '9') && ch != ';' && ch != '[')
+	ansi = 0;
+    }
+    else
+    {
+      if (++len >= SCR_WIDTH)
+      {
+	*str = '\0';
+	break;
       }
     }
-
-    while (line < MOVIE_LINES)	/* at lease MOVIE_LINES lines */
-    {
-      *data++ = '\n';
-      line++;
-    }
-
-    *data = '\0';
-    size = data - head;
   }
-
-  ch = size + 1;	/* Thor.980804: +1 將結尾的 '\0' 也算入 */
-
-  line = tail + ch;
-  if (line >= MOVIE_SIZE)	/* 若加入這篇會超過全部容量，則不 mirror */
-    return 0;
-
-  data = image.film + tail;
-  memcpy(data, head, ch);
-  image.shot[++number] = tail = line;
-  return 1;
 }
 
 
-static int		/* 1:成功 0:已超過篇數 */
-mirror(fpath, movie)
+static FCACHE image;
+static int number;	/* 目前已 mirror 幾篇了 */
+static int total;	/* 目前已 mirror 幾 byte 了 */
+
+
+static int		/* 1:成功 0:已超過篇數或容量 */
+mirror(fpath, line)
   char *fpath;
-  int movie;		/* 0:系統文件，不限制列數  !=0:動態看板，要限制列數 */
+  int line;		/* 0:系統文件，不限制列數  !=0:動態看板，line 列 */
 {
-  int fd, size;
-  char buf[FILM_SIZ + 1];
+  int size, i;
+  char buf[FILM_SIZ];
+  char tmp[ANSILINELEN];
+  struct stat st;
+  FILE *fp;
 
   /* 若已經超過最大篇數，則不再繼續 mirror */
   if (number >= MOVIE_MAX - 1)
     return 0;
 
-  size = 0;
-  if ((fd = open(fpath, O_RDONLY)) >= 0)
+  if (stat(fpath, &st))
+    size = -1;
+  else
+    size = st.st_size;
+
+  if (size > 0 && size < FILM_SIZ && (fp = fopen(fpath, "r")))
   {
-    /* 讀入檔案 */
-    size = read(fd, buf, FILM_SIZ);
-    close(fd);
+    size = i = 0;
+    while (fgets(tmp, ANSILINELEN, fp))
+    {
+      str_strip(tmp);
+
+      strcpy(buf + size, tmp);
+      size += strlen(tmp);
+  
+      if (line)
+      {
+	/* 動態看板，最多 line 列 */
+	if (++i >= line)
+	  break;
+      }
+    }
+    fclose(fp);
+
+    if (i != line)	
+    {
+      /* 動態看板，若不到 line 列，要填滿 line 列 */
+      for (; i < line; i++)
+      {
+	buf[size] = '\n';
+	size++;
+      }
+      buf[size] = '\0';
+    }
   }
 
-  if (size <= 0)
+  if (size <= 0 || size >= FILM_SIZ)
   {
-    if (movie)		/* 如果是 動態看板/點歌 缺檔案，就不 mirror */
+    if (line)		/* 如果是 動態看板/點歌 缺檔案，就不 mirror */
       return 1;
 
-    /* 如果是系統文件缺檔案的話，要補上去 */
-    sprintf(buf, "請告訴站長缺檔案 %s", fpath);
+    /* 如果是系統文件出錯的話，要補上去 */
+    sprintf(buf, "請告訴站長檔案 %s 遺失或是過大", fpath);
     size = strlen(buf);
   }
 
-  buf[size] = '\0';
-  return play(buf, movie, size);
+  size++;	/* Thor.980804: +1 將結尾的 '\0' 也算入 */
+
+  i = total + size;
+  if (i >= MOVIE_SIZE)	/* 若加入這篇會超過全部容量，則不 mirror */
+    return 0;
+
+  memcpy(image.film + total, buf, size);
+  image.shot[++number] = total = i;
+
+  return 1;
 }
 
 
@@ -142,7 +182,7 @@ do_gem(folder)		/* itoc.011105: 把看板/精華區的文章收進 movie */
       }
       else				/* plain text */
       {
-	if (!mirror(fpath, FILM_MOVIE))
+	if (!mirror(fpath, MOVIE_LINES))
 	  break;
       }
     }
@@ -296,8 +336,7 @@ main()
   setuid(BBSUID);
   chdir(BBSHOME);
 
-  number = 0;		/* 計算有幾篇動態看板用的 */
-  tail = 0;
+  number = total = 0;
 
   /* --------------------------------------------------- */
   /* 今天節日					 	 */
@@ -350,7 +389,7 @@ main()
   fshm = (FCACHE *) shm_new(FILMSHM_KEY, sizeof(FCACHE));
   memcpy(fshm, &image, sizeof(FCACHE));
 
-  /* printf("%d/%d films, %d/%d bytes\n", number, MOVIE_MAX, tail, MOVIE_SIZE); */
+  /* printf("%d/%d films, %d/%d bytes\n", number, MOVIE_MAX, total, MOVIE_SIZE); */
 
   exit(0);
 }
