@@ -90,20 +90,22 @@ song_swap(str, src, des)
   char *src;
   char *des;
 {
-  char *ptr, *tmp, buf[256];
+  char *ptr;
+  char buf[ANSILINELEN];
 
-  ptr = strstr(str, src);
-  if (ptr)
+  if (ptr = strstr(str, src))
   {
     *ptr = '\0';
-    tmp = ptr + strlen(src);
-    sprintf(buf, "%s%s%s", str, des, tmp);
+    ptr += strlen(src);
+    /* sprintf(buf, "%s%s%s", str, des, ptr); */
+    snprintf(buf, ANSILINELEN, "%s%s%s", str, des, ptr);	/* swap ¥i¯à·|¶W¹L ANSILINELEN */
     strcpy(str, buf);
+
     /* return 1; */
     return ++swaped;
   }
-  else
-    return 0;
+
+  return 0;
 }
 
 
@@ -112,10 +114,10 @@ song_quote(fpr, fpw, src, des, say)	/* ±q fpr Åª¥X¤º¤å¡A§â <~Src~> µ¥´À´«±¼¡A¼g¤
   FILE *fpr, *fpw;
   char *src, *des, *say;
 {
-  char buf[256];
+  char buf[ANSILINELEN];
 
   swaped = 0;
-  while (fgets(buf, 256, fpr))
+  while (fgets(buf, sizeof(buf), fpr))
   {
     if (strstr(buf, SONG_END))
       break;
