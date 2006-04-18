@@ -588,7 +588,7 @@ re_key:
 	break;
       }
       /* 程辈秨﹍ */
-      i = PAGE_SCROLL + 1 - lino;
+      i = b_lines - lino;
       shift = BMAX(-PAGE_SCROLL, i);
     }
 
@@ -613,7 +613,7 @@ re_key:
       if (lino <= b_lines)	/* 竒程秨﹍ */
 	shift = 0;
       else
-	shift = -b_lines;
+	shift = -PAGE_SCROLL - 1;
     }
 
     else if (key == '/' || key == 'n')
@@ -717,7 +717,7 @@ re_key:
     }
     else if (shift < 0)			/* 非称簿 -shift  */
     {
-      if (shift > -b_lines)	/* 辈计 */
+      if (shift >= -PAGE_SCROLL)	/* 辈计 */
       {
 	lino += shift;
 
