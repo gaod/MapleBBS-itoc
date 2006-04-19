@@ -647,9 +647,9 @@ re_key:
     else if (key == 'h')
     {
       screenline slt[T_LINES];
-      uschar *tmp_fimage;		/* file image begin */
-      uschar *tmp_fend;		/* file image end */
-      uschar *tmp_foff;		/* 目前讀到哪裡 */
+      uschar *tmp_fimage;
+      uschar *tmp_fend;
+      uschar *tmp_foff;
       off_t tmp_block[MAXBLOCK];
 
       /* itoc.060420: xo_help() 會進入第二次 more()，所以要把所有 static 宣告的都記錄下來 */
