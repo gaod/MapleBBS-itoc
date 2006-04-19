@@ -647,9 +647,26 @@ re_key:
     else if (key == 'h')
     {
       screenline slt[T_LINES];
+      uschar *tmp_fimage;		/* file image begin */
+      uschar *tmp_fend;		/* file image end */
+      uschar *tmp_foff;		/* 目前讀到哪裡 */
+      off_t tmp_block[MAXBLOCK];
+
+      /* itoc.060420: xo_help() 會進入第二次 more()，所以要把所有 static 宣告的都記錄下來 */
+      tmp_fimage = fimage;
+      tmp_fend = fend;
+      tmp_foff = foff;
+      memcpy(tmp_block, block, sizeof(tmp_block));
+
       vs_save(slt);
       xo_help("post");
       vs_restore(slt);
+
+      fimage = tmp_fimage;
+      fend = tmp_fend;
+      foff = tmp_foff;
+      memcpy(block, tmp_block, sizeof(block));
+
       shift = 0;
     }
 
