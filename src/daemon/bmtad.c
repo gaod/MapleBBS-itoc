@@ -1679,6 +1679,8 @@ mta_from(ap, str)
       
       if (is_forge(tail))	/* Thor.990811: 假造的, 想都別想 */
 	return NULL;
+
+      /* 檢查 From: 是否在黑白名單上 */
       if (!(ap->mode & (AM_VALID | AM_BBSADM)) && acl_spam(head, tail))
       {
 	tail[-1] = '@';
@@ -1981,18 +1983,13 @@ mta_mailer(ap)
       data = mta_from(ap, data);
       if (!data)
       {
-	agent_reply(ap, "550 spam mail");
+	agent_reply(ap, "550 you are not in my access list");
 	return -1;
       }
     }
     else if (!str_ncmp(data, "Subject:", 8))
     {
       data = mta_subject(ap, data + 8);
-      if (!data)
-      {
-	agent_reply(ap, "550 spam mail");
-	return -1;
-      }
     }
     else if (!str_ncmp(data, "Content-Transfer-Encoding:", 26))
     {				/* Thor.980901: 解 rfc1522 body code */
@@ -2007,7 +2004,7 @@ mta_mailer(ap)
       char *content = data + 14;
       if (*content != '\0' && str_ncmp(content, "text/plain", 10))
       {
-	agent_reply(ap, "550 spam mail");
+	agent_reply(ap, "550 we only accept plain text");
 	return -1;
       }
 #endif
@@ -2018,7 +2015,7 @@ mta_mailer(ap)
 	mm_getcharset(data + 13, charset, sizeof(charset));
 	if (str_cmp(charset, MYCHARSET) && str_cmp(charset, "us-ascii"))
 	{
-	  agent_reply(ap, "550 spam mail");
+	  agent_reply(ap, "550 non-supported charset");
 	  return -1;
 	}
       }
@@ -2524,12 +2521,13 @@ cmd_mail(ap)
   ht_add(mfrom_ht, ptr);
 
   MYDOG;
+  /* 檢查 MAIL FROM: 是否在黑白名單上 */
   if (acl_spam(user, domain))
   {
     ap->xspam++;
     ap->mode |= AM_SPAM;
     agent_log(ap, "SPAM-M", ptr);
-    agent_reply(ap, "550 spam mail");
+    agent_reply(ap, "550 you are not in my access list");
     return;
   }
 
@@ -2661,33 +2659,40 @@ cmd_rcpt(ap)
   ht_add(mrcpt_ht, user);
 
   cc = is_rcpt(user, &letter);
-  if (cc < 0)
+
+  if (cc < 0)		/* 無此使用者或看板 */
   {
     ap->xerro++;
-    agent_reply(ap, "550 no such user");
+    agent_reply(ap, "550 no such user or board");
     return;
   }
 
-  if (cc)
+  if (cc)		/* AM_VALID、AM_BBSADM */
   {
     ap->mode |= cc;
   }
-  else
-  {				/* Thor.991130.註解: 一般 *.bbs@ 或 *.brd@ 情況 */
+  else			/* Thor.991130.註解: 一般 *.bbs@ 或 *.brd@ 情況 */
+  {
 #if 1	/* Thor.981227: 確定不是 bbsreg 才擋，delay 擋連線 */
     /* format: sprintf(servo_ident, "[%d] %s ip:%08x", ++servo_sno, rhost, csin.sin_addr.s_addr); */
     char rhost[256], *s;
 
-    s = strchr(ap->ident, ' ');
-    strcpy(rhost, s + 1);
-    if (s = strchr(rhost, ' '))
-      *s = '\0';
-    if (acl_spam("*", rhost))
+    if (s = strchr(ap->ident, ' '))
     {
-      ap->mode |= AM_SPAM;
-      agent_log(ap, "SPAM-M", rhost);
-      agent_reply(ap, "550 deny connection");
-      return;
+      strcpy(rhost, s + 1);
+      if (s = strchr(rhost, ' '))
+      {
+	*s = '\0';
+
+	/* 檢查 發信的機器 是否在黑白名單上 */
+	if (acl_spam("*", rhost))
+	{
+	  ap->mode |= AM_SPAM;
+	  agent_log(ap, "SPAM-M", rhost);
+	  agent_reply(ap, "550 deny connection");
+	  return;
+	}
+      }
     }
 #endif
 
@@ -3102,7 +3107,7 @@ agent_recv(ap)
     ap->used = dest - data;
 
     MYDOG;
-    /* Thor.981223: 不擋 bbsreg，將 untrust.acl 分離出來 */
+    /* Thor.981223: 確定不是 bbsreg 才擋 */
     if (!(mode & (AM_VALID | AM_BBSADM)) && (mode & AM_SPAM))
     {
       sprintf(ap->memo, "SPAM : %s", ap->from);
