@@ -2189,7 +2189,8 @@ mta_mail_body:
       /* itoc.060420.註解: 有些使用者會從別的 BBS 站一次轉寄整個討論串的文章(同標題)
          來本站，就會因為下面這條 rule 而被視為廣告商 */
 
-      if (he->xyz == hx)	/* 如果這個 from 在這次來信的標題和上次來信的標題一樣，那麼這個 from 很可能是廣告商 */
+      /* 如果這個 from 在這次來信和他自己上次來信的標題相同，那麼這個 from 很可能是廣告商 */
+      if (he->xyz == hx)
 	score += SPAM_MFROM_LIMIT >> 4;
       else
 	he->xyz = hx;		/* title_ht 指向目前之 From */
