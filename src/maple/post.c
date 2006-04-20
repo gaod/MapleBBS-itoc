@@ -614,8 +614,8 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   HDR *hdr;
   int cc;			/* 印出最多 cc - 1 字的標題 */
 {
-  /* 回覆/原創/閱讀中的同主題回覆/閱讀中的同主題原創 */
-  static char *type[4] = {"Re", "◇", "\033[1;33m=>", "\033[1;32m◆"};
+  /* 回覆/轉錄/原創/閱讀中的同主題回覆/閱讀中的同主題轉錄/閱讀中的同主題原創 */
+  static char *type[6] = {"Re", "Fw", "◇", "\033[1;33m=>", "\033[1;33m=>", "\033[1;32m◆"};
   uschar *title, *mark;
   int ch, len;
 #ifdef HAVE_DECLARE
@@ -676,9 +676,9 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   /* --------------------------------------------------- */
 
   title = str_ttl(mark = hdr->title);
-  ch = title == mark;
+  ch = (title == mark) ? 2 : (*mark == 'R') ? 0 : 1;
   if (!strcmp(currtitle, title))
-    ch += 2;
+    ch += 3;
   outs(type[ch]);
   outc(' ');
 
@@ -1203,8 +1203,8 @@ post_cross(xo)
 
   if (!tag)	/* lkchu.981201: 整批轉錄就不要一一詢問 */
   {
-    if (method && strncmp(hdr->title, "[轉錄]", 6))	/* 已有[轉錄]字樣就不要一直加了 */
-      sprintf(ve_title, "[轉錄]%.66s", hdr->title);
+    if (method)
+      sprintf(ve_title, "Fw: %.68s", str_ttl(hdr->title));	/* 已有 Re:/Fw: 字樣就只要一個 Fw: */
     else
       strcpy(ve_title, hdr->title);
 
@@ -1254,7 +1254,7 @@ post_cross(xo)
       EnumTag(hdr, dir, locus, sizeof(HDR));
 
       if (method)
-	sprintf(ve_title, "[轉錄]%.66s", hdr->title);
+	sprintf(ve_title, "Fw: %.68s", str_ttl(hdr->title));	/* 已有 Re:/Fw: 字樣就只要一個 Fw: */
       else
 	strcpy(ve_title, hdr->title);
     }
