@@ -61,10 +61,11 @@
 #define MAX_HOST_CONN	2
 
 
-#define SPAM_TITLE_LIMIT	50	/* 同一個標題寄進來超過 50 次就擋掉 */
-#define SPAM_MHOST_LIMIT	1000	/* 同一個 @domain 寄進來超過 1000 封信就擋掉 */
-#define SPAM_MFROM_LIMIT	100	/* 同一個 from 寄進來超過 100 封信就擋掉，如遇有標題、長度類似者加權；標題完全相同者加權更多 */
-#define SPAM_FORGE_LIMIT	10	/* 不是寫錯的，是故意的 */
+#define SPAM_MHOST_LIMIT	1000	/* 同一個 @host 寄進來超過 1000 封信，就將此 @host 視為廣告商 */
+#define SPAM_MFROM_LIMIT	100	/* 同一個 from 寄進來超過 100 封信，就將此 from 視為廣告商 */
+
+#define SPAM_TITLE_LIMIT	50	/* 同一個標題寄進來超過 50 次就特別記錄 */
+#define SPAM_FORGE_LIMIT	10	/* 同一個 @domain 錯 10 次以上，就認定不是筆誤，而是故意的 */
 
 
 /* Thor.000425: POSIX 用 O_NONBLOCK */
@@ -463,8 +464,8 @@ typedef struct HashEntry
   struct HashEntry *next;
   unsigned int hv;		/* hashing value */
   time_t uptime;
-  unsigned int visit;		/* reference counts */
-  unsigned int score;
+  int visit;			/* reference counts */
+  int score;
   void *xyz;			/* other stuff */
   char key[0];
 }         HashEntry;
@@ -661,7 +662,7 @@ ht_add(ht, key)
 	he->next = NULL;
 	he->visit = 0;
 	he->score = 0;
-	he->xyz = 0;
+	he->xyz = NULL;
 	memcpy(he->key, key, len);
 	ht->tale++;
 	ht->leak++;
@@ -1762,20 +1763,6 @@ mta_subject(ap, str)
 
 
 static inline int
-is_almost(size, used)
-  int *size;
-  int used;
-{
-  int delta;
-
-  delta = (*size) - used;
-  *size = used;
-
-  return (delta >= -16 && delta <= 16);
-}
-
-
-static inline int
 is_host_alias(addr)
   char *addr;
 {
@@ -1966,7 +1953,6 @@ mta_mailer(ap)
   char boundary[512] = "--";
   int cc, mode;
   RCPT *rcpt;
-  HashEntry *he, *hx;
 
   mode = ap->mode;
   data = ap->data + 1;		/* skip leading stuff */
@@ -2107,6 +2093,7 @@ mta_mail_body:
   /* --------------------------------------------------- */
   /* decode mail body					 */
   /* --------------------------------------------------- */
+
   /* Thor.980901: decode multipart body */
   if (boundary[2])
   {
@@ -2138,49 +2125,79 @@ mta_mail_body:
   /* --------------------------------------------------- */
 
   addr = ap->addr;
-  if ((str = strchr(addr, '@')) && str_ncmp("mailer-daemon@", addr, 14))
+  if ((str = strchr(addr, '@')) && str_ncmp(addr, "mailer-daemon@", 14))
   {
-    int aScore, hScore;
+    HashEntry *he, *hx;
+    int nrcpt, score, delta;
     time_t uptime;
 
     uptime = ap->uptime;
-    he = ht_add(mfrom_ht, addr);
-    he->uptime = uptime;
+    nrcpt = ap->nrcpt;
 
-    aScore = ap->nrcpt;
-    if (aScore > 0)
+    /* -------------------------------------------------- */
+    /* 檢查這個 @host 寄進來的信有無超過 SPAM_MHOST_LIMIT */
+    /* -------------------------------------------------- */
+
+    he = ht_add(mhost_ht, ++str);
+    he->uptime = uptime;
+    he->score += (nrcpt > 0) ? nrcpt : 1;	/* 一個收件人都沒有也算一次訪問 */
+
+    if (he->score >= SPAM_MHOST_LIMIT)
     {
-      hScore = aScore;
+      unmail_root = acl_add(unmail_root, str);
+      spam_add(he);
+      fprintf(flog, "SPAM-H\t[%d] %s\n", ap->sno, str);
+
+      sprintf(ap->memo, "SPAM : %s", str);
+      *delimiter = '\n';
+    }
+
+    /* -------------------------------------------- */
+    /* 檢查這個 title 的信有無超過 SPAM_TITLE_LIMIT */
+    /* -------------------------------------------- */
+
+    if (nrcpt > 0)
+    {
       hx = ht_add(title_ht, str_ttl(ap->title));
       hx->uptime = uptime;
-      hx->visit += aScore - 1;
-      hx->score += aScore;
+      hx->visit += nrcpt - 1;	/* title_ht 的 visit 是記錄這標題的信有幾人收過 */
+      hx->score += nrcpt;
       if (hx->score >= SPAM_TITLE_LIMIT)
-      {
 	fprintf(flog, "TITLE\t[%d] %s\n", ap->sno, ap->title);
-	aScore += aScore;
-      }
-
-      if (is_almost((int *) &hx->xyz, ap->used))	/* 標題雷同、長度亦類似 */
-      {
-	aScore += SPAM_MFROM_LIMIT >> 4;
-      }
-
-      if (he->xyz == hx)	/* title / from 皆同 */
-      {
-	aScore += SPAM_MFROM_LIMIT >> 3;
-      }
-      else
-      {
-	he->xyz = hx;		/* title_ht 指向目前之 From */
-      }
+ 
+      /* 如果這次來信和上次同標題的來信檔案差不多大，那麼這次來信很可能是廣告信 */
+      score = nrcpt;
+      delta = ((int) hx->xyz) - ap->used;
+      if (delta >= -16 && delta <= 16)
+	score +=  SPAM_MFROM_LIMIT >> 5;
+      (int) (hx->xyz) = ap->used;	/* title_ht 的 xyz 是記錄用這標題的最後一封信之檔案大小 */
     }
     else
     {
-      hScore = aScore = 1;
+      score = 1;
+    }
+    
+    /* ------------------------------------------------- */
+    /* 檢查這個 from 寄進來的信有無超過 SPAM_MFROM_LIMIT */
+    /* ------------------------------------------------- */
+
+    he = ht_add(mfrom_ht, addr);
+    he->uptime = uptime;
+
+    if (nrcpt > 0)	/* 有 title_ht 的 HashEntry hx-> */
+    {
+      /* itoc.060420.註解: 有些使用者會從別的 BBS 站一次轉寄整個討論串的文章(同標題)
+         來本站，就會因為下面這條 rule 而被視為廣告商 */
+
+      if (he->xyz == hx)	/* 如果這個 from 在這次來信的標題和上次來信的標題一樣，那麼這個 from 很可能是廣告商 */
+	score += SPAM_MFROM_LIMIT >> 4;
+      else
+	he->xyz = hx;		/* title_ht 指向目前之 From */
     }
 
-    if ((he->score += aScore) >= SPAM_MFROM_LIMIT)
+    he->score += score;
+
+    if (he->score >= SPAM_MFROM_LIMIT)
     {
       unmail_root = acl_add(unmail_root, addr);
       spam_add(he);
@@ -2192,20 +2209,7 @@ mta_mail_body:
 
     /* ------------------------------------------------- */
 
-    he = ht_add(mhost_ht, ++str);
-    he->uptime = uptime;
-
-    if ((he->score += hScore) >= SPAM_MHOST_LIMIT)
-    {
-      unmail_root = acl_add(unmail_root, str);
-      spam_add(he);
-      fprintf(flog, "SPAM-H\t[%d] %s\n", ap->sno, str);
-
-      sprintf(ap->memo, "SPAM : %s", str);
-      *delimiter = '\n';
-    }
-
-    if (*delimiter)
+    if (*delimiter)	/* 若 *delimiter == '\n'，表示超過 SPAM_*_LIMIT */
     {
       MYDOG;
       mta_memo(ap, 0);
