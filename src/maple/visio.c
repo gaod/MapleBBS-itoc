@@ -1770,13 +1770,8 @@ vget(line, col, prompt, data, max, echo)
     }
 
     /* ----------------------------------------------- */
-    /* 輸入 password / match-list 時只能按 BackSpace   */
+    /* 輸入 password 時只能按 BackSpace		       */
     /* ----------------------------------------------- */
-
-#if 0
-    if ((!echo || mfunc) && ch != KEY_BKSP)
-      continue;
-#endif
 
     if (!echo && ch != KEY_BKSP)
       continue;
@@ -1825,7 +1820,7 @@ vget(line, col, prompt, data, max, echo)
       while (i < len)
       {
 	data[i] = ch = data[i + 1];
-	outc(echo ? ch : '*');
+	outc(ch);
 	i++;
       }
       outc(' ');
