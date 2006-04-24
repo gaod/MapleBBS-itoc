@@ -690,7 +690,7 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
 
 #ifdef HAVE_DECLARE	/* Thor.980508: Declaration, 嘗試使某些title更明顯 */
   square = 0;		/* 0:不處理方括 1:要處理方括 */
-  if (ch < 2)
+  if (ch < 3)
   {
     if (*title == '[')
     {
@@ -720,9 +720,9 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   }
 
 #ifdef HAVE_DECLARE
-  if (square || ch >= 2)	/* Thor.980508: 變色還原用 */
+  if (square || ch >= 3)	/* Thor.980508: 變色還原用 */
 #else
-  if (ch >= 2)
+  if (ch >= 3)
 #endif
     outs("\033[m");
 
