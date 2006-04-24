@@ -290,14 +290,23 @@ b_invis()
   }
   else
   {
-    if (cuser.gold < 10)
+    if (HAS_PERM(PERM_CLOAK))
     {
-      vmsg("要 10 金幣才能隱形喔");
-      return XEASY;
+      if (vans("是否隱形(Y/N)？[N] ") != 'y')
+	return XEASY;
+      /* 有無限隱形權限者免費 */
     }
-    if (vans("是否花 10 金幣隱形(Y/N)？[N] ") != 'y')
-      return XEASY;
-    cuser.gold -= 10;
+    else
+    {
+      if (cuser.gold < 10)
+      {
+	vmsg("要 10 金幣才能隱形喔");
+	return XEASY;
+      }
+      if (vans("是否花 10 金幣隱形(Y/N)？[N] ") != 'y')
+	return XEASY;
+      cuser.gold -= 10;
+    }
   }
 
   cuser.ufo ^= UFO_CLOAK;
