@@ -63,8 +63,7 @@ transfer_pal(userid)
   ACCT acct;
   FILE *fp;
   int fd, friend_userno;
-  char fpath[64], buf[64];
-  char abuf[80], bbuf[80];
+  char fpath[64], buf[64], friend_userid[80];
   PAL pal;
 
   usr_fpath(fpath, userid, FN_PAL);         			/* 新的好友名單 */
@@ -81,23 +80,15 @@ transfer_pal(userid)
   if (dashf(fpath))
     unlink(fpath);      /* 清掉重建 */
 
-  strcpy(bbuf, "dadadasdasda");	/* 隨便亂給一個不會發生的 ID */
-
   if (!(fp = fopen(buf, "r")))
     return;
 
-  while (1)
+  while (fscanf(fp, "%s", friend_userid) == 1)
   {
-    fscanf(fp, "%s", abuf);
-
-    if (!strcmp(abuf, bbuf))
-      break;
-    strcpy(bbuf, abuf);
-
-    if ((friend_userno = acct_uno(abuf)) >= 0)
+    if ((friend_userno = acct_uno(friend_userid)) >= 0)
     {
       memset(&pal, 0, sizeof(PAL));
-      str_ncpy(pal.userid, abuf, sizeof(pal.userid));
+      str_ncpy(pal.userid, friend_userid, sizeof(pal.userid));
       pal.ftype = 0;
       str_ncpy(pal.ship, "", sizeof(pal.ship));
       pal.userno = friend_userno;
@@ -115,12 +106,11 @@ transfer_brdpal(userid)
 {
   FILE *fp;
   int friend_userno;
-  char fpath[64], buf[64];
-  char abuf[80], bbuf[80];
+  char fpath[64], buf[64], friend_userid[80];
   PAL pal;
 
-  brd_fpath(fpath, userid, FN_PAL);                     /* 新的看板好友名單 */
-  sprintf(buf, OLD_BBSHOME"/boards/%s/visable", userid);     /* 舊的看板好友名單 */
+  brd_fpath(fpath, userid, FN_PAL);				/* 新的看板好友名單 */
+  sprintf(buf, OLD_BBSHOME"/boards/%s/visable", userid);	/* 舊的看板好友名單 */
 
   if (dashf(fpath))
     unlink(fpath);              /* 清掉重建 */
@@ -128,20 +118,12 @@ transfer_brdpal(userid)
   if (!(fp = fopen(buf, "r")))
     return;
 
-  strcpy(bbuf, "daldjlsadadas");    /* 隨便亂給一個不會發生的 ID */
-
-  while (1)
+  while (fscanf(fp, "%s", friend_userid) == 1)
   {
-    fscanf(fp, "%s", abuf);
-
-    if (!strcmp(abuf, bbuf))
-      break;
-    strcpy(bbuf, abuf);
-
-    if ((friend_userno = acct_uno(abuf)) >= 0)
+    if ((friend_userno = acct_uno(friend_userid)) >= 0)
     {
       memset(&pal, 0, sizeof(PAL));
-      str_ncpy(pal.userid, abuf, sizeof(pal.userid));
+      str_ncpy(pal.userid, friend_userid, sizeof(pal.userid));
       pal.ftype = 0;
       str_ncpy(pal.ship, "", sizeof(pal.ship));
       pal.userno = friend_userno;
