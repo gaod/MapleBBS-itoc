@@ -109,7 +109,7 @@ typedef struct Agent
   int state;
   int mode;
   int letter;			/* 1:寄給 *.bbs@  0:寄給 *.brd@ */
-  unsigned int ip_addr;
+  u_long ip_addr;
 
   time_t uptime;
   time_t tbegin;
@@ -462,11 +462,12 @@ bbs_biff(userno)
 typedef struct HashEntry
 {
   struct HashEntry *next;
-  unsigned int hv;		/* hashing value */
+  usint hv;			/* hashing value */
   time_t uptime;
   int visit;			/* reference counts */
   int score;
-  void *xyz;			/* other stuff */
+  int fsize;			/* file size (只有在 title_ht 才有用) */
+  struct HashEntry *ttl;	/* title (只有在 mfrom_ht 才有用) */
   char key[0];
 }         HashEntry;
 
@@ -488,7 +489,7 @@ he_hash(key, len)
   const unsigned char *key;
   int len;			/* 0 : string */
 {
-  unsigned int seed, shft;
+  usint seed, shft;
 
   seed = HASH_TABLE_SEED;
   shft = 0;
@@ -567,7 +568,7 @@ ht_free(ht)
     {
       next = node->next;
       if (len > 0)
-	free(node->xyz);
+	free(node->ttl);
       free(node);
       node = next;
     }
@@ -595,7 +596,7 @@ ht_apply(ht, func)
       {
 	*hp = he->next;
 	if (len > 0)
-	  free(he->xyz);
+	  free(he->ttl);
 	free(he);
 	ht->tale--;
       }
@@ -614,7 +615,7 @@ ht_look(ht, key)
   const void *key;
 {
   int len;
-  unsigned int hv;
+  usint hv;
   HashEntry *he;
   int (*comp) ();
 
@@ -640,7 +641,7 @@ ht_add(ht, key)
 {
   HashEntry *he, **hp;
   int len;
-  unsigned int hv;
+  usint hv;
   int (*comp) ();
 
   len = ht->keylen;
@@ -662,7 +663,8 @@ ht_add(ht, key)
 	he->next = NULL;
 	he->visit = 0;
 	he->score = 0;
-	he->xyz = NULL;
+	he->fsize = 0;
+	he->ttl = NULL;
 	memcpy(he->key, key, len);
 	ht->tale++;
 	ht->leak++;
@@ -2167,10 +2169,10 @@ mta_mail_body:
  
       /* 如果這次來信和上次同標題的來信檔案差不多大，那麼這次來信很可能是廣告信 */
       score = nrcpt;
-      delta = ((int) hx->xyz) - ap->used;
+      delta = hx->fsize - ap->used;
       if (delta >= -16 && delta <= 16)
 	score +=  SPAM_MFROM_LIMIT >> 5;
-      (int) (hx->xyz) = ap->used;	/* title_ht 的 xyz 是記錄用這標題的最後一封信之檔案大小 */
+      hx->fsize = ap->used;		/* 記錄用這標題的最後一封信之檔案大小 */
     }
     else
     {
@@ -2190,10 +2192,10 @@ mta_mail_body:
          來本站，就會因為下面這條 rule 而被視為廣告商 */
 
       /* 如果這個 from 在這次來信和他自己上次來信的標題相同，那麼這個 from 很可能是廣告商 */
-      if (he->xyz == hx)
+      if (he->ttl == hx)
 	score += SPAM_MFROM_LIMIT >> 4;
       else
-	he->xyz = hx;		/* title_ht 指向目前之 From */
+	he->ttl = hx;		/* 記錄這個 from 在這次來信的標題 */
     }
 
     he->score += score;
@@ -3901,7 +3903,7 @@ main(argc, argv)
     if (FD_ISSET(0, &rset))
     {
       /* Thor.990319: check maximum connection number */
-      unsigned int ip_addr;
+      u_long ip_addr;
       MYDOG;
       sock = agent_accept();
       MYDOG;
