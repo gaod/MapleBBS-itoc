@@ -2026,7 +2026,6 @@ ve_key:
 	    ve_col = cc;
 	}
 	vx_cur = tmp;
-//itoc
 #ifdef HAVE_MULTI_BYTE
 	if (ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
 	  ve_col++;
@@ -2052,7 +2051,6 @@ ve_key:
 	    ve_col = cc;
 	}
 	vx_cur = tmp;
-//itoc
 #ifdef HAVE_MULTI_BYTE
 	if (ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
 	  ve_col++;
