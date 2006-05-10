@@ -27,6 +27,32 @@ static int cur_pos;			/* current position with ANSI codes */
 
 
 /* ----------------------------------------------------- */
+/* 漢字 (zh-char) 判斷					 */
+/* ----------------------------------------------------- */
+
+
+#ifdef HAVE_MULTI_BYTE
+int			/* 1:是 0:不是 */
+is_zhc_low(str, n)	/* hightman.060505: 判斷字串中的第 n 個字符是否為漢字的後半字 */
+  char *str;
+  int n;
+{
+  char *end;
+
+  end = str + n;
+  while (str < end)
+  {
+    if (IS_ZHC_HI(*str))
+      str++;
+    str++;
+  }
+
+  return (str - end);
+}
+#endif
+
+
+/* ----------------------------------------------------- */
 /* output routines					 */
 /* ----------------------------------------------------- */
 
@@ -1794,16 +1820,27 @@ vget(line, col, prompt, data, max, echo)
       /* remove data and display it			 */
       /* ----------------------------------------------- */
 
-      i = col--;
       len--;
-      move(x, y + col);
-      while (i <= len)
+      col--;
+#ifdef HAVE_MULTI_BYTE
+      /* hightman.060504: 判斷現在刪除的位置是否為漢字的後半段，若是刪二字元 */
+      if (echo && col && IS_ZHC_LO(data, col))
       {
-	data[i - 1] = ch = data[i];
-	outc(echo ? ch : '*');
-	i++;
+	len--;
+	col--;
+	next = 2;
       }
-      outc(' ');
+      else
+#endif
+	next = 1;
+      move(x, y + col);
+      for (i = col; i < len; i++)
+      {
+	data[i] = ch = data[i + next];
+	outc(echo ? ch : '*');
+      }
+      while (next--)
+	outc(' ');
       break;
 
     case KEY_DEL:
@@ -1815,27 +1852,50 @@ vget(line, col, prompt, data, max, echo)
       /* remove data and display it			 */
       /* ----------------------------------------------- */
 
-      i = col;
       len--;
-      while (i < len)
+#ifdef HAVE_MULTI_BYTE
+      /* hightman.060504: 判斷現在刪除的位置是否為漢字的前半段，若是刪二字元 */
+      if (col < len && IS_ZHC_HI(data[col]))
       {
-	data[i] = ch = data[i + 1];
-	outc(ch);
-	i++;
+	len--;
+	next = 2;
       }
-      outc(' ');
+      else
+#endif
+	next = 1;
+      for (i = col; i < len; i++)
+      {
+	data[i] = ch = data[i + next];
+	outc(ch);
+      }
+      while (next--)
+	outc(' ');
       break;
 
     case KEY_LEFT:
     case Ctrl('B'):
       if (col)
-	--col;
+      {
+	col--;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 左移時碰到漢字移雙格 */
+	if (col && IS_ZHC_LO(data, col))
+	  col--;
+#endif
+      }
       break;
 
     case KEY_RIGHT:
     case Ctrl('F'):
       if (col < len)
-	++col;
+      {
+	col++;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 右移時碰到漢字移雙格 */
+	if (col < len && IS_ZHC_HI(data[col - 1]))
+	  col++;
+#endif
+      }
       break;
 
     case KEY_HOME:

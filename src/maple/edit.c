@@ -88,6 +88,10 @@ ve_position(cur, top)
   row = cur->len;
   if (ve_col > row)
     ve_col = row;
+#ifdef HAVE_MULTI_BYTE
+  else if (ve_col < row && IS_ZHC_LO(cur->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+    ve_col++;
+#endif
 
   row = 0;
   while (cur != top)
@@ -1900,7 +1904,13 @@ ve_key:
 
 	if (col)
 	{
-	  delete_char(vln, ve_col = --col);
+	  delete_char(vln, --col);
+#ifdef HAVE_MULTI_BYTE
+	  /* hightman.060504: 判斷現在刪除的位置是否為漢字的後半段，若是刪二字元 */
+	  if (col && IS_ZHC_LO(vln->data, col))
+	    delete_char(vln, --col);
+#endif
+	  ve_col = col;
 	  continue;
 	}
 
@@ -1931,6 +1941,12 @@ ve_key:
 	{
 	  if (cc == 0)
 	    goto ve_key;
+#ifdef HAVE_MULTI_BYTE
+	  /* hightman.060504: 判斷現在刪除的位置是否為漢字的前半段，若是刪二字元 */
+	  /* 注意原有的雙色字刪除後可能出問題，暫時不作另行處理 */
+	  if (col < cc - 1 && IS_ZHC_HI(vln->data[col]))
+	    delete_char(vln, col);
+#endif
 	  delete_char(vln, col);
 	  if (mode & VE_ANSI)	/* Thor: 雖然增加 load, 不過edit 時會比較好看 */
 	    ve_col = ansi2n(n2ansi(col, vln), vln);
@@ -1942,6 +1958,10 @@ ve_key:
 	if (col)
 	{
 	  ve_col = (mode & VE_ANSI) ? ansi2n(pos - 1, vln) : col - 1;
+#ifdef HAVE_MULTI_BYTE
+	  if (ve_col && IS_ZHC_LO(vln->data, ve_col))	/* hightman.060504: 漢字整字移動 */
+	    ve_col--;
+#endif
 	  continue;
 	}
 
@@ -1956,9 +1976,13 @@ ve_key:
 
       case KEY_RIGHT:
 
-	if (vln->len != col)
+	if (col < vln->len)
 	{
 	  ve_col = (mode & VE_ANSI) ? ansi2n(pos + 1, vln) : col + 1;
+#ifdef HAVE_MULTI_BYTE
+	  if (ve_col < vln->len && IS_ZHC_HI(vln->data[ve_col - 1]))	/* hightman.060504: 漢字整字移動 */
+	    ve_col++;
+#endif
 	  continue;
 	}
 
@@ -2002,6 +2026,11 @@ ve_key:
 	    ve_col = cc;
 	}
 	vx_cur = tmp;
+//itoc
+#ifdef HAVE_MULTI_BYTE
+	if (ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+	  ve_col++;
+#endif
 	break;
 
       case KEY_DOWN:
@@ -2023,6 +2052,11 @@ ve_key:
 	    ve_col = cc;
 	}
 	vx_cur = tmp;
+//itoc
+#ifdef HAVE_MULTI_BYTE
+	if (ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+	  ve_col++;
+#endif
 	break;
 
       case KEY_PGUP:
