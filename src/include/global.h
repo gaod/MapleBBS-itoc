@@ -347,6 +347,7 @@ KEY_BKSP == Ctrl('H') == 0x08
 #define	STR_POST1	"¬ÝªO:"
 #define	STR_POST2	"¯¸¤º:"
 #define	STR_REPLY	"Re: "
+#define	STR_FORWARD	"Fw: "
 
 #define STR_LINE	"\n\
 > -------------------------------------------------------------------------- <\n\n"
