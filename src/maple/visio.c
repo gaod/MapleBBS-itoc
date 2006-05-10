@@ -33,7 +33,7 @@ static int cur_pos;			/* current position with ANSI codes */
 
 #ifdef HAVE_MULTI_BYTE
 int			/* 1:是 0:不是 */
-is_zhc_low(str, n)	/* hightman.060505: 判斷字串中的第 n 個字符是否為漢字的後半字 */
+is_zhc_low(str, n)	/* hightman.060504: 判斷字串中的第 n 個字符是否為漢字的後半字 */
   char *str;
   int n;
 {
@@ -1824,7 +1824,7 @@ vget(line, col, prompt, data, max, echo)
       col--;
 #ifdef HAVE_MULTI_BYTE
       /* hightman.060504: 判斷現在刪除的位置是否為漢字的後半段，若是刪二字元 */
-      if (echo && col && IS_ZHC_LO(data, col))
+      if ((cuser.ufo & UFO_ZHC) && echo && col && IS_ZHC_LO(data, col))
       {
 	len--;
 	col--;
@@ -1855,7 +1855,7 @@ vget(line, col, prompt, data, max, echo)
       len--;
 #ifdef HAVE_MULTI_BYTE
       /* hightman.060504: 判斷現在刪除的位置是否為漢字的前半段，若是刪二字元 */
-      if (col < len && IS_ZHC_HI(data[col]))
+      if ((cuser.ufo & UFO_ZHC) && col < len && IS_ZHC_HI(data[col]))
       {
 	len--;
 	next = 2;
@@ -1879,7 +1879,7 @@ vget(line, col, prompt, data, max, echo)
 	col--;
 #ifdef HAVE_MULTI_BYTE
 	/* hightman.060504: 左移時碰到漢字移雙格 */
-	if (col && IS_ZHC_LO(data, col))
+	if ((cuser.ufo & UFO_ZHC) && col && IS_ZHC_LO(data, col))
 	  col--;
 #endif
       }
@@ -1892,7 +1892,7 @@ vget(line, col, prompt, data, max, echo)
 	col++;
 #ifdef HAVE_MULTI_BYTE
 	/* hightman.060504: 右移時碰到漢字移雙格 */
-	if (col < len && IS_ZHC_HI(data[col - 1]))
+	if ((cuser.ufo & UFO_ZHC) && col < len && IS_ZHC_HI(data[col - 1]))
 	  col++;
 #endif
       }

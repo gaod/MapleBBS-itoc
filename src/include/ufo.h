@@ -41,7 +41,7 @@
 #define UFO_NOSIGN	BFLAG(16)	/* itoc.000320: 不使用簽名檔 */
 #define UFO_SHOWSIGN	BFLAG(17)	/* itoc.000319: 存檔前顯示簽名檔 */
 
-#define UFO_NOUSE18	BFLAG(18)
+#define UFO_ZHC		BFLAG(18)	/* hightman.060504: 全型字偵測 */
 #define UFO_JUMPBRD	BFLAG(19)	/* itoc.020122: 自動跳去下一個未讀看板 */
 #define UFO_NOUSE20	BFLAG(20)
 #define UFO_NOUSE21	BFLAG(21)
@@ -94,7 +94,7 @@
 #define NUMUFOS_GUEST	5	/* guest 可以用前 5 個 ufo */
 #define NUMUFOS_USER	20	/* 一般使用者 可以用前 20 個 ufo */
 
-#define STR_UFO		"-mpsnemPBQFANbwtSH-J----CHA"		/* itoc: 新增習慣的時候別忘了改這裡啊 */
+#define STR_UFO		"-mpsnemPBQFANbwtSHZJ----CHA"		/* itoc: 新增習慣的時候別忘了改這裡啊 */
 
 
 #ifdef _ADMIN_C_
@@ -142,7 +142,11 @@ char *ufo_tbl[NUMUFOS] =
   "不使用簽名檔    (不用/選擇)",	/* UFO_NOSIGN */
   "顯示簽名檔      (顯示/不看)",	/* UFO_SHOWSIGN */
 
+#ifdef HAVE_MULTI_BYTE
+  "全型字偵測      (偵測/不用)",	/* UFO_ZHC */
+#else
   "保留",
+#endif
 
 #ifdef AUTO_JUMPBRD
   "跳去未讀看板    (跳去/不跳)",	/* UFO_JUMPBRD */

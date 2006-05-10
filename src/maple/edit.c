@@ -38,6 +38,11 @@ static int ve_col;
 static int ve_mode;		/* operation mode */
 
 
+#ifdef HAVE_MULTI_BYTE
+static int zhc;			/* 是否有 UFO_ZHC */
+#endif
+
+
 #ifdef HAVE_ANONYMOUS
 char anonymousid[IDLEN + 1];	/* itoc.010717: 自定匿名 ID */
 #endif
@@ -89,7 +94,7 @@ ve_position(cur, top)
   if (ve_col > row)
     ve_col = row;
 #ifdef HAVE_MULTI_BYTE
-  else if (ve_col < row && IS_ZHC_LO(cur->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+  else if (zhc && ve_col < row && IS_ZHC_LO(cur->data, ve_col))	/* hightman.060504: 漢字整字調節 */
     ve_col++;
 #endif
 
@@ -1759,6 +1764,10 @@ vedit(fpath, ve_op)
   ve_lno = 1;
   ve_mode = VE_INSERT | VE_REDRAW | VE_FOOTER;
 
+#ifdef HAVE_MULTI_BYTE
+  zhc = (cuser.ufo & UFO_ZHC);
+#endif
+
   /* --------------------------------------------------- */
   /* 主迴圈：螢幕顯示、鍵盤處理、檔案處理		 */
   /* --------------------------------------------------- */
@@ -1907,7 +1916,7 @@ ve_key:
 	  delete_char(vln, --col);
 #ifdef HAVE_MULTI_BYTE
 	  /* hightman.060504: 判斷現在刪除的位置是否為漢字的後半段，若是刪二字元 */
-	  if (col && IS_ZHC_LO(vln->data, col))
+	  if (zhc && col && IS_ZHC_LO(vln->data, col))
 	    delete_char(vln, --col);
 #endif
 	  ve_col = col;
@@ -1944,7 +1953,7 @@ ve_key:
 #ifdef HAVE_MULTI_BYTE
 	  /* hightman.060504: 判斷現在刪除的位置是否為漢字的前半段，若是刪二字元 */
 	  /* 注意原有的雙色字刪除後可能出問題，暫時不作另行處理 */
-	  if (col < cc - 1 && IS_ZHC_HI(vln->data[col]))
+	  if (zhc && col < cc - 1 && IS_ZHC_HI(vln->data[col]))
 	    delete_char(vln, col);
 #endif
 	  delete_char(vln, col);
@@ -1959,7 +1968,7 @@ ve_key:
 	{
 	  ve_col = (mode & VE_ANSI) ? ansi2n(pos - 1, vln) : col - 1;
 #ifdef HAVE_MULTI_BYTE
-	  if (ve_col && IS_ZHC_LO(vln->data, ve_col))	/* hightman.060504: 漢字整字移動 */
+	  if (zhc && ve_col && IS_ZHC_LO(vln->data, ve_col))	/* hightman.060504: 漢字整字移動 */
 	    ve_col--;
 #endif
 	  continue;
@@ -1980,7 +1989,7 @@ ve_key:
 	{
 	  ve_col = (mode & VE_ANSI) ? ansi2n(pos + 1, vln) : col + 1;
 #ifdef HAVE_MULTI_BYTE
-	  if (ve_col < vln->len && IS_ZHC_HI(vln->data[ve_col - 1]))	/* hightman.060504: 漢字整字移動 */
+	  if (zhc && ve_col < vln->len && IS_ZHC_HI(vln->data[ve_col - 1]))	/* hightman.060504: 漢字整字移動 */
 	    ve_col++;
 #endif
 	  continue;
@@ -2027,7 +2036,7 @@ ve_key:
 	}
 	vx_cur = tmp;
 #ifdef HAVE_MULTI_BYTE
-	if (ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+	if (zhc && ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
 	  ve_col++;
 #endif
 	break;
@@ -2052,7 +2061,7 @@ ve_key:
 	}
 	vx_cur = tmp;
 #ifdef HAVE_MULTI_BYTE
-	if (ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+	if (zhc && ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
 	  ve_col++;
 #endif
 	break;
