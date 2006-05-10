@@ -705,7 +705,7 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
 #ifdef HAVE_DECLARE
     if (square)
     {
-      if (square & 0x80 || cc & 0x80)	/* 中文字的第二碼若是 ']' 不算是方括 */
+      if (IS_ZHC_HI(square) || IS_ZHC_HI(cc))	/* 中文字的第二碼若是 ']' 不算是方括 */
 	square ^= 0x80;
       else if (cc == ']')
       {

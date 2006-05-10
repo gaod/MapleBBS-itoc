@@ -523,7 +523,7 @@ ansi_html(fpw, src)
   {
     ch1 = ch2;
     ch2 = *(++src);
-    if (ch1 & 0x80)
+    if (IS_ZHC_HI(ch1))
     {
       while (ch2 == ANSI_TAG)
       {
@@ -634,7 +634,7 @@ str_html(src, len)
   ch = *src;
   while (ch && src < end)
   {
-    if (ch & 0x80)
+    if (IS_ZHC_HI(ch))
     {
       in_chi = *(++src);
       while (in_chi == ANSI_TAG)

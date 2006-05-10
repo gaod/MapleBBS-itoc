@@ -190,6 +190,7 @@ int u_log(void);
 int u_xfile(void);
 
 /* visio.c */
+int is_zhc_low(char *str, int pos);
 void prints(char *fmt, ...);
 void bell(void);
 void move(int x, int y);
