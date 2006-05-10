@@ -223,6 +223,7 @@ filter_select(head, hdr)
   HDR *hdr;	/* 條件 */
 {
   char *title;
+  usint str4;
 
   /* 借用 hdr->xid 當 strlen(hdr->owner) */
 
@@ -233,7 +234,8 @@ filter_select(head, hdr)
   if (hdr->title[0])
   {
     title = head->title;
-    if (STR4(title) == STR4(STR_REPLY))	/* Thor.980911: 先把 Re: 除外 */
+    str4 = STR4(title);
+    if (str4 == STR4(STR_REPLY) || str4 == STR4(STR_FORWARD))	/* Thor.980911: 先把 Re:/Fw: 除外 */
       title += 4;
     if (!str_sub(title, hdr->title))
       return 0;
@@ -371,9 +373,11 @@ filter_search(head, hdr)
   HDR *hdr;	/* 條件 */
 {
   char *title, buf[TTLEN + 1];
+  usint str4;
 
   title = head->title;
-  if (STR4(title) == STR4(STR_REPLY))	/* Thor.980911: 先把 Re: 除外 */
+  str4 = STR4(title);
+  if (str4 == STR4(STR_REPLY) || str4 == STR4(STR_FORWARD))	/* Thor.980911: 先把 Re:/Fw: 除外 */
     title += 4;
   str_lowest(buf, title);
   return !strcmp(buf, hdr->title);
@@ -386,6 +390,7 @@ XoXsearch(xo)
 {
   HDR hdr, *mhdr;
   char *title;
+  usint str4;
 
 #ifdef EVERY_Z
   if (z_status && xz[XZ_XPOST - XO_ZONE].xo)	/* itoc.020308: 不得累積進入二次 */
@@ -398,7 +403,8 @@ XoXsearch(xo)
   mhdr = (HDR *) xo_pool + (xo->pos - xo->top);
 
   title = mhdr->title;
-  if (STR4(title) == STR4(STR_REPLY))
+  str4 = STR4(title);
+  if (str4 == STR4(STR_REPLY) || str4 == STR4(STR_FORWARD))	/* Thor.980911: 先把 Re:/Fw: 除外 */
     title += 4;
 
   strcpy(HintWord, title);
@@ -1093,7 +1099,7 @@ XoNews(xo)			/* itoc: News reader : call from post_cb */
 #endif
 
     /* check condition */
-    if (STR4(head->title) == STR4(STR_REPLY)) /* reply 的文章不要 */
+    if (STR4(head->title) == STR4(STR_REPLY))	/* reply 的文章不要 */
       continue;
 
     list[count++] = i;
