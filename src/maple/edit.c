@@ -1968,7 +1968,8 @@ ve_key:
 	{
 	  ve_col = (mode & VE_ANSI) ? ansi2n(pos - 1, vln) : col - 1;
 #ifdef HAVE_MULTI_BYTE
-	  if (zhc && ve_col && IS_ZHC_LO(vln->data, ve_col))	/* hightman.060504: 漢字整字移動 */
+	  /* hightman.060504: 左移時碰到漢字移雙格 */
+	  if (zhc && ve_col && IS_ZHC_LO(vln->data, ve_col))
 	    ve_col--;
 #endif
 	  continue;
@@ -1989,7 +1990,8 @@ ve_key:
 	{
 	  ve_col = (mode & VE_ANSI) ? ansi2n(pos + 1, vln) : col + 1;
 #ifdef HAVE_MULTI_BYTE
-	  if (zhc && ve_col < vln->len && IS_ZHC_HI(vln->data[ve_col - 1]))	/* hightman.060504: 漢字整字移動 */
+	  /* hightman.060504: 右移時碰到漢字移雙格 */
+	  if (zhc && ve_col < vln->len && IS_ZHC_HI(vln->data[ve_col - 1]))
 	    ve_col++;
 #endif
 	  continue;
@@ -2036,7 +2038,8 @@ ve_key:
 	}
 	vx_cur = tmp;
 #ifdef HAVE_MULTI_BYTE
-	if (zhc && ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+	/* hightman.060504: 漢字整字調節 */
+	if (zhc && ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))
 	  ve_col++;
 #endif
 	break;
@@ -2061,7 +2064,8 @@ ve_key:
 	}
 	vx_cur = tmp;
 #ifdef HAVE_MULTI_BYTE
-	if (zhc && ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))	/* hightman.060504: 漢字整字調節 */
+	/* hightman.060504: 漢字整字調節 */
+	if (zhc && ve_col < tmp->len && IS_ZHC_LO(tmp->data, ve_col))
 	  ve_col++;
 #endif
 	break;

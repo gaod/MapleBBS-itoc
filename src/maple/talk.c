@@ -23,6 +23,9 @@ typedef struct
 {
   int curcol, curln;
   int sline, eline;
+#ifdef HAVE_MULTI_BYTE
+  int zhc;
+#endif
 }      talk_win;
 
 
@@ -334,7 +337,15 @@ talk_save()
 
 
 static char page_requestor[40];
-static uschar talk_pic[T_LINES][SCR_WIDTH];	/* 每列可以輸入的字數為 SCR_WIDTH - 1 */
+#ifdef HAVE_MULTI_BYTE
+static int page_requestor_zhc;
+#endif
+
+#ifdef HAVE_MULTI_BYTE
+static uschar talk_pic[T_LINES][SCR_WIDTH + 1];	/* 每列可以輸入的字數為 SCR_WIDTH - 1 (保留二個空白) */
+#else
+static uschar talk_pic[T_LINES][SCR_WIDTH];	/* 每列可以輸入的字數為 SCR_WIDTH - 1 (保留一個空白) */
+#endif
 static int talk_len[T_LINES];			/* 每列目前已輸入多少字 */
 
 
@@ -348,7 +359,7 @@ talk_clearline(ln, col)
   for (i = col; i < len; i++)
     talk_pic[ln][i] = ' ';
 
-  talk_len[len] = col;
+  talk_len[ln] = col;
 }
 
 
@@ -375,7 +386,7 @@ static void
 talk_nextline(twin)
   talk_win *twin;
 {
-  int curln, max;
+  int curln, max, len, i;
 
   curln = twin->curln;
   if (curln != twin->eline)
@@ -387,7 +398,9 @@ talk_nextline(twin)
     max = twin->eline;
     for (curln = twin->sline; curln < max; curln++)
     {
-      strcpy(talk_pic[curln], talk_pic[curln + 1]);
+      len = BMAX(talk_len[curln], talk_len[curln + 1]);
+      for (i = 0; i < len; i++)
+        talk_pic[curln][i] = talk_pic[curln + 1][i];
       talk_len[curln] = talk_len[curln + 1];
       move(curln, 0);
       talk_outs(talk_pic[curln], talk_len[curln]);
@@ -417,6 +430,14 @@ talk_char(twin, ch)
 
   if (isprint2(ch))
   {
+    if (col >= SCR_WIDTH - 1)	/* 若已經打到列尾，先換列 */
+    {
+      talk_nextline(twin);
+      col = twin->curcol;
+      ln = twin->curln;
+      len = talk_len[ln];
+    }
+
     move(ln, col);
     if (col >= len)
     {
@@ -430,7 +451,9 @@ talk_char(twin, ch)
       for (i = SCR_WIDTH - 2; i > col; i--)
 	talk_pic[ln][i] = talk_pic[ln][i - 1];
       talk_pic[ln][col] = ch;
-      talk_len[ln] = ++len;
+      if (len < SCR_WIDTH - 1)
+	len++;
+      talk_len[ln] = len;
       talk_outs(talk_pic[ln] + col, len - col);
       twin->curcol = ++col;
       move(ln, col);
@@ -456,27 +479,42 @@ talk_char(twin, ch)
 	else
 	{
 	  col--;
-	  for (i = col; i < SCR_WIDTH - 2; i++)
-	    talk_pic[ln][i] = talk_pic[ln][i + 1];
-	  talk_pic[ln][SCR_WIDTH - 2] = ' ';
+#ifdef HAVE_MULTI_BYTE
+	  /* hightman.060504: 判斷現在刪除的位置是否為漢字的後半段，若是刪二字元 */
+	  if (twin->zhc && col && IS_ZHC_LO(talk_pic[ln], col))
+	  {
+	    col--;
+	    ch = 2;
+	  }
+	  else
+#endif
+	    ch = 1;
+	  for (i = col; i < SCR_WIDTH - 1; i++)
+	    talk_pic[ln][i] = talk_pic[ln][i + ch];
 	  move(ln, col);
 	  talk_outs(talk_pic[ln] + col, len - col);
 	  twin->curcol = col;
-	  talk_len[ln] = len - 1;
+	  talk_len[ln] = len - ch;
 	  move(ln, col);
 	}
       }
       break;
 
-    case KEY_DEL:		/* KEY_DEL */
+    case Ctrl('D'):		/* KEY_DEL */
       if (col < len)
       {
-	for (i = col; i < SCR_WIDTH - 2; i++)
-	  talk_pic[ln][i] = talk_pic[ln][i + 1];
-	talk_pic[ln][SCR_WIDTH - 2] = ' ';
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 判斷現在刪除的位置是否為漢字的前半段，若是刪二字元 */
+	if (twin->zhc && col < len - 1 && IS_ZHC_HI(talk_pic[ln][col]))
+	  ch = 2;
+	else
+#endif
+	  ch = 1;
+	for (i = col; i < SCR_WIDTH - 1; i++)
+	  talk_pic[ln][i] = talk_pic[ln][i + ch];
 	move(ln, col);
 	talk_outs(talk_pic[ln] + col, len - col);
-	talk_len[ln] = len - 1;
+	talk_len[ln] = len - ch;
 	move(ln, col);
       }
       break;
@@ -484,7 +522,13 @@ talk_char(twin, ch)
     case Ctrl('B'):		/* KEY_LEFT */
       if (col > 0)
       {
-	twin->curcol = --col;
+	col--;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 左移時碰到漢字移雙格 */
+	if (twin->zhc && col && IS_ZHC_LO(talk_pic[ln], col))
+	  col--;
+#endif
+	twin->curcol = col;
 	move(ln, col);
       }
       break;
@@ -492,7 +536,13 @@ talk_char(twin, ch)
     case Ctrl('F'):		/* KEY_RIGHT */
       if (col < SCR_WIDTH - 1)
       {
-	twin->curcol = ++col;
+	col++;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 右移時碰到漢字移雙格 */
+	if (twin->zhc && col < SCR_WIDTH - 1 && IS_ZHC_HI(talk_pic[ln][col - 1]))
+	  col++;
+#endif
+	twin->curcol = col;
 	move(ln, col);
       }
       break;
@@ -501,6 +551,11 @@ talk_char(twin, ch)
       if (ln > twin->sline)
       {
 	twin->curln = --ln;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 漢字整字調節 */
+	if (twin->zhc && col < SCR_WIDTH - 1 && IS_ZHC_LO(talk_pic[ln], col))
+	  col++;
+#endif
 	move(ln, col);
       }
       break;
@@ -509,6 +564,11 @@ talk_char(twin, ch)
       if (ln < twin->eline)
       {
 	twin->curln = ++ln;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 漢字整字調節 */
+	if (twin->zhc && col < SCR_WIDTH - 1 && IS_ZHC_LO(talk_pic[ln], col))
+	  col++;
+#endif
 	move(ln, col);
       }
       break;
@@ -611,8 +671,14 @@ talk_speak(fd)
 
   i = b_lines >> 1;
   mywin.eline = i - 1;
+#ifdef HAVE_MULTI_BYTE
+  mywin.zhc = cuser.ufo & UFO_ZHC;
+#endif
   itswin.curln = itswin.sline = i + 1;
   itswin.eline = b_lines - 1;
+#ifdef HAVE_MULTI_BYTE
+  itswin.zhc = page_requestor_zhc;
+#endif
 
   clear();
   move(i, 0);
@@ -623,8 +689,6 @@ talk_speak(fd)
 
   /* talk_pic 記錄整個畫面的文字，初始值是空白 */
   memset(talk_pic, ' ', sizeof(talk_pic));
-  for (i = 0; i < T_LINES; i++)
-    talk_pic[i][SCR_WIDTH - 1] = '\0';
   /* talk_len 記錄整個畫面各列已經用了多少字 */
   memset(talk_len, 0, sizeof(talk_len));
 
@@ -747,6 +811,10 @@ talk_speak(fd)
     {
       switch (ch)
       {
+      case KEY_DEL:
+	ch = Ctrl('D');
+	break;
+
       case KEY_LEFT:
 	ch = Ctrl('B');
 	break;
@@ -984,6 +1052,9 @@ talk_page(up)
   if (ans == 'y')
   {
     sprintf(page_requestor, "%s (%s)", up->userid, up->username);
+#ifdef HAVE_MULTI_BYTE
+    page_requestor_zhc = up->ufo & UFO_ZHC;
+#endif
 
     /* Thor.980814.注意: 在此有一個雞同鴨講的可能情況, 如果 A 先 page B, 但在 B 回應前卻馬上離開, 換 page C,
 	C 尚未回應前, 如果 B 回應了, B 就會被 accept, 而不是 C.
@@ -1338,6 +1409,10 @@ over_for:
     if (ans == 'y')
     {
       strcpy(cutmp->mateid, up->userid);
+#ifdef HAVE_MULTI_BYTE
+      page_requestor_zhc = up->ufo & UFO_ZHC;
+#endif
+
       talk_speak(sock);
     }
   }
