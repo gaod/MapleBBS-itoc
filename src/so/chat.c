@@ -430,6 +430,8 @@ chat_cmd(fd, buf)
 
 extern char lastcmd[MAXLASTCMD][80];
 
+#define CHAT_YPOS	10
+
 
 int
 t_chat()
@@ -600,7 +602,7 @@ t_chat()
 
   for (;;)
   {
-    move(b_lines - 1, cmdcol + 10);
+    move(b_lines - 1, cmdcol + CHAT_YPOS);
     ch = vkey();
 
     if (ch == I_OTHERDATA)
@@ -628,7 +630,7 @@ t_chat()
 	  ptr[cmdcol + 1] = '\0';
 	}
 	ptr[cmdcol] = ch;
-	move(b_lines - 1, cmdcol + 10);
+	move(b_lines - 1, cmdcol + CHAT_YPOS);
 	outs(&ptr[cmdcol++]);
       }
       continue;
@@ -676,28 +678,53 @@ t_chat()
 	*ptr = '\0';
 	cmdcol = 0;
 	cmdpos = -1;
-	move(b_lines - 1, 10);
+	move(b_lines - 1, CHAT_YPOS);
 	clrtoeol();
       }
       continue;
     }
 
-    if (ch == Ctrl('H'))
+    if (ch == KEY_BKSP)
     {
       if (cmdcol)
       {
-	ch = cmdcol--;
-	memcpy(&ptr[cmdcol], &ptr[ch], 69 - cmdcol);
-	move(b_lines - 1, cmdcol + 10);
-	outs(&ptr[cmdcol]);
+	ch = cmdcol;
+	cmdcol--;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 判斷現在刪除的位置是否為漢字的後半段，若是刪二字元 */
+	if ((cuser.ufo & UFO_ZHC) && cmdcol && IS_ZHC_LO(ptr, cmdcol))
+	  cmdcol--;
+#endif
+	strcpy(ptr + cmdcol, ptr + ch);
+	move(b_lines - 1, cmdcol + CHAT_YPOS);
+	outs(ptr + cmdcol);
 	clrtoeol();
       }
       continue;
     }
 
-    if (ch == Ctrl('D'))	/* itoc.註解: 聊天室回訊 */
+    if (ch == KEY_DEL)
     {
-      chat_send(cfd, "/b\n");
+      if (ptr[cmdcol])
+      {
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 判斷現在刪除的位置是否為漢字的前半段，若是刪二字元 */
+	if ((cuser.ufo & UFO_ZHC) && ptr[cmdcol + 1] && IS_ZHC_HI(ptr[cmdcol]))
+	  ch = 2;
+	else
+#endif
+	  ch = 1;
+	strcpy(ptr + cmdcol, ptr + cmdcol + ch);
+	move(b_lines - 1, cmdcol + CHAT_YPOS);
+	outs(ptr + cmdcol);
+	clrtoeol();
+      }
+      continue;
+    }
+
+    if (ch == Ctrl('D'))
+    {
+      chat_send(cfd, "/b\n");	/* /bye 離開 */
       break;
     }
 
@@ -705,28 +732,18 @@ t_chat()
     {
       *ptr = '\0';
       cmdcol = 0;
-      move(b_lines - 1, 10);
+      move(b_lines - 1, CHAT_YPOS);
       clrtoeol();
       continue;
     }
 
-    if (ch == KEY_HOME)		/* itoc.000312: 移到行頭 */
-    {
-      ch = Ctrl('A');
-    }
-
-    if (ch == Ctrl('A'))
+    if (ch == KEY_HOME || ch == Ctrl('A'))
     {
       cmdcol = 0;
       continue;
     }
 
-    if (ch == KEY_END)		/* itoc.000312: 移到行尾 */
-    {
-      ch = Ctrl('E');
-    }
-
-    if (ch == Ctrl('E'))
+    if (ch == KEY_END || ch == Ctrl('E'))
     {
       cmdcol = strlen(ptr);
       continue;
@@ -735,14 +752,28 @@ t_chat()
     if (ch == KEY_LEFT)
     {
       if (cmdcol)
-	--cmdcol;
+      {
+	cmdcol--;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 左移時碰到漢字移雙格 */
+	if ((cuser.ufo & UFO_ZHC) && cmdcol && IS_ZHC_LO(ptr, cmdcol))
+	  cmdcol--;
+#endif
+      }
       continue;
     }
 
     if (ch == KEY_RIGHT)
     {
       if (ptr[cmdcol])
-	++cmdcol;
+      {
+	cmdcol++;
+#ifdef HAVE_MULTI_BYTE
+	/* hightman.060504: 右移時碰到漢字移雙格 */
+	if ((cuser.ufo & UFO_ZHC) && ptr[cmdcol] && IS_ZHC_HI(ptr[cmdcol - 1]))
+	  cmdcol++;
+#endif
+      }
       continue;
     }
 
@@ -779,7 +810,7 @@ t_chat()
       cmdpos++;
       cmdpos %= MAXLASTCMD;
       strcpy(ptr, lastcmd[cmdpos]);
-      move(b_lines - 1, 10);
+      move(b_lines - 1, CHAT_YPOS);
       outs(ptr);
       clrtoeol();
       cmdcol = strlen(ptr);
