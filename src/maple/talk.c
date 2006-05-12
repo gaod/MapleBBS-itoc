@@ -334,15 +334,40 @@ talk_save()
 
 
 static char page_requestor[40];
-static uschar talk_pic[T_LINES][SCR_WIDTH + 1];
-static uschar talk_len[T_LINES];
+static uschar talk_pic[T_LINES][SCR_WIDTH];	/* 每列可以輸入的字數為 SCR_WIDTH - 1 */
+static int talk_len[T_LINES];			/* 每列目前已輸入多少字 */
 
 
 static void
-talk_outc(ch)
-  int ch;
+talk_clearline(ln, col)
+  int ln, col;
 {
-  outc(ch == '\0' ? ' ' : ch);	/* 如果是 '\0' 要填空白 */
+  int i, len;
+
+  len = talk_len[ln];
+  for (i = col; i < len; i++)
+    talk_pic[ln][i] = ' ';
+
+  talk_len[len] = col;
+}
+
+
+static void
+talk_outs(str, len)
+  uschar *str;
+  int len;
+{
+  int ch;
+  uschar *end;
+
+  /* 和一般的 outs() 是相同，只是限制印 len 個字 */
+  end = str + len;
+  while (ch = *str)
+  {
+    outc(ch);
+    if (++str >= end)
+      break;
+  }
 }
 
 
@@ -350,35 +375,32 @@ static void
 talk_nextline(twin)
   talk_win *twin;
 {
-  int curln, max, i;
+  int curln, max;
 
   curln = twin->curln;
   if (curln != twin->eline)
   {
     twin->curln = ++curln;
   }
-  else	/* 已經是最後一行，要向上捲動 */
+  else	/* 已經是最後一列，要向上捲動 */
   {
     max = twin->eline;
     for (curln = twin->sline; curln < max; curln++)
     {
-      move(curln, 0);
-      clrtoeol();
-
-      for (i = 0; i < SCR_WIDTH; i++)
-	talk_outc(talk_pic[curln][i] = talk_pic[curln + 1][i]);
+      strcpy(talk_pic[curln], talk_pic[curln + 1]);
       talk_len[curln] = talk_len[curln + 1];
+      move(curln, 0);
+      talk_outs(talk_pic[curln], talk_len[curln]);
+      clrtoeol();
     }
   }
+
+  /* 新的一列 */
+  talk_clearline(curln, 0);
 
   twin->curcol = 0;
   move(curln, 0);
   clrtoeol();
-
-  max = talk_len[curln];
-  for (i = 0; i < max; i++)
-    talk_pic[curln][i] = '\0';
-  talk_len[curln] = 0;
 }
 
 
@@ -395,32 +417,23 @@ talk_char(twin, ch)
 
   if (isprint2(ch))
   {
-    if (len >= SCR_WIDTH - 1)	/* Talk 的字數要比 SCR_WIDTH 少一字，此時游標要恰好在 (x, SCR_WIDTH) */
-    {
-      talk_nextline(twin);
-      col = 0;
-      ln = twin->curln;
-      len = 0;
-    }
-
+    move(ln, col);
     if (col >= len)
     {
-      move(ln, col);
-      outc(talk_pic[ln][col] = ch);
+      talk_pic[ln][col] = ch;
+      outc(ch);
       twin->curcol = ++col;
       talk_len[ln] = col;
     }
     else		/* 要 insert */
     {
-      for (i = len; i > col; i--)
-      {
-	move(ln, i);
-	talk_outc(talk_pic[ln][i] = talk_pic[ln][i - 1]);
-      }
-      move(ln, col);
-      outc(talk_pic[ln][col] = ch);	/* ch 一定不會是 '\0' */
-      twin->curcol = ++col;
+      for (i = SCR_WIDTH - 2; i > col; i--)
+	talk_pic[ln][i] = talk_pic[ln][i - 1];
+      talk_pic[ln][col] = ch;
       talk_len[ln] = ++len;
+      talk_outs(talk_pic[ln] + col, len - col);
+      twin->curcol = ++col;
+      move(ln, col);
     }
   }
   else
@@ -442,17 +455,29 @@ talk_char(twin, ch)
 	}
 	else
 	{
-	  twin->curcol = --col;
-	  talk_len[ln] = --len;
-	  for (i = col; i < len; i++)
-	  {
-	    move(ln, i);
-	    talk_outc(talk_pic[ln][i] = talk_pic[ln][i + 1]);
-	  }
-	  move(ln, len);
-	  talk_outc(talk_pic[ln][len] = '\0');
+	  col--;
+	  for (i = col; i < SCR_WIDTH - 2; i++)
+	    talk_pic[ln][i] = talk_pic[ln][i + 1];
+	  talk_pic[ln][SCR_WIDTH - 2] = ' ';
+	  move(ln, col);
+	  talk_outs(talk_pic[ln] + col, len - col);
+	  twin->curcol = col;
+	  talk_len[ln] = len - 1;
 	  move(ln, col);
 	}
+      }
+      break;
+
+    case KEY_DEL:		/* KEY_DEL */
+      if (col < len)
+      {
+	for (i = col; i < SCR_WIDTH - 2; i++)
+	  talk_pic[ln][i] = talk_pic[ln][i + 1];
+	talk_pic[ln][SCR_WIDTH - 2] = ' ';
+	move(ln, col);
+	talk_outs(talk_pic[ln] + col, len - col);
+	talk_len[ln] = len - 1;
+	move(ln, col);
       }
       break;
 
@@ -499,18 +524,14 @@ talk_char(twin, ch)
       break;
     
     case Ctrl('Y'):		/* clear this line */
-      for (i = 0; i < len; i++)
-	talk_pic[ln][i] = '\0';
-      talk_len[ln] = 0;
+      talk_clearline(ln, 0);
       twin->curcol = 0;
       move(ln, 0);
       clrtoeol();
       break;
 
     case Ctrl('K'):		/* clear to end of line */
-      for (i = col; i < len; i++)
-	talk_pic[ln][i] = '\0';
-      talk_len[ln] = col;
+      talk_clearline(ln, col);
       move(ln, col);
       clrtoeol();
       break;
@@ -555,7 +576,7 @@ talk_speak(fd)
   所以我們必須要先把自己打的字與對方打的字分開來.
 
   於是就先建兩個 spool, 分別將 mywin/itswin recv 的 char 往各自的 spool 
-  裡丟, 目前設 spool 剛好是一行的大小, 所以只要是 spool 滿了, 或是碰到換
+  裡丟, 目前設 spool 剛好是一列的大小, 所以只要是 spool 滿了, 或是碰到換
   行字元, 就把 spool 裡的資料寫回 log, 然後清掉 spool, 如此繼續 :)
 #endif
 
@@ -600,9 +621,12 @@ talk_speak(fd)
   outf(FOOTER_TALK);
   move(0, 0);
 
-  /* 清空 talk_pic[][] talk_len[] */
-  memset(&talk_pic, 0, sizeof(talk_pic));
-  memset(&talk_len, 0, sizeof(talk_len));
+  /* talk_pic 記錄整個畫面的文字，初始值是空白 */
+  memset(talk_pic, ' ', sizeof(talk_pic));
+  for (i = 0; i < T_LINES; i++)
+    talk_pic[i][SCR_WIDTH - 1] = '\0';
+  /* talk_len 記錄整個畫面各列已經用了多少字 */
+  memset(talk_len, 0, sizeof(talk_len));
 
 #ifdef LOG_TALK				/* lkchu.981201: 聊天記錄 */
   usr_fpath(buf, cuser.userid, FN_TALK_LOG);
@@ -666,7 +690,7 @@ talk_speak(fd)
 	switch (data[i])
 	{
 	case '\n':
-	  /* lkchu.981201: 有換行就把 itswords 印出清掉 */
+	  /* lkchu.981201: 有換列就把 itswords 印出清掉 */
 	  if (itswords[0] != '\0')
   	  {
   	    fprintf(fp, "\033[32m%s：%s\033[m\n", itsuserid, itswords);
