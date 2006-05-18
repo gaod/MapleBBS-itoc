@@ -790,7 +790,6 @@ re_key:
     case 'r':
       if (bbstate & STAT_POST)
       {
-	strcpy(quote_file, fpath);
 	if (do_reply(xo, hdr) == XO_INIT)	/* 有成功地 post 出去了 */
 	  return xpost_init(xo);
       }

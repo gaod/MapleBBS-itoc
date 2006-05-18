@@ -331,7 +331,7 @@ do_post(xo, title)
   XO *xo;
   char *title;
 {
-  /* Thor.981105: 進入前需設好 curredit */
+  /* Thor.981105: 進入前需設好 curredit 及 quote_file */
   HDR hdr, buf;
   char fpath[64], *folder, *nick, *rcpt;
   int mode;
@@ -498,12 +498,10 @@ do_reply(xo, hdr)
   switch (vans("▲ 回應至 (F)看板 (M)作者信箱 (B)二者皆是 (Q)取消？[F] "))
   {
   case 'm':
+    hdr_fpath(quote_file, xo->dir, hdr);
     return do_mreply(hdr, 0);
 
   case 'q':
-    /* Thor: 解決 Gao 發現的 bug，先假裝 reply 文章，卻按 q 取消，
-       然後去編輯檔案，你就會發現跑出是否引用原文的選項了 */
-    *quote_file = '\0';
     return XO_FOOT;
 
   case 'b':
@@ -517,6 +515,7 @@ do_reply(xo, hdr)
   if (hdr->xmode & (POST_INCOME | POST_OUTGO))
     curredit |= EDIT_OUTGO;
 
+  hdr_fpath(quote_file, xo->dir, hdr);
   strcpy(quote_user, hdr->owner);
   strcpy(quote_nick, hdr->nick);
   return do_post(xo, hdr->title);
@@ -539,7 +538,6 @@ post_reply(xo)
       return XO_NONE;
 #endif
 
-    hdr_fpath(quote_file, xo->dir, hdr);
     return do_reply(xo, hdr);
   }
   return XO_NONE;
@@ -551,6 +549,7 @@ post_add(xo)
   XO *xo;
 {
   curredit = EDIT_OUTGO;
+  *quote_file = '\0';
   return do_post(xo, NULL);
 }
 
@@ -1000,7 +999,6 @@ re_key:
     case 'r':
       if (bbstate & STAT_POST)
       {
-	strcpy(quote_file, fpath);
 	if (do_reply(xo, hdr) == XO_INIT)	/* 有成功地 post 出去了 */
 	  return post_init(xo);
       }

@@ -766,6 +766,7 @@ m_bm()
   }
 
   curredit = EDIT_MAIL;
+  *quote_file = '\0';
   if (vedit(fpath, 1) >= 0)
   {
     vmsg("需要一段蠻長的時間，請耐心等待");
@@ -816,6 +817,7 @@ m_all()
   }
 
   curredit = EDIT_MAIL;
+  *quote_file = '\0';
   if (vedit(fpath, 1) >= 0)
   {
     vmsg("需要一段蠻長的時間，請耐心等待");

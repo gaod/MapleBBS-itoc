@@ -785,6 +785,7 @@ int		/* >=0:成功 -1:失敗或取消 */
 mail_send(rcpt)
   char *rcpt;
 {
+  /* Thor.981105: 進入前需設好 quote_file */
   /* itoc.041116: 進入前需設好 ve_title (之所以用 ve_title 是希望在 vedit 改標題時，也能一起改信件檔頭的標題) */
   HDR hdr;
   char fpath[64], folder[64], *msg;
@@ -813,7 +814,7 @@ mail_send(rcpt)
   fpath[0] = '\0';
   curredit = EDIT_MAIL;		/* Thor.981105: 直接指定寫信 */
 
-  if (vedit(fpath, userno ? 1 : 2) == -1)
+  if (vedit(fpath, userno ? 1 : 2) < 0)
   {
     unlink(fpath);
     vmsg(msg_cancel);
@@ -908,7 +909,10 @@ my_send(userid)		/* 站內寄信給 userid */
   vs_bar("寄  信");
   prints("收信人：%s", userid);
   if (vget(2, 0, "標題：", ve_title, TTLEN + 1, DOECHO))
+  {
+    *quote_file = '\0';
     mail_send(userid);
+  }
   return XO_HEAD;
 }
 
@@ -942,6 +946,7 @@ m_internet()
   if (vget(15, 0, "收信人：", rcpt, sizeof(rcpt), DOECHO) &&
     vget(17, 0, "標題：", ve_title, TTLEN + 1, DOECHO))
   {
+    *quote_file = '\0';
     mail_send(rcpt);
   }
 
@@ -1000,9 +1005,14 @@ m_sysop()
     i = vans("請輸入代碼：[0] ") - '1';
     if (i >= 0 && i < j)
     {
-      clear();
+      vs_bar("寄  信");
+      prints("收信人：%s", sysoplist[i].userid);
+
       if (vget(2, 0, "標題：", ve_title, TTLEN + 1, DOECHO))
+      {
+	*quote_file = '\0';
         mail_send(sysoplist[i].userid);
+      }
     }
   }
   return 0;
@@ -1169,7 +1179,7 @@ multi_send(title)
     utmp_mode(M_SMAIL);
     curredit = EDIT_MAIL | EDIT_LIST;
 
-    if (vedit(fpath, 1) == -1)
+    if (vedit(fpath, 1) < 0)
     {
       vmsg(msg_cancel);
       unlink(fpath);
@@ -1263,13 +1273,10 @@ do_mreply(hdr, noreply)
   HDR *hdr;
   int noreply;		/* 1:要 0:不要 檢查 MAIL_NOREPLY */
 {
-  /* 進來 do_mreply() 之前要準備好 quote_file */
-
   if ((noreply && (hdr->xmode & MAIL_NOREPLY)) ||
     HAS_PERM(PERM_DENYMAIL) ||
     !HAS_PERM(strchr(hdr->owner, '@') ? PERM_INTERNET : PERM_LOCAL))
   {
-    *quote_file = '\0';
     return XO_FOOT;
   }
 
@@ -1284,7 +1291,6 @@ do_mreply(hdr, noreply)
 #endif
     mail_reply(hdr);
 
-  *quote_file = '\0';
   return XO_HEAD;
 }
 
