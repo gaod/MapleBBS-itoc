@@ -674,24 +674,6 @@ static MENU menu_song[] =
 #endif
 
 
-#ifdef HAVE_NETTOOL
-  /* --------------------------------------------------- */
-  /* net menu						 */
-  /* --------------------------------------------------- */
-
-static MENU menu_net[] =
-{
-  /* itoc.010821: 一般簡單的服務，讓 guest 也可以用；特殊的服務才要求 PERM_VALID */
-
-  "bin/railway.so:main_railway", 0, - M_XMODE,
-  "Railway    ♂ 台鐵時刻 ♀",
-
-  menu_tool, PERM_MENU + 'R', M_XMENU,
-  "網路服務"
-};
-#endif
-
-
 #ifdef HAVE_GAME
 
 #if 0
@@ -894,11 +876,6 @@ static MENU menu_other[] =
 
 static MENU menu_tool[] =
 {
-#ifdef HAVE_NETTOOL
-  menu_net, 0, M_XMENU,	/* itoc.010821: 一般簡單的服務，讓 guest 也可以用；特殊的服務才要求 PERM_VALID */
-  "Net        【 網路服務 】",
-#endif
-
 #ifdef HAVE_SONG
   menu_song, 0, M_XMENU,
   "KTV        【 真情點歌 】",

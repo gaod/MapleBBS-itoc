@@ -13,8 +13,7 @@
 # ------------------------------------------------------ #
 
 
-SO =	railway.so \
-	bar.so bingo.so bj.so bwboard.so chessmj.so dice.so dragon.so fantan.so \
+SO =	bar.so bingo.so bj.so bwboard.so chessmj.so dice.so dragon.so fantan.so \
 	gp.so gray.so guessnum.so km.so liteon.so marie.so mine.so nine.so \
 	pushbox.so race.so recall.so seven.so tetris.so
 
