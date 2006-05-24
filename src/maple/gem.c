@@ -198,6 +198,9 @@ gem_check(xo, fpath, op)
   if ((gtype & GEM_RESTRICT) && !(xo->key & GEM_M_BIT))
     return NULL;
 
+  if (op && (gtype & GEM_LINE))
+    return NULL;
+
   if ((op & GEM_PLAIN) && (gtype & GEM_FOLDER))
     return NULL;
 
@@ -346,15 +349,15 @@ gem_add(xo, gtype)
   if (!gtype)
   {
     gtype = vans((level & GEM_X_BIT) ?
-      /* "新增 A)rticle B)oard C)lass D)ata F)older P)aste Q)uit [Q] " : */
-      "新增 (A)文章 (B)看板 (C)分類 (D)資料 (F)卷宗 (P)貼複 (Q)取消？[Q] " : 
-      "新增 (A)文章 (F)卷宗 (P)貼複 (Q)取消？[Q] ");
+      /* "新增 A)rticle B)oard C)lass D)ata F)older L)ine P)aste Q)uit [Q] " : */
+      "新增 (A)文章 (B)看板 (C)分類 (D)資料 (F)卷宗 (L)分隔 (P)貼複 (Q)取消？[Q] " : 
+      "新增 (A)文章 (F)卷宗 (L)分隔 (P)貼複 (Q)取消？[Q] ");
   }
 
   if (gtype == 'p')
     return gem_paste(xo);
 
-  if (gtype != 'a' && gtype != 'f' && 
+  if (gtype != 'a' && gtype != 'f' && gtype != 'l' && 
     (!(level & GEM_X_BIT) || (gtype != 'b' && gtype != 'c' && gtype != 'd')))
     return XO_FOOT;
 
@@ -424,6 +427,10 @@ gem_add(xo, gtype)
       else if (gtype == 'f')
       {
 	gtype = GEM_FOLDER;
+      }
+      else if (gtype == 'l')
+      {
+	gtype = GEM_LINE;
       }
 
       hdr.xmode = gtype;

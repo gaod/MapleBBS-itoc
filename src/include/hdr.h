@@ -101,6 +101,7 @@ typedef struct
 
 #define	GEM_FOLDER	0x00010000	/* folder / article */
 #define	GEM_BOARD	0x00020000	/* 看板精華區 */
+#define GEM_LINE	0x00040000	/* 分隔線 */
 
 
 /* ----------------------------------------------------- */
