@@ -41,6 +41,8 @@ is_zhc_low(str, n)	/* hightman.060504: 判斷字串中的第 n 個字符是否為漢字的後半字
   end = str + n;
   while (str < end)
   {
+    if (!*str)
+      return 0;
     if (IS_ZHC_HI(*str))
       str++;
     str++;
