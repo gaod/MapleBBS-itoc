@@ -31,7 +31,6 @@ static int cur_pos;			/* current position with ANSI codes */
 /* ----------------------------------------------------- */
 
 
-#ifdef HAVE_MULTI_BYTE
 int			/* 1:是 0:不是 */
 is_zhc_low(str, n)	/* hightman.060504: 判斷字串中的第 n 個字符是否為漢字的後半字 */
   char *str;
@@ -49,7 +48,6 @@ is_zhc_low(str, n)	/* hightman.060504: 判斷字串中的第 n 個字符是否為漢字的後半字
 
   return (str - end);
 }
-#endif
 
 
 /* ----------------------------------------------------- */
