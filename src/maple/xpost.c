@@ -75,7 +75,7 @@ extern KeyFunc xpost_cb[];
 extern KeyFunc xmbox_cb[];
 
 static int *xpostIndex;		/* Thor: first ypost pos in ypost_xo.key */
-static int comebackPos;		/* 記錄最後 */
+static int comebackPos;		/* 記錄最後閱讀那篇文章的位置 */
 
 
 static char HintWord[TTLEN + 1];
