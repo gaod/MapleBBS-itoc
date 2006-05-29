@@ -62,7 +62,7 @@
 /* ulist_neck() 及 xpost_head() 的第一行比較特別，不在此定義 */
 
 #define NECKER_CLASS	"[←]主選單 [→]閱\讀 [↑↓]選擇 [c]篇數 [y]載入 [/?]搜尋 [s]看板 [h]說明\n" \
-			COLOR3 "  %s   看  板       類別轉信 中   文   敘   述%*s             人氣 板    主%*s    \033[m"
+			COLOR3 "  %s   看  板       類別轉信中   文   敘   述%*s              人氣 板    主%*s    \033[m"
 
 #define NECKER_ULIST	"\n" \
 			COLOR3 "  編號  代號         暱稱%*s                 %-*s               動態        閒置 \033[m"
@@ -80,7 +80,7 @@
 			COLOR3 "  編號 代  號       內       容%*s                                          時間 \033[m"
 
 #define NECKER_MF	"[←]離開 [→]進入 [^P]新增 [d]刪除 [c]切換 [C]複製 [^V]貼上 [m]移動 [h]說明\n" \
-			COLOR3 "  %s   看  板       類別轉信 中   文   敘   述%*s             人氣 板    主%*s    \033[m"
+			COLOR3 "  %s   看  板       類別轉信中   文   敘   述%*s              人氣 板    主%*s    \033[m"
 
 #define NECKER_COSIGN	"[←]離開 [→]閱\讀 [^P]申請 [d]刪除 [o]開板 [h]說明\n" \
 			COLOR3 "  編號   日 期  舉辦人       看  板  標  題%*s                                   \033[m"
@@ -106,7 +106,7 @@
 /* 以下這些則是一些類 XZ_* 結構的 necker */
 
 #define NECKER_VOTEALL	"[↑/↓]上下 [PgUp/PgDn]上下頁 [Home/End]首尾 [→]投票 [←][q]離開\n" \
-			COLOR3 "  編號   看  板       類別轉信 中   文   敘   述%*s                 板    主%*s     \033[m"
+			COLOR3 "  編號   看  板       類別轉信中   文   敘   述%*s                  板    主%*s     \033[m"
 
 #define NECKER_CREDIT	"[←]離開 [C]換頁 [1]新增 [2]刪除 [3]全刪 [4]總計\n" \
 			COLOR3 "  編號   日  期   收支  金  額  分類     說  明%*s                               \033[m"

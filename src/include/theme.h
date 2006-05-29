@@ -15,13 +15,13 @@
 /* 基本顏色定義，以利介面修改				 */
 /* ----------------------------------------------------- */
 
-#define COLOR1		"\033[1;33;45m"	/* footer/feeter 的前段顏色 */
-#define COLOR2		"\033[0;30;43m"	/* footer/feeter 的後段顏色 */
-#define COLOR3		"\033[1;33;41m"	/* neck 的顏色 */
-#define COLOR4		"\033[1;43m"	/* 光棒 的顏色 */
-#define COLOR5		"\033[1;33;46m"	/* more 檔頭的標題顏色 */
-#define COLOR6		"\033[37;43m"	/* more 檔頭的內容顏色 */
-#define COLOR7		"\033[1;33m"	/* 作者在線上的顏色 */
+#define COLOR1		"\033[34;46m"	/* footer/feeter 的前段顏色 */
+#define COLOR2		"\033[37;44m"	/* footer/feeter 的後段顏色 */
+#define COLOR3		"\033[37;44m"	/* neck 的顏色 */
+#define COLOR4		"\033[1;44m"	/* 光棒 的顏色 */
+#define COLOR5		"\033[34;47m"	/* more 檔頭的標題顏色 */
+#define COLOR6		"\033[37;44m"	/* more 檔頭的內容顏色 */
+#define COLOR7		"\033[1;34m"	/* 作者在線上的顏色 */
 
 
 /* ----------------------------------------------------- */
@@ -62,7 +62,7 @@
 /* ulist_neck() 及 xpost_head() 的第一行比較特別，不在此定義 */
 
 #define NECKER_CLASS	"[←]主選單 [→]閱\讀 [↑↓]選擇 [c]篇數 [y]載入 [/?]搜尋 [s]看板 [h]說明\n" \
-			COLOR3 "  %s   看  板       類別轉信 中   文   敘   述%*s             人氣 板    主%*s    \033[m"
+			COLOR3 "  %s   看  板       類別轉信中   文   敘   述%*s              人氣 板    主%*s    \033[m"
 
 #define NECKER_ULIST	"\n" \
 			COLOR3 "  編號  代號         暱稱%*s                 %-*s               動態        閒置 \033[m"
@@ -80,7 +80,7 @@
 			COLOR3 "  編號 代  號       內       容%*s                                          時間 \033[m"
 
 #define NECKER_MF	"[←]離開 [→]進入 [^P]新增 [d]刪除 [c]切換 [C]複製 [^V]貼上 [m]移動 [h]說明\n" \
-			COLOR3 "  %s   看  板       類別轉信 中   文   敘   述%*s             人氣 板    主%*s    \033[m"
+			COLOR3 "  %s   看  板       類別轉信中   文   敘   述%*s              人氣 板    主%*s    \033[m"
 
 #define NECKER_COSIGN	"[←]離開 [→]閱\讀 [^P]申請 [d]刪除 [o]開板 [h]說明\n" \
 			COLOR3 "  編號   日 期  舉辦人       看  板  標  題%*s                                   \033[m"
@@ -106,7 +106,7 @@
 /* 以下這些則是一些類 XZ_* 結構的 necker */
 
 #define NECKER_VOTEALL	"[↑/↓]上下 [PgUp/PgDn]上下頁 [Home/End]首尾 [→]投票 [←][q]離開\n" \
-			COLOR3 "  編號   看  板       類別轉信 中   文   敘   述%*s                 板    主%*s     \033[m"
+			COLOR3 "  編號   看  板       類別轉信中   文   敘   述%*s                  板    主%*s     \033[m"
 
 #define NECKER_CREDIT	"[←]離開 [C]換頁 [1]新增 [2]刪除 [3]全刪 [4]總計\n" \
 			COLOR3 "  編號   日  期   收支  金  額  分類     說  明%*s                               \033[m"
@@ -219,28 +219,28 @@ COLOR1 " 轉信設定 " COLOR2 " (↑/↓)上下 (PgUp/PgDn)上下頁 (Home/End)首尾 (←)(q
 /* itoc: 建議 banner 不要超過三行，過長的站簽可能會造成某些使用者的反感 */
 
 #define EDIT_BANNER	"\n--\n" \
-			" \033[1;41m→\033[44m↓\033[m O\033[1mri\033[30mgi\033[mn: \033[1;43m "SCHOOLNAME"˙"BBSNAME" \033[47m "MYHOSTNAME" \033[m\n" \
-			" \033[1;45m↑\033[42m←\033[m Au\033[1mt\033[30mho\033[mr: \033[1;33m%s\033[m 從 \033[1;34m%s\033[m 發表\n"
+			" \033[1;43m◤\033[46m◥\033[m Or\033[1mig\033[30min\033[m: \033[1;44m "SCHOOLNAME"˙"BBSNAME" \033[42m "MYHOSTNAME" \033[m\n" \
+			" \033[1;44m◣\033[41m◢\033[m A\033[1mut\033[30mho\033[mr: \033[1;34m%s\033[m 從 \033[1;31m%s\033[m 發表\n"
 
-#define MODIFY_BANNER	" \033[1;43m↗\033[46m↖\033[m \033[1mMo\033[30mdi\033[mfy: %s 於 \033[1;33m%s\033[m 修改\n"
+#define MODIFY_BANNER	" \033[1;45m▂\033[42m█\033[m \033[1mMo\033[30mdi\033[mfy: %s 於 \033[1;34m%s\033[m 修改\n"
 
 
 /* ----------------------------------------------------- */
 /* 其他訊息字串						 */
 /* ----------------------------------------------------- */
 
-#define VMSG_NULL	"                           \033[1;43m ⊕ 請按任意鍵繼續 ⊕ \033[m"
+#define VMSG_NULL	"                           \033[1;33;46m ● 請按任意鍵繼續 ● \033[m"
 
-#define ICON_UNREAD_BRD		"\033[1;33mπ"		/* 未讀看板 */
+#define ICON_UNREAD_BRD		"\033[1;33m˙\033[m"	/* 未讀看板 */
 #define ICON_READ_BRD		"  "			/* 已讀看板 */
 
 #define ICON_GAMBLED_BRD	"\033[1;31m賭\033[m"	/* 舉行賭盤中的看板 */
 #define ICON_VOTED_BRD		"\033[1;33m投\033[m"	/* 舉行投票中的看板 */
-#define ICON_NOTRAN_BRD		"◇"			/* 不轉信板 */
-#define ICON_TRAN_BRD		"◆"			/* 轉信板 */
+#define ICON_NOTRAN_BRD		"  "			/* 不轉信板 */
+#define ICON_TRAN_BRD		"轉"			/* 轉信板 */
 
 #define TOKEN_ZAP_BRD		'-'			/* zap 板 */
-#define TOKEN_FRIEND_BRD	'#'			/* 好友板 */
-#define TOKEN_SECRET_BRD	']'			/* 秘密板 */
+#define TOKEN_FRIEND_BRD	'.'			/* 好友板 */
+#define TOKEN_SECRET_BRD	')'			/* 秘密板 */
 
 #endif				/* _THEME_H_ */
