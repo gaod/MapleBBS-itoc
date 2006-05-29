@@ -1096,22 +1096,14 @@ class_item(num, bno, brdpost)
   else
     str3 = "  ";
 
-#if 0
-  prints("%6d%c%s%-13s\033[1;3%dm%-5s\033[m%s %-*.*s %s %.*s\n",
+  prints("%6d%c%s%-13s\033[1;3%dm%-5s\033[m%s ",
     num, token, str1, brd->brdname,
-    brd->class[3] & 7, brd->class, str2,
-    (d_cols >> 1) + 31, (d_cols >> 1) + 30, brd->title, str3,
-    d_cols - (d_cols >> 1) + 13, brd->BM);
-#endif
-
-   prints("%6d%c%s%-13s\033[1;3%dm%-5s\033[m%s ",
-     num, token, str1, brd->brdname,
-     brd->class[3] & 7, brd->class, str2);
-   /* itoc.060530: 借用 str1、num 來處理看板敘述顯示的中文斷字 */
-   str1 = brd->title;
-   num = (d_cols >> 1) + 33;
-   prints("%-*.*s", num, IS_ZHC_LO(str1, num - 1) ? num - 2 : num - 1, str1);
-   prints("%s %.*s\n", str3, d_cols - (d_cols >> 1) + 13, brd->BM);
+    brd->class[3] & 7, brd->class, str2);
+  /* itoc.060530: 借用 str1、num 來處理看板敘述顯示的中文斷字 */
+  str1 = brd->title;
+  num = (d_cols >> 1) + 33;
+  prints("%-*.*s", num, IS_ZHC_LO(str1, num - 1) ? num - 2 : num - 1, str1);
+  prints("%s %.*s\n", str3, d_cols - (d_cols >> 1) + 12, brd->BM);
 }
 
 
