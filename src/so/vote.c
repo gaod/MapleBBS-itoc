@@ -139,16 +139,20 @@ vch_edit(vch, item, echo)
   int item;		/* vlist 有幾項 */
   int echo;
 {
-  int num;
+  int num, row;
   char ans[8], buf[80];
 
+  clear();
+
+  row = 3;
+
   if (echo == DOECHO)	/* 只有新增時才能決定是否為賭盤 */
-    vch->vgamble = (vget(b_lines - 6, 0, "是否為賭盤(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? '$' : ' ';
+    vch->vgamble = (vget(++row, 0, "是否為賭盤(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? '$' : ' ';
 
   if (vch->vgamble == ' ')
   {
     sprintf(buf, "請問每人最多可投幾票？([1]～%d)：", item);
-    vget(b_lines - 5, 0, buf, ans, 3, DOECHO);
+    vget(++row, 0, buf, ans, 3, DOECHO);
     num = atoi(ans);
     if (num < 1)
       num = 1;
@@ -161,7 +165,7 @@ vch_edit(vch, item, echo)
     /* 賭盤就只能選一項 */
     vch->maxblt = 1;
 
-    vget(b_lines - 5, 0, "請問每票售價多少銀幣？(100～100000)：", ans, 7, DOECHO);
+    vget(++row, 0, "請問每票售價多少銀幣？(100～100000)：", ans, 7, DOECHO);
     num = atoi(ans);
     if (num < 100)
       num = 100;
@@ -170,7 +174,7 @@ vch_edit(vch, item, echo)
     vch->price = num;
   }
 
-  vget(b_lines - 4, 0, "本項投票進行幾小時 (至少一小時)？[1] ", ans, 5, DOECHO);
+  vget(++row, 0, "本項投票進行幾小時 (至少一小時)？[1] ", ans, 5, DOECHO);
   num = atoi(ans);
   if (num < 1)
     num = 1;
@@ -179,8 +183,8 @@ vch_edit(vch, item, echo)
 
   if (vch->vgamble == ' ')	/* 賭盤一定排序、及顯示百分比 */
   {
-    vch->vsort = (vget(b_lines - 3, 0, "開票結果是否排序(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? 's' : ' ';
-    vch->vpercent = (vget(b_lines - 2, 0, "開票結果是否顯示百分比例(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? '%' : ' ';
+    vch->vsort = (vget(++row, 0, "開票結果是否排序(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? 's' : ' ';
+    vch->vpercent = (vget(++row, 0, "開票結果是否顯示百分比例(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? '%' : ' ';
   }
   else
   {
@@ -188,7 +192,22 @@ vch_edit(vch, item, echo)
     vch->vpercent = '%';
   }
 
-  vch->vprivate = (vget(b_lines - 1, 0, "是否限制投票名單(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? ')' : ' ';
+  vch->vprivate = (vget(++row, 0, "是否限制投票名單(Y/N)？[N] ", ans, 3, LCECHO) == 'y') ? ')' : ' ';
+
+  if (vch->vprivate == ' ' && vget(++row, 0, "是否限制投票資格(Y/N)？[N] ", ans, 3, LCECHO) == 'y')
+  {
+    vget(++row, 0, "請問要登入幾次以上才可以參加本次投票？([0]～9999)：", ans, 5, DOECHO);
+    num = atoi(ans);
+    if (num < 0)
+      num = 0;
+    vch->limitlogins = num;
+
+    vget(++row, 0, "請問要發文幾次以上才可以參加本次投票？([0]～9999)：", ans, 5, DOECHO);
+    num = atoi(ans);
+    if (num < 0)
+      num = 0;
+    vch->limitposts = num;
+  }
 }
 
 
@@ -309,7 +328,7 @@ vote_add(xo)
     brd->bvote = (vch.vgamble == '$') ? -1 : 1;
   vch.bstamp = brd->bstamp;
 
-  rec_add(dir, &vch, sizeof(vch));
+  rec_add(dir, &vch, sizeof(VCH));
 
   vmsg("開始投票了！");
   return vote_init(xo);
@@ -582,8 +601,6 @@ vote_join(xo)
       vmsg("您的錢不夠參加賭盤");
       return XO_FOOT;
     }
-    if (vans("是否參加賭盤(Y/N)？[N] ") != 'y')
-      return XO_FOOT;
   }
 
   /* --------------------------------------------------- */
@@ -605,15 +622,21 @@ vote_join(xo)
       vmsg("您已經投過票了！");
       return XO_FOOT;
     }
-    if (vans("是否參加投票(Y/N)？[N] ") != 'y')
-      return XO_FOOT;
   }
 
   /* --------------------------------------------------- */
-  /* 檢查是否在投票名單中				 */
+  /* 檢查投票限制					 */
   /* --------------------------------------------------- */
 
-  if (vch->vprivate == ')')	/* itoc.020117: 私人投票 */
+  if (vch->vprivate == ' ')
+  {
+    if (cuser.numlogins < vch->limitlogins || cuser.numposts < vch->limitposts)
+    {
+      vmsg("您不夠資深喔！");
+      return XO_FOOT;
+    }
+  }
+  else		/* itoc.020117: 私人投票檢查是否在投票名單中 */
   {
     *fname = 'L';
 
@@ -624,6 +647,13 @@ vote_join(xo)
       return XO_FOOT;
     }
   }
+
+  /* --------------------------------------------------- */
+  /* 確認進入投票					 */
+  /* --------------------------------------------------- */
+
+  if (vans(vch->vgamble == ' ' ? "是否參加投票(Y/N)？[N] " : "是否參加賭盤(Y/N)？[N] ") != 'y')
+    return XO_FOOT;
 
   /* --------------------------------------------------- */
   /* 開始投票，顯示投票說明				 */

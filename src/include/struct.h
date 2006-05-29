@@ -153,7 +153,10 @@ typedef struct VoteControlHeader
   int maxblt;			/* –щ碭布 */
   int price;			/* –眎戒布扳基 */
 
-  char nouse[96];
+  int limitlogins;		/* 璶祅禬筁碭Ωㄏノщ布 */
+  int limitposts;		/* 璶祇ゅ禬筁碭Ωㄏノщ布 */
+
+  char nouse[88];
 }      VCH;
 
 
