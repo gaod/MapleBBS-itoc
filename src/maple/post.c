@@ -688,13 +688,13 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   mark = title + cc;
 
 #ifdef HAVE_DECLARE	/* Thor.980508: Declaration, 嘗試使某些title更明顯 */
-  square = 0;		/* 0:不處理方括 1:要處理方括 */
+  square = 0;		/* 0x00:不處理方括 0x01:要處理方括 0x10:中文字的首碼 */
   if (ch < 3)
   {
     if (*title == '[')
     {
       outs("\033[1m");
-      square = 1;
+      square ^= 0x01;
     }
   }
 #endif
@@ -704,13 +704,18 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
 #ifdef HAVE_DECLARE
     if (square)
     {
-      if (IS_ZHC_HI(square) || IS_ZHC_HI(cc))	/* 中文字的第二碼若是 ']' 不算是方括 */
-	square ^= 0x80;
-      else if (cc == ']')
+      if ((square & 0x10) || IS_ZHC_HI(cc))	/* 中文字的第二碼若是 ']' 不算是方括 */
       {
-	outs("]\033[m");
-	square = 0;
-	continue;
+	square ^= 0x10;
+      }
+      else
+      {
+	if (cc == ']')
+	{
+	  outs("]\033[m");
+	  square = 0;			/* 只處理一組方括，方括已經處理完了 */
+	  continue;
+	}
       }
     }
 #endif
