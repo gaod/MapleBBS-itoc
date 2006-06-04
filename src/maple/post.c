@@ -654,6 +654,8 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   {
     if (--len <= 0)
     {
+      /* 把超過 len 長度的部分直接切掉 */
+      /* itoc.060604.註解: 如果剛好切在中文字的一半就會出現亂碼，不過這情況很少發生，所以就不管了 */
       ch = '.';
     }
     else
@@ -711,6 +713,8 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   }
 #endif
 
+  /* 把超過 cc 長度的部分直接切掉 */
+  /* itoc.060604.註解: 如果剛好切在中文字的一半就會出現亂碼，不過這情況很少發生，所以就不管了 */
   while ((ch = *title++) && (title < mark))
   {
 #ifdef HAVE_DECLARE
