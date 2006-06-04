@@ -1077,7 +1077,7 @@ multi_send(title)
   FILE *fp;
   HDR hdr;
   char buf[128], fpath[64], *userid;
-  int userno, reciper, listing;
+  int userno, reciper, listing, row;
   LinkList *wp;
 
   vs_bar(title ? "群組回信" : "群組寄信");
@@ -1192,12 +1192,12 @@ multi_send(title)
       listing = 80;
       wp = ll_head;
       title = ve_title;
-      userno = 2;	/* 借用 userno 當印到哪一行 */
+      row = 2;	/* 印到哪一列 */
 
       do
       {
 	userid = wp->data;
-	if (userno < b_lines)	/* 最多印到 b_lines - 1 */
+	if (row < b_lines)	/* 最多印到 b_lines - 1 */
 	{
 	  /* 印出目前寄到哪一個 id */
 	  reciper = strlen(userid) + 1;
@@ -1205,7 +1205,7 @@ multi_send(title)
 	  {
 	    listing = reciper;
 	    outc('\n');
-	    userno++;
+	    row++;
 	  }
 	  else
 	  {
@@ -1221,6 +1221,9 @@ multi_send(title)
 	strcpy(hdr.title, title);
 	hdr.xmode = MAIL_MULTI;
 	rec_add(buf, &hdr, sizeof(HDR));
+
+	if ((userno = acct_userno(userid)) > 0)
+	  m_biff(userno);
       } while (wp = wp->next);
 
       if (fp = fopen(FN_RUN_MAIL_LOG, "a"))
