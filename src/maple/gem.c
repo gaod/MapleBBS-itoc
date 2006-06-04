@@ -848,7 +848,6 @@ gem_prune(xo)
 static char GemFolder[64];
 
 static HDR *GemBuffer;
-static int GemBufferSiz;
 /* static int GemBufferNum; */	/* Thor.990414: 提前宣告給gem_head用 */
 
 
@@ -860,6 +859,7 @@ gbuf_malloc(num)
   int num;
 {
   HDR *gbuf;
+  static int GemBufferSiz;	/* 目前 GemBuffer 的 size 是 GemBufferSiz * sizeof(HDR) */
 
   GemBufferNum = num;
   if (gbuf = GemBuffer)
@@ -881,7 +881,6 @@ gbuf_malloc(num)
 }
 
 
-/* static */			/* itoc.010924: 給 post_copy() 用 */
 void
 gem_buffer(dir, hdr)
   char *dir;
