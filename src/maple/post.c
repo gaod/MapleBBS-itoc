@@ -617,8 +617,9 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   static char *type[6] = {"Re", "Fw", "◇", "\033[1;33m=>", "\033[1;33m=>", "\033[1;32m◆"};
   uschar *title, *mark;
   int ch, len;
+  int in_chi;		/* 1: 在中文字中 */
 #ifdef HAVE_DECLARE
-  int square;
+  int square;		/* 1: 要處理方括 */
 #endif
 #ifdef CHECK_ONLINE
   UTMP *online;
@@ -647,11 +648,23 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
 
   mark = hdr->owner;
   len = IDLEN + 1;
+  in_chi = 0;
 
   while (ch = *mark)
   {
-    if ((--len <= 0) || (ch == '@'))	/* 站外的作者把 '@' 換成 '.' */
+    if (--len <= 0)
+    {
       ch = '.';
+    }
+    else
+    {
+      /* 站外的作者把 '@' 換成 '.' */
+      if (in_chi || IS_ZHC_HI(ch))	/* 中文字尾碼是 '@' 的不算 */
+	in_chi ^= 1;
+      else if (ch == '@')
+	ch = '.';
+    }
+      
     outc(ch);
 
     if (ch == '.')
@@ -661,9 +674,7 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   }
 
   while (len--)
-  {
     outc(' ');
-  }
 
 #ifdef CHECK_ONLINE
   if (online)
@@ -674,11 +685,12 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   /* 印出標題的種類					 */
   /* --------------------------------------------------- */
 
+  /* len: 標題是 type[] 裡面的那一種 */
   title = str_ttl(mark = hdr->title);
-  ch = (title == mark) ? 2 : (*mark == 'R') ? 0 : 1;
+  len = (title == mark) ? 2 : (*mark == 'R') ? 0 : 1;
   if (!strcmp(currtitle, title))
-    ch += 3;
-  outs(type[ch]);
+    len += 3;
+  outs(type[len]);
   outc(' ');
 
   /* --------------------------------------------------- */
@@ -688,45 +700,42 @@ hdr_outs(hdr, cc)		/* print HDR's subject */
   mark = title + cc;
 
 #ifdef HAVE_DECLARE	/* Thor.980508: Declaration, 嘗試使某些title更明顯 */
-  square = 0;		/* 0x00:不處理方括 0x01:要處理方括 0x10:中文字的首碼 */
-  if (ch < 3)
+  square = in_chi = 0;
+  if (len < 3)
   {
     if (*title == '[')
     {
       outs("\033[1m");
-      square ^= 0x01;
+      square = 1;
     }
   }
 #endif
 
-  while ((cc = *title++) && (title < mark))
+  while ((ch = *title++) && (title < mark))
   {
 #ifdef HAVE_DECLARE
     if (square)
     {
-      if ((square & 0x10) || IS_ZHC_HI(cc))	/* 中文字的第二碼若是 ']' 不算是方括 */
+      if (in_chi || IS_ZHC_HI(ch))	/* 中文字的第二碼若是 ']' 不算是方括 */
       {
-	square ^= 0x10;
+	in_chi ^= 1;
       }
-      else
+      else if (ch == ']')
       {
-	if (cc == ']')
-	{
-	  outs("]\033[m");
-	  square = 0;			/* 只處理一組方括，方括已經處理完了 */
-	  continue;
-	}
+	outs("]\033[m");
+	square = 0;			/* 只處理一組方括，方括已經處理完了 */
+	continue;
       }
     }
 #endif
 
-    outc(cc);
+    outc(ch);
   }
 
 #ifdef HAVE_DECLARE
-  if (square || ch >= 3)	/* Thor.980508: 變色還原用 */
+  if (square || len >= 3)	/* Thor.980508: 變色還原用 */
 #else
-  if (ch >= 3)
+  if (len >= 3)
 #endif
     outs("\033[m");
 

@@ -104,7 +104,7 @@ draw_line(x, y, msg)	/* 在 (x, y) 的位置塞入 msg，左右仍要印出原來的彩色文字 */
 	if (!in_chi && IS_ZHC_HI(ch))
 	{
 	  outc(' ');
-	  in_chi = 1;
+	  in_chi ^= 1;
 	}
 	else
 	{
