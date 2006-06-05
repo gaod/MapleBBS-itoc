@@ -1835,7 +1835,7 @@ mbox_copy(xo)		/* itoc.011025: 取代 gem_gather */
   if (tag < 0)
     return XO_FOOT;
 
-  gem_buffer(xo->dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top));
+  gem_buffer(xo->dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top), NULL);
 
   zmsg("檔案標記完成。[注意] 拷貝後才能刪除原文！");
   return mbox_gem(xo);		/* 拷貝完直接進精華區 */

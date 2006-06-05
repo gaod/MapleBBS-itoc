@@ -87,7 +87,7 @@ void mf_main(void);
 /* gem.c */
 int gem_link(char *brdname);
 void brd2gem(BRD *brd, HDR *gem);
-void gem_buffer(char *dir, HDR *ghdr);
+void gem_buffer(char *dir, HDR *hdr, int (*fchk)());
 int gem_gather(XO *xo);
 void XoGem(char *folder, char *title, int level);
 void gem_main(void);

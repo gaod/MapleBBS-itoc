@@ -45,16 +45,15 @@ gem_item(num, hdr, level)
   gtype = (char) 0xba;
 
   /* 目錄用實心，不是目錄用空心 */
-  if (xmode & GEM_FOLDER)		/* 文章:◇ 卷宗:◆ */
+  if (xmode & GEM_FOLDER)			/* 文章:◇ 卷宗:◆ */
     gtype += 1;
 
-  if (hdr->xname[0] == '@')		/* 資料:☆ 分類:★ */
+  if (hdr->xname[0] == '@')			/* 資料:☆ 分類:★ */
     gtype -= 2;
-  else if (xmode & GEM_BOARD)		/*         看板:■ */
+  else if (xmode & (GEM_BOARD | GEM_LINE))	/* 分隔:□ 看板:■ */
     gtype += 2;
 
-  prints("%6d%c%c\241%c ", num, xmode & GEM_RESTRICT ? ')' : ' ',
-    TagNum && !Tagger(hdr->chrono, num - 1, TAG_NIN) ? '*' : ' ', gtype);
+  prints("%6d%c%c\241%c ", num, tag_char(hdr->chrono), xmode & GEM_RESTRICT ? ')' : ' ', gtype);
 
   if ((xmode & GEM_RESTRICT) && !(level & GEM_M_BIT))
     outs(MSG_DATA_CLOAK);				/* itoc.000319: 限制級文章保密 */
@@ -250,6 +249,118 @@ gem_bno(xo)
 /* ----------------------------------------------------- */
 
 
+/* itoc.060605:
+  1. 在 hdr_stamp() 中用檔案是否已經存在的方法來確認是否為 unique chrono，
+     然而精華區的檔案可以有三種 token (F/A/L)，所以可以會發生 F1234567/A1234567/L1234567
+     三個不同檔名但卻相同 chrono 的錯誤。
+  2. Tagger() 要求 unique chrono，否則如果 tag 到相同 chrono 的檔案，該 chrono 的所有檔案
+     都會 tag 失效。
+  3. 所以就從 hdr_stamp() 改寫一隻 gem_hdr_stamp()。
+*/
+
+static int
+gem_hdr_stamp(folder, token, hdr, fpath)
+  char *folder;
+  int token;		/* 只會有 F/A/L | HDR_LINK/HDR_COPY */
+  HDR *hdr;
+  char *fpath;
+{
+  char *fname, *family;
+  int rc, chrono;
+  char *flink, buf[128];
+  int i;
+  int Token;		/* token 的大寫 */
+  char *ptr;		/* token 所在處 */
+  char *pool = "FAL";
+  static time_t chrono0;
+
+  flink = NULL;
+  if (token & (HDR_LINK | HDR_COPY))
+  {
+    flink = fpath;
+    fpath = buf;
+  }
+
+  fname = fpath;
+  while (rc = *folder++)
+  {
+    *fname++ = rc;
+    if (rc == '/')
+      family = fname;
+  }
+  if (*family != '.')
+  {
+    fname = family;
+    family -= 2;
+  }
+  else
+  {
+    fname = family + 1;
+    *fname++ = '/';
+  }
+
+  Token = token & 0xdf;	/* 變大寫 */
+  ptr = fname;
+  fname++;
+
+  chrono = time(0);
+
+  /* itoc.060605: 由於精華區往往有大量複製貼上，所以就乾脆把上一次最後的 chrono 記下來，這次就不用從頭 try */
+  if (chrono <= chrono0)
+    chrono = chrono0 + 1;
+
+  for (;;)
+  {
+    *family = radix32[chrono & 31];
+    archiv32(chrono, fname);
+
+    /* 要確保這個 chrono 的 F/A/L 都沒有檔案 */
+    for (i = 0; i < 3; i++)
+    {
+      if (pool[i] != Token)
+      {
+	*ptr = pool[i];
+	if (dashf(fpath))
+	  goto next_chrono;
+      }
+    }
+
+    *ptr = Token;
+
+    if (flink)
+    {
+      if (token & HDR_LINK)
+	rc = f_ln(flink, fpath);
+      else
+        rc = f_cp(flink, fpath, O_EXCL);
+    }
+    else
+    {
+      rc = open(fpath, O_WRONLY | O_CREAT | O_EXCL, 0600);
+    }
+
+    if (rc >= 0)
+    {
+      memset(hdr, 0, sizeof(HDR));
+      hdr->chrono = chrono;
+      str_stamp(hdr->date, &hdr->chrono);
+      strcpy(hdr->xname, --fname);
+      break;
+    }
+
+    if (errno != EEXIST)
+      break;
+
+next_chrono:
+    chrono++;
+  }
+
+  chrono0 = chrono;
+
+  return rc;
+}
+
+
 void
 brd2gem(brd, gem)
   BRD *brd;
@@ -387,8 +498,7 @@ gem_add(xo, gtype)
       if (strchr(fpath, '/'))
       {
 	zmsg("不合法的檔案名稱");
-	/* return XO_NONE; */
-	return XO_FOOT;		/* itoc.010726: 把 b_lines 填上 feeter */
+	return XO_FOOT;
       }
 
       memset(&hdr, 0, sizeof(HDR));
@@ -410,7 +520,7 @@ gem_add(xo, gtype)
     }
     else
     {
-      if ((fd = hdr_stamp(dir, gtype, &hdr, fpath)) < 0)
+      if ((fd = gem_hdr_stamp(dir, gtype, &hdr, fpath)) < 0)
 	return XO_FOOT;
       close(fd);
 
@@ -861,7 +971,6 @@ gbuf_malloc(num)
   HDR *gbuf;
   static int GemBufferSiz;	/* 目前 GemBuffer 的 size 是 GemBufferSiz * sizeof(HDR) */
 
-  GemBufferNum = num;
   if (gbuf = GemBuffer)
   {
     if (GemBufferSiz < num)
@@ -882,40 +991,69 @@ gbuf_malloc(num)
 
 
 void
-gem_buffer(dir, hdr)
+gem_buffer(dir, hdr, fchk)
   char *dir;
   HDR *hdr;			/* NULL 代表放入 TagList, 否則將傳入的放入 */
+  int (*fchk)();		/* 允許放入 gbuf 的條件 */
 {
-  int num, locus;
-  HDR *gbuf;
+  int max, locus, num;
+  HDR *gbuf, buf;
 
   if (hdr)
   {
-    num = 1;
+    max = 1;
   }
   else
   {
-    num = TagNum;
-    if (num <= 0)
+    max = TagNum;
+    if (max <= 0)
       return;
   }
 
-  gbuf = gbuf_malloc(num);
+  gbuf = gbuf_malloc(max);
+  num = 0;
 
   if (hdr)
   {
-    memcpy(gbuf, hdr, sizeof(HDR));
+    if (!fchk || fchk(hdr))
+    {
+      memcpy(gbuf, hdr, sizeof(HDR));
+      num++;
+    }
   }
   else
   {
     locus = 0;
     do
     {
-      EnumTag(&gbuf[locus], dir, locus, sizeof(HDR));
-    } while (++locus < num);
+      EnumTag(&buf, dir, locus, sizeof(HDR));
+
+      if (!fchk || fchk(&buf))
+      {
+	memcpy(gbuf + num, &buf, sizeof(HDR));
+	num++;
+      }
+    } while (++locus < max);
   }
 
   strcpy(GemFolder, dir);
+  GemBufferNum = num;
+}
+
+
+static int IamBM;
+
+static int
+chkrestrict(hdr)
+  HDR *hdr;
+{
+  if (hdr->xmode & GEM_BOARD)		/* 看板不能被複製/貼上 */
+    return 0;
+
+  if ((hdr->xmode & GEM_RESTRICT) && !IamBM)
+    return 0;
+
+  return 1;
 }
 
 
@@ -923,21 +1061,17 @@ static int
 gem_copy(xo)
   XO *xo;
 {
-  HDR *hdr;
   int tag;
-
-  if (!(hdr = gem_check(xo, NULL, 0)))
-    return XO_NONE;
 
   tag = AskTag("精華區拷貝");
 
   if (tag < 0)
     return XO_FOOT;
 
-  gem_buffer(xo->dir, tag ? NULL : hdr);
+  IamBM = (xo->key & GEM_M_BIT);
+  gem_buffer(xo->dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top), chkrestrict);
 
-  zmsg("拷貝完成，但是加密文章不會被拷貝。[注意] 貼上後才能刪除原文！");
-
+  zmsg("拷貝完成。[注意] 貼上後才能刪除原文！");
   /* return XO_FOOT; */
   return gem_head(xo);		/* Thor.990414: 讓剪貼篇數更新 */
 }
@@ -1051,31 +1185,33 @@ gem_do_paste(srcDir, dstDir, hdr, pos)		/* itoc.010725: for gem_paste() */
 
   xmode = hdr->xmode;
 
-  if (xmode & (GEM_RESTRICT | GEM_RESERVED))	/* 限制級精華區不能複製/貼上 */
-    return;
-
-  if (xmode & GEM_BOARD)			/* 看板不能被複製/貼上 */
-    return;
-
   if (xmode & GEM_FOLDER)	/* 卷宗/分類 */
   {
-    /* 先新檔建立自己這個分類/卷宗 */
-
     /* 在複製/貼上後一律變成卷宗，因為分類是站長專用特殊用途的 */
-    if ((fsize = hdr_stamp(dstDir, 'F', &fhdr, fpath)) < 0)
+    if ((fsize = gem_hdr_stamp(dstDir, 'F', &fhdr, fpath)) < 0)
       return;
     close(fsize);
 
     fhdr.xmode = GEM_FOLDER;
+  }
+  else if (xmode & GEM_LINE)	/* 分隔 */
+  {
+    if ((fsize = gem_hdr_stamp(dstDir, 'L', &fhdr, fpath)) < 0)
+      return;
+    close(fsize);
+
+    fhdr.xmode = GEM_LINE;
   }
   else				/* 文章/資料 */
   {
     hdr_fpath(folder, srcDir, hdr);
 
     /* 在複製/貼上後一律變成文章，因為資料是站長專用特殊用途的 */
-    hdr_stamp(dstDir, HDR_COPY | 'A', &fhdr, folder);
+    gem_hdr_stamp(dstDir, HDR_COPY | 'A', &fhdr, folder);
   }
 
+  if (hdr->xmode & GEM_RESTRICT)
+    fhdr.xmode ^= GEM_RESTRICT;
   strcpy(fhdr.owner, cuser.userid);
   strcpy(fhdr.title, hdr->title);
   if (pos < 0)
@@ -1086,7 +1222,7 @@ gem_do_paste(srcDir, dstDir, hdr, pos)		/* itoc.010725: for gem_paste() */
 
   if (xmode & GEM_FOLDER)	/* 卷宗/分類 */
   {
-    /* 建立完自己這個卷宗/分類以後，再 recursive 地一層一層目錄進去一篇一篇另存新檔 */
+    /* 建立完自己這個卷宗以後，再 recursive 地一層一層目錄進去一篇一篇另存新檔 */
     hdr_fpath(folder, srcDir, hdr);
     if (data = (HDR *) f_img(folder, &fsize))
     {
@@ -1094,7 +1230,9 @@ gem_do_paste(srcDir, dstDir, hdr, pos)		/* itoc.010725: for gem_paste() */
       tail = data + (fsize / sizeof(HDR));
       do
       {
-	gem_do_paste(folder, fpath, head, -1);
+	/* 只有 gem_copy() 才可能有 GEM_FOLDER，所以用精華區的 chkrestrict */
+	if (chkrestrict(head))
+	  gem_do_paste(folder, fpath, head, -1);
       } while (++head < tail);
 
       free(data);
@@ -1117,8 +1255,7 @@ gem_paste(xo)
   if (!(num = GemBufferNum))
   {
     zmsg("請先執行 copy 命令後再 paste");
-    /* return XO_NONE; */
-    return XO_FOOT;		/* itoc.010726: 把 b_lines 填上 feeter */
+    return XO_FOOT;
   }
 
   dir = xo->dir;
@@ -1231,8 +1368,21 @@ gem_anchor(xo)
     zmsg("錨動作完成");
   }
 
-  /* return XO_NONE; */
-  return XO_FOOT;	/* itoc.010726: 把 b_lines 填上 feeter */
+  return XO_FOOT;
+}
+
+
+static int
+chkgather(hdr)
+  HDR *hdr;
+{
+  if (hdr->xmode & GEM_RESTRICT)	/* 限制級精華區不能定錨收錄 */
+    return 0;
+    
+  if (hdr->xmode & GEM_FOLDER)		/* 查 hdr 是否 plain text (即文章/資料) */
+    return 0;
+
+  return 1;
 }
 
 
@@ -1240,10 +1390,10 @@ int
 gem_gather(xo)
   XO *xo;
 {
-  HDR *hdr, *gbuf, ghdr, xhdr;
-  int tag, locus, index, rc, xmode;
-  char *dir, *folder, fpath[80];
+  int tag;
+  char *dir, *folder, fpath[80], title[TTLEN + 1];
   FILE *fp;
+  HDR *head, *tail, hdr;
 
   folder = GemAnchor;
 
@@ -1272,88 +1422,46 @@ gem_gather(xo)
       break;
 
     default:
-      strcpy(xhdr.title, currtitle);
-      if (!vget(b_lines, 0, "標題：", xhdr.title, TTLEN + 1, GCARRY))
+      strcpy(title, currtitle);
+      if (!vget(b_lines, 0, "標題：", title, TTLEN + 1, GCARRY))
 	return XO_FOOT;
-      fp = fdopen(hdr_stamp(folder, 'A', &ghdr, fpath), "w");
-      strcpy(ghdr.owner, cuser.userid);
-      strcpy(ghdr.title, xhdr.title);
+      fp = fdopen(gem_hdr_stamp(folder, 'A', &hdr, fpath), "w");
+      strcpy(hdr.owner, cuser.userid);
+      strcpy(hdr.title, title);
     }
   }
 
-  dir = xo->dir;
-  hdr = tag ? &xhdr : (HDR *) xo_pool + xo->pos - xo->top;
-  rc = (*dir == 'g') ? XO_NONE : XO_FOOT;
-
   /* gather 視同 copy，可準備作 paste */
+  dir = xo->dir;
+  gem_buffer(dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top), chkgather);
 
-  strcpy(GemFolder, folder);
-  gbuf = gbuf_malloc((fp != NULL || tag == 0) ? 1 : tag);
-
-  /* itoc.010727.註解: 若合成一篇或只收錄一篇，則 GemBufferNum = 1，反之是 tag 數量 */
-
-  index = 0;
-  locus = 0;
-
+  head = GemBuffer;
+  tail = head + GemBufferNum;
   do
   {
-    if (tag)
-      EnumTag(hdr, dir, locus, sizeof(HDR));
+    hdr_fpath(fpath, dir, head);
 
-    xmode = hdr->xmode;
-
-    if (xmode & (GEM_RESTRICT | GEM_RESERVED))	/* 限制級精華區不能定錨收錄 */
-      continue;
-    
-    if (!(xmode & GEM_FOLDER))	/* 查 hdr 是否 plain text (即文章/資料/絲路) */
+    if (fp)	/* 合成一篇 */
     {
-      hdr_fpath(fpath, dir, hdr);
-
-      if (fp)	/* 合成一篇 */
-      {
-	f_suck(fp, fpath);
-	fputs(str_line, fp);
-      }
-      else	/* 分別建檔 */
-      {
-	hdr_stamp(folder, HDR_COPY | 'A', &ghdr, fpath);
-	strcpy(ghdr.owner, cuser.userid);	/* 收錄用板主 id */
-	strcpy(ghdr.title, hdr->title);
-	ghdr.xmode = 0;				/* xmode 是文章 */
-
-	gbuf[index] = ghdr;		/* itoc.010727: 跳過不是 plain text 的 */
-	index++;
-	rec_add(folder, &ghdr, sizeof(HDR));
-	gem_log(folder, "收錄", &ghdr);
-      }
+      f_suck(fp, fpath);
+      fputs(str_line, fp);
     }
-  } while (++locus < tag);
+    else	/* 分別建檔 */
+    {
+      gem_do_paste(dir, folder, head, -1);
+    }
+  } while (++head < tail);
 
   if (fp)
   {
     fclose(fp);
-    gbuf[0] = ghdr;
-    rec_add(folder, &ghdr, sizeof(HDR));
-    gem_log(folder, "新增", &ghdr);
-  }
-  else
-  {
-    /* itoc.010727: tag 數量扣掉不是 plain text 的才是真是剪貼簿的篇數 */
-    /* itoc.010727.註解: 如果 GemBufferNum 數目不對，那麼 gem_paste() 時就會發生錯誤 */
-    GemBufferNum = index;
+    rec_add(folder, &hdr, sizeof(HDR));
+    gem_log(folder, "新增", &hdr);
   }
 
   zmsg("收錄完成，但是加密文章不會被收錄");
 
-  if (rc == XO_NONE)	/* 在精華區中 gem_gather() 才要重繪剪貼簿篇數，在看板/信箱裡都不用 */
-  {
-    /* itoc.010727: 重繪剪貼簿篇數 */
-    move(1, 59);
-    clrtoeol();
-    prints("(剪貼簿 %d 篇)\n", GemBufferNum);
-  }
-
-  return XO_FOOT;
+  return gem_init(xo);
 }
 
 
@@ -1362,17 +1470,20 @@ gem_tag(xo)
   XO *xo;
 {
   HDR *hdr;
-  int pos, tag;
+  int tag, pos, cur;
 
-  if ((hdr = gem_check(xo, NULL, 0)) &&
-    (tag = Tagger(hdr->chrono, pos = xo->pos, TAG_TOGGLE)))
+  pos = xo->pos;
+  cur = pos - xo->top;
+  hdr = (HDR *) xo_pool + cur;
+
+  if (tag = Tagger(hdr->chrono, pos, TAG_TOGGLE))
   {
-    move(3 + pos - xo->top, 7);
+    move(3 + cur, 6);
     outc(tag > 0 ? '*' : ' ');
   }
 
   /* return XO_NONE; */
-  return xo->pos + 1 + XO_MOVE; /* lkchu.981201: 跳至下一項，方便連續 tag */
+  return pos + 1 + XO_MOVE;	/* lkchu.981201: 跳至下一項 */
 }
 
 
@@ -1415,6 +1526,7 @@ static KeyFunc gem_cb[] =
   'X', post_forward,
   'B', gem_toggle,
   'o', gem_refuse,
+  Ctrl('Y'), gem_refuse,
   'm', gem_move,
   'M', gem_move,
 
@@ -1465,3 +1577,4 @@ gem_main()
   xo->key = (HAS_PERM(PERM_ALLBOARD) ? (GEM_W_BIT | GEM_X_BIT | GEM_M_BIT) : 0);
   xo->xyz = "";
 }
+

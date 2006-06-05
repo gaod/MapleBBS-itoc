@@ -1735,21 +1735,33 @@ post_prune(xo)
 }
 
 
+#ifdef HAVE_REFUSEMARK
+static int
+chkrestrict(hdr)
+  HDR *hdr;
+{
+  return !(hdr->xmode & POST_RESTRICT) || 
+    !strcmp(hdr->owner, cuser.userid) || (bbstate & STAT_BM);
+}
+#endif
+
+
 static int
 post_copy(xo)	   /* itoc.010924: 取代 gem_gather */
   XO *xo;
 {
   int tag;
-  HDR *hdr;
 
   tag = AskTag("看板文章拷貝");
 
   if (tag < 0)
     return XO_FOOT;
 
-  hdr = (HDR *) xo_pool + (xo->pos - xo->top);
-
-  gem_buffer(xo->dir, tag ? NULL : hdr);
+#ifdef HAVE_REFUSEMARK
+  gem_buffer(xo->dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top), chkrestrict);
+#else
+  gem_buffer(xo->dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top), NULL);
+#endif
 
   if (bbstate & STAT_BOARD)
   {
@@ -1762,7 +1774,7 @@ post_copy(xo)	   /* itoc.010924: 取代 gem_gather */
     else
 #endif
     {
-      zmsg("拷貝完成，但是加密文章不會被拷貝。[注意] 貼上後才能刪除原文！");
+      zmsg("拷貝完成。[注意] 貼上後才能刪除原文！");
       return post_gem(xo);	/* 拷貝完直接進精華區 */
     }
   }
