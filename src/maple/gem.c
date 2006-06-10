@@ -1461,7 +1461,13 @@ gem_gather(xo)
 
   zmsg("收錄完成，但是加密文章不會被收錄");
 
-  return gem_init(xo);
+  if (*dir == 'g')	/* 在精華區中 gem_gather() 才要重繪剪貼簿篇數，在看板/信箱裡都不用 */
+  {
+    move(1, 59);
+    clrtoeol();
+    prints("(剪貼簿 %d 篇)\n", GemBufferNum);
+  }
+  return XO_FOOT;
 }
 
 
