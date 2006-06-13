@@ -753,7 +753,7 @@ readnews(node)
 
     if (ResetActive)
     {
-      if (nf->high != high)
+      if (nf->high != high || nf->xmode & INN_ERROR)
         updaterc(nf, i, high);
       DEBUG(("│└<readnews> 結束 %s，此群組之 high-number 已更新\n", newsgroup));
       continue;		/* 若 ResetActive 則不取信，輪下一個群組 */
@@ -761,7 +761,7 @@ readnews(node)
 
     if (nf->high >= high)
     {
-      if (nf->high > high)	/* server re-number */
+      if (nf->high > high || nf->xmode & INN_ERROR)	/* server re-number */
 	updaterc(nf, i, high);
 
       DEBUG(("│└<readnews> 結束 %s，此群組已沒有新文章\n", newsgroup));
