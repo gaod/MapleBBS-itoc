@@ -158,18 +158,16 @@ static int checknum = 0;
 
 
 static inline int
-checksum_add(str)		/* 回傳本行文字的 checksum */
+checksum_add(str)		/* 回傳本列文字的 checksum */
   char *str;
 {
-  int sum, i, len;
-  char *ptr;
+  int i, len, sum;
 
-  ptr = str;
-  len = strlen(str) >> 2;	/* 只算前四分之一 */
+  len = strlen(str);
 
-  sum = 0;
-  for (i = 0; i < len; i++)
-    sum += *ptr++;
+  sum = len;	/* 當字數太少時，前四分之一很可能完全相同，所以將字數也加入 sum 值 */
+  for (i = len >> 2; i > 0; i--)	/* 只算前四分之一字元的 sum 值 */
+    sum += *str++;
 
   return sum;
 }
@@ -215,7 +213,7 @@ checksum_find(fpath)
   sum = 0;
   if (fp = fopen(fpath, "r"))
   {
-    for (i = -4;;)	/* 前四列是檔頭 */
+    for (i = -(LINE_HEADER + 1);;)	/* 前幾列是檔頭 */
     {
       if (!fgets(buf, ANSILINELEN, fp))
 	break;

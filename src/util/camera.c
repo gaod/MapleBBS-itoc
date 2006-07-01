@@ -61,7 +61,7 @@ str_strip(str)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
 	len += BMAX(IDLEN, UNLEN) - 1;
 	if (len > SCR_WIDTH)
 	{
-	  *str = '\0';
+	  strcpy(str - 1, "\033[m\n");
 	  break;
 	}
       }
@@ -72,7 +72,7 @@ str_strip(str)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
     {
       if (++len > SCR_WIDTH)
       {
-	*str = '\0';
+	strcpy(str - 1, "\033[m\n");
 	break;
       }
     }
