@@ -780,8 +780,11 @@ post_attr(hdr)
 
   mode = hdr->xmode;
 
+  /* 已閱讀為小寫，未閱讀為大寫 */
   /* 由於置底文沒有閱讀記錄，所以視為已讀 */
-  attr = !(mode & POST_BOTTOM) && brh_unread(hdr->chrono) ? 0 : 0x20;	/* 已閱讀為小寫，未閱讀為大寫 */  
+  /* 加密文章視為已讀 */
+  attr = ((mode & POST_BOTTOM) || !brh_unread(hdr->chrono) || 
+    ((mode & POST_RESTRICT) && strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))) ? 0x20 : 0;
 
 #ifdef HAVE_REFUSEMARK
   if (mode & POST_RESTRICT)
