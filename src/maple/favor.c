@@ -16,6 +16,7 @@
 static int mf_add();
 static int mf_paste();
 static int mf_load();
+static void XoMF();
 
 
 extern XZ xz[];
@@ -34,6 +35,8 @@ static int mf_jumpnext = 0;     /* itoc.020615: 是否跳去下一個未讀板 1:要 0:不要
 
 
 static MF mftmp;		/* for copy & paste */
+
+static int mf_depth;
 
 
 void
@@ -535,10 +538,12 @@ mf_browse(xo)
     XoGem(fpath, "精華區", type);
     return mf_init(xo);
   }
-  else if (type & MF_FOLDER)	/* 資料夾 */
+  else if (type & MF_FOLDER)	/* 卷宗 */
   {
+    mf_depth++;
     mf_fpath(fpath, cuser.userid, xname);
     XoMF(fpath);
+    mf_depth--;
     return mf_load(xo);
   }
 
@@ -778,16 +783,22 @@ static KeyFunc mf_cb[] =
 };
 
 
-void
+static void
 XoMF(folder)
   char *folder;
 {
   XO *xo, *last;
 
-  last = xz[XZ_MF - XO_ZONE].xo;	/* record */
+  /* itoc.060706: 當 mf_depth 為 0 時，表示要進 FN_MF，在 mf_main() 已處理過，
+     不需要重新 xo_new()，如此可保留首頁的 xo->pos */
 
-  xz[XZ_MF - XO_ZONE].xo = xo = xo_new(folder);
-  xo->pos = 0;
+  if (mf_depth)
+  {
+    last = xz[XZ_MF - XO_ZONE].xo;	/* record */
+
+    xz[XZ_MF - XO_ZONE].xo = xo = xo_new(folder);
+    xo->pos = 0;
+  }
 
 #ifdef AUTO_JUMPBRD
   if (cuser.ufo & UFO_JUMPBRD)
@@ -795,19 +806,19 @@ XoMF(folder)
 #endif
   xover(XZ_MF);
 
-  free(xo);
-  xz[XZ_MF - XO_ZONE].xo = last;	/* restore */
+  if (mf_depth)
+  {
+    free(xo);
+    xz[XZ_MF - XO_ZONE].xo = last;	/* restore */
+  }
 }
 
 
 int
 MyFavorite()
 {
-  char fpath[64];
-
-  mftmp.chrono = 0;		/* 初始化 */
-  mf_fpath(fpath, cuser.userid, FN_MF);
-  XoMF(fpath);
+  /* 從主選單進入我的最愛，mf_depth 一定是 0 */
+  XoMF(NULL);
 
   return 0;
 }
@@ -819,10 +830,17 @@ mf_main()
   char fpath[64];
   XO *xo;
 
+  /* itoc.060706.註解: 進站時就要初始化，因為使用者可能一上站就 every_Z 跳去我的最愛 */
+
   mf_fpath(fpath, cuser.userid, FN_MF);
   xz[XZ_MF - XO_ZONE].xo = xo = xo_new(fpath);
   xz[XZ_MF - XO_ZONE].cb = mf_cb;
 
   xo->pos = 0;
+
+#ifdef AUTO_JUMPBRD
+  if (cuser.ufo & UFO_JUMPBRD)
+    mf_jumpnext = 1;	/* itoc.020615: 主動跳去下一個未讀看板 */
+#endif
 }
 #endif				/* MY_FAVORITE */

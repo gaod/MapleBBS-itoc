@@ -1576,6 +1576,8 @@ gem_main()
 {
   XO *xo;
 
+  /* itoc.060706.註解: 進站時就要初始化，因為使用者可能一上站就 every_Z 跳去精華區 */
+
   xz[XZ_GEM - XO_ZONE].xo = xo = xo_new("gem/"FN_DIR);
   xz[XZ_GEM - XO_ZONE].cb = gem_cb;
   xo->pos = 0;
@@ -1583,4 +1585,3 @@ gem_main()
   xo->key = (HAS_PERM(PERM_ALLBOARD) ? (GEM_W_BIT | GEM_X_BIT | GEM_M_BIT) : 0);
   xo->xyz = "";
 }
-
