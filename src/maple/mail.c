@@ -718,7 +718,7 @@ mail_hold(fpath, rcpt, title, hold)
   char *title;
   int hold;		/* -1:當寄信失敗時可以強迫保留 */
 {
-  if (hold < 0 || vans("是否自存底稿(Y/N)？[N] ") == 'y')
+  if (cuser.userlevel && (hold < 0 || vans("是否自存底稿(Y/N)？[N] ") == 'y'))
   {
     char buf[256];
 
