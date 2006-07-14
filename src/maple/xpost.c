@@ -202,9 +202,9 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
 
   /* free index memory, remember check free pointer */
 
-  if (list)
+  if (xpostIndex)
   {
-    free(list);
+    free(xpostIndex);
     xpostIndex = NULL;
   }
 
