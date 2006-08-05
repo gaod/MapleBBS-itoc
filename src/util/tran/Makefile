@@ -20,7 +20,7 @@ EXE =	brd2gem transacct transbrd \
 	snap2usr snap2brd \
 	sob2brd sob2gem sob2pal sob2usr \
 	wd2bmw wd2brd wd2gem wd2list wd2mf wd2pal wd2pip wd2usr \
-	windtop2brd windtop2pip windtop2usr
+	windtop2brd windtop2mf windtop2pip windtop2usr
 
 all: 
 	@echo "Please enter 'make sys-type', "

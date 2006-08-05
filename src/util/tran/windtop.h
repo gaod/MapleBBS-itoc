@@ -18,13 +18,15 @@
 
   3. 利用 windtop2usr 轉換 .ACCT
 
-  4. 利用 windtop2pip 轉換 chicken
+  4. 利用 windtop2mf 轉換 MF
 
-  5. 將新版的 gem/@/ 下的這些檔案複製過來
+  5. 利用 windtop2pip 轉換 chicken
+
+  6. 將新版的 gem/@/ 下的這些檔案複製過來
      @apply @e-mail @goodbye @index @justify @newuser @opening.0
      @opening.1 @opening.2 @post @re-reg @tryout @welcome
             
-  6. 上 BBS 站，在 (A)nnounce 裡面，建以下二個卷宗的所有資料
+  7. 上 BBS 站，在 (A)nnounce 裡面，建以下二個卷宗的所有資料
      {話題} 熱門討論
      {排行} 統計資料
 
@@ -129,3 +131,32 @@ typedef struct
 #define BATTR_MODIFY      0x8000  /* 使用者修改文章 */
 #define BATTR_PRH         0x10000 /* 推薦文章 */
 #define BATTR_NOTOTAL     0x20000 /* 不統計看板使用紀錄 */
+
+
+/* ----------------------------------------------------- */
+/* old MF struct					 */
+/* ----------------------------------------------------- */
+
+typedef struct
+{
+  time_t chrono;                /* timestamp */
+  int xmode;
+
+  int xid;                      /* reserved 保留*/
+
+  char xname[31];               /* 檔案名稱 */
+  signed char pushscore;
+  char owner[80];               /* 作者 (E-mail address) */
+  char nick[50];                /* 暱稱 */
+
+  char date[9];                 /* [96/12/01] */
+  char title[73];               /* 主題 (TTLEN + 1) */
+}   mfheader;
+
+
+/* ----------------------------------------------------- */
+/* old MF file						 */
+/* ----------------------------------------------------- */
+
+#define FN_OLD_FAVORITE		"favorite"
+#define FN_OLDIMG_FAVORITE	"favorite.img"
