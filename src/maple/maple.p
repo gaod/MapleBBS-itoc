@@ -81,7 +81,6 @@ int vedit(char *fpath, int ve_op);
 /* favorite.c */
 void mf_fpath(char *fpath, char *userid, char *fname);
 int MyFavorite(void);
-void XoMF(char *folder);
 void mf_main(void);
 
 /* gem.c */
