@@ -794,6 +794,7 @@ brd_set(brd, row)
     }
     else
       continue;
+
     move(i - 2, 0);
     prints("目前板主為 %s", buf);
     clrtoeol();

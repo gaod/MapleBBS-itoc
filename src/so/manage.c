@@ -331,6 +331,9 @@ post_changeBM(xo)
 
       acct_setperm(&acct, PERM_BM, 0);
     }
+    else
+      continue;
+
     move(8, 0);
     prints("目前板主為 %s", buf);
     clrtoeol();
