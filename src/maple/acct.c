@@ -792,6 +792,8 @@ brd_set(brd, row)
 
       acct_setperm(&acct, PERM_BM, 0);
     }
+    else
+      continue;
     move(i - 2, 0);
     prints("目前板主為 %s", buf);
     clrtoeol();
