@@ -3,9 +3,10 @@
 /*-------------------------------------------------------*/
 /* target : 象棋麻將遊戲                                 */
 /* create : 98/07/29                                     */
-/* update : 01/04/25                                     */
+/* update : 05/06/30                                     */
 /* author : weiren@mail.eki.com.tw                       */
 /* recast : itoc.bbs@bbs.tnfsh.tn.edu.tw                 */
+/* modify : yiting.bbs@bbs.cs.tku.edu.tw                 */
 /*-------------------------------------------------------*/
 
 
@@ -17,12 +18,10 @@
 
 static int host_card[5];	/* 電腦(莊家) 的牌 */
 static int guest_card[5];	/* 玩家的牌 */
-static int throw[32];		/* 被丟棄的牌 */
+static int throw[50];		/* 被丟棄的牌，多留一些位置放被吃的牌 */
 
 static int flag;
 static int tflag;
-static int tflagA;
-static int tflagB;
 static int selftouch;		/* 自摸 */
 
 static int cnum[32] = 
@@ -33,123 +32,114 @@ static int cnum[32] =
   14, 14, 14, 14, 14
 };
 
-static int group[32] = 
+static int group[14] = 
 {
-  1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
-  3, 3, 3, 3, 3, 4, 4, 4, 4, 4,
-  5, 5, 5, 5, 5, 5,
-  6, 6, 6, 6, 6
+  1, 1, 1, 2, 2, 2, 3,
+  4, 4, 4, 5, 5, 5, 6
+};
+
+static char *chess[15] = 
+{
+  "\033[1;30m  \033[m",
+  "\033[1;31m帥\033[m", "\033[1;31m仕\033[m", "\033[1;31m相\033[m", "\033[1;31m硨\033[m", "\033[1;31m傌\033[m", "\033[1;31m炮\033[m", "\033[1;31m兵\033[m",
+  "\033[1;37m將\033[m", "\033[1;37m士\033[m", "\033[1;37m象\033[m", "\033[1;37m車\033[m", "\033[1;37m馬\033[m", "\033[1;37m包\033[m", "\033[1;37m卒\033[m"
 };
 
 
 static void
-out_song()
+out_song(money)
+  int money;
 {
-  static int count = 0;
-
-  /* 蘇慧倫˙不要再說愛我 */
-  uschar *msg[8] = 
-  {
-    "忘掉吧我的老情人  別在意也別說出來",
-    " 時間已沖淡一切  心情也沒有季節  把過去放回你心中",
-    "不要問我誰對誰錯  你的愛在我回憶中  這些年習慣自由",
-    "也沒有太多煩憂  那過去就像一陣風",
-    "不要再說愛我  不要再說愛我",
-    "現在我們之間  只能當當朋友",
-    "落下太多眼淚\  等過太多黑夜",
-    "現在我一個人  愛情我不想問"
-  };
   move(b_lines - 2, 0);
-  prints("\033[1;3%dm%s\033[m  籌碼還有 %d 元", time(0) % 7, msg[count], cuser.money);
-  clrtoeol();
-  if (++count == 8)
-    count = 0;
+  prints("\033[1;37;44m現有籌碼: %-20d", cuser.money);
+  if(money)
+    prints("押注金額: %-38d\033[m", money);
+  else
+    outs("                                                \033[m");
 }
 
 
-static void
-print_Sign(x, y)
-  int x, y;
+static inline void
+print_sign(host)
+  int host;
 {
-  move(x, y);
+  int y = (tflag-1) / 2 * 4; 
+  move((host * 3 + 8), y);
   outs("╭●╮");
 }
 
 
-static void
-print_Schess(card, x, y)
-  int card, x, y;
+static inline void
+print_chess(x, y)
+  int x, y;
 {
-  char *chess[33] = 
-  {
-    "帥", "仕", "仕", "相", "相", "硨", "硨", "傌", "傌", "炮", "炮",
-    "兵", "兵", "兵", "兵", "兵",
-    "將", "士", "士", "象", "象", "車", "車", "馬", "馬", "包", "包",
-    "卒", "卒", "卒", "卒", "卒", "Ｘ"
-  };
-
   move(x, y);
   outs("╭─╮");
-  move(x + 1, y);
-  prints("│%2s│", chess[card]);
   move(x + 2, y);
   outs("╰─╯");
 }
 
 
 static inline void
-clear_5card()
+clear_chess(x, y)
+  int x, y;
 {
-  move(15, 24);
+  move(x, y);
   outs("      ");
-  move(16, 24);
-  outs("      ");
-  move(17, 24);
+  move(x + 2, y);
   outs("      ");
 }
 
 
-static inline void
-Phost5()
+static void
+print_all(cards, x)
+  int cards[5], x;
 {
-  move(4, 24);
-  outs("╭─╮");
-  move(5, 24);
-  outs("│  │");
-  move(6, 24);
-  outs("╰─╯");
-}
-
-
-static inline void
-Chost5()
-{
-  move(4, 24);
-  outs("      ");
-  move(5, 24);
-  outs("      ");
-  move(6, 24);
-  outs("      ");
-}
-
-
-static inline void
-P_allchess()
-{
-  char *chess[33] = {
-    "帥", "仕", "仕", "相", "相", "硨", "硨", "傌", "傌", "炮", "炮",
-    "兵", "兵", "兵", "兵", "兵",
-    "將", "士", "士", "象", "象", "車", "車", "馬", "馬", "包", "包",
-    "卒", "卒", "卒", "卒", "卒", ""
-  };
-
   int i;
 
+  move(x + 1, 0);
+  clrtoeol();
+
   for (i = 0; i < 4; i++)
+    prints("│%s│", chess[cards[i]]);
+
+  if (cards[4] == 0)
+    clear_chess(x, 24);
+  else
   {
-    move(16, 2 + 6 * i);
-    outs(chess[guest_card[i]]);
+    prints("│%s│", chess[cards[4]]);
+    print_chess(x, 24);
   }
+}
+
+
+static inline void
+print_guest()
+{
+  print_all(guest_card, 15);
+}
+
+
+static inline void
+print_host()
+{
+  print_all(host_card, 4);
+}
+
+
+static void
+print_throw(host)
+  int host;
+{
+  int x = 11 - host * 3;
+
+  move(x + 1, 0);
+  outs("│");
+
+  for(; host < tflag; host += 2)
+    prints("%s│", chess[throw[host] & 0x0f]);
+  
+  print_chess(x, (host-2) / 2 * 4);
 }
 
 
@@ -157,6 +147,7 @@ static inline void
 sortchess()
 {
   int i, j, x;
+
   for (i = 0; i < 4; i++)
   {
     for (j = 0; j < (3 - i); j++)
@@ -182,11 +173,11 @@ static int
 testpair(a, b)
   int a, b;
 {
-  if (cnum[a] == cnum[b])
+  if (a == b)
     return 1;
-  if (cnum[a] == 1 && cnum[b] == 8)
+  if (a == 1 && b == 8)
     return 1;
-  if (cnum[a] == 8 && cnum[b] == 1)
+  if (a == 8 && b == 1)
     return 1;
   return 0;
 }
@@ -215,17 +206,17 @@ testthree(a, b, c)
     a = b;
     b = tmp;
   }
-  if (cnum[a] == 1 && cnum[b] == 2 && cnum[c] == 3)
+  if (a == 1 && b == 2 && c == 3)
     return 1;			/* 帥仕相 */
-  if (cnum[a] == 4 && cnum[b] == 5 && cnum[c] == 6)
+  if (a == 4 && b == 5 && c == 6)
     return 1;			/* 硨傌炮 */
-  if (cnum[a] == 8 && cnum[b] == 9 && cnum[c] == 10)
+  if (a == 8 && b == 9 && c == 10)
     return 1;			/* 將士象 */
-  if (cnum[a] == 11 && cnum[b] == 12 && cnum[c] == 13)
+  if (a == 11 && b == 12 && c == 13)
     return 1;			/* 車馬包 */
-  if (cnum[a] == 7 && cnum[b] == 7 && cnum[c] == 7)
+  if (a == 7 && b == 7 && c == 7)
     return 1;			/* 兵兵兵 */
-  if (cnum[a] == 14 && cnum[b] == 14 && cnum[c] == 14)
+  if (a == 14 && b == 14 && c == 14)
     return 1;			/* 卒卒卒 */
   return 0;
 }
@@ -236,6 +227,7 @@ testall(set)
   int set[5];
 {
   int i, j, k, m, p[3];
+
   for (i = 0; i < 4; i++)
   {
     for (j = i + 1; j < 5; j++)
@@ -257,24 +249,6 @@ testall(set)
 }
 
 
-static void
-printhostall()
-{
-  int i;
-  for (i = 0; i < 5; i++)
-    print_Schess(host_card[i], 4, 6 * i);
-}
-
-
-static void
-printhostfour()
-{
-  int i;
-  for (i = 0; i < 4; i++)
-    print_Schess(host_card[i], 4, 6 * i);
-}
-
-
 static int
 testlisten(set)
   int set[4];
@@ -286,14 +260,17 @@ testlisten(set)
   {
     if (group[set[i]] != 3)
       j++;
-  } if (j == 0)
+  }
+  if (j == 0)
     return 1;			/* 四支兵 */
+
   j = 0;
   for (i = 0; i < 4; i++)
   {
     if (group[set[i]] != 6)
       j++;
-  } if (j == 0)
+  }
+  if (j == 0)
     return 1;			/* 四支卒 */
 
   if (testthree(set[1], set[2], set[3]) != 0)
@@ -304,6 +281,7 @@ testlisten(set)
     return 1;
   if (testthree(set[0], set[1], set[2]) != 0)
     return 1;			/* 三支成形則聽 */
+
   for (i = 0; i < 3; i++)
   {
     for (j = i + 1; j < 4; j++)
@@ -326,7 +304,7 @@ testlisten(set)
   }
   if (m != 0)
   {
-    if ((group[p[0]] == group[p[1]]) && (cnum[p[0]] != cnum[p[1]]))
+    if ((group[p[0]] == group[p[1]]) && (p[0] != p[1]))
       return 1;			/* 兩支是 pair 另兩支有聽 */
     if ((group[p[0]] == group[p[1]] == 3) || (group[p[0]] == group[p[1]] == 6))
       return 1;
@@ -336,22 +314,6 @@ testlisten(set)
   return 0;
 }
 
-
-static inline void
-host_hula()
-{
-  print_Sign(11, (tflagB - 1) * 4);	/* 印撿牌符號 */
-  printhostall();
-}
-
-
-static inline void
-host_self()
-{
-  printhostall();
-}
-
-
 static int
 diecard(a)			/* 傳進一張牌, 看是否絕張 */
   int a;
@@ -359,16 +321,16 @@ diecard(a)			/* 傳進一張牌, 看是否絕張 */
   int i, k = 0;
   for (i = 0; i < tflag; i++)
   {
-    if (cnum[throw[i]] == cnum[a])
+    if (throw[i] == a)
       k++;
-    if (cnum[throw[i]] == 1 && cnum[a] == 8)
+    if (throw[i] == 1 && a == 8)
       return 1;
-    if (cnum[throw[i]] == 8 && cnum[a] == 1)
+    if (throw[i] == 8 && a == 1)
       return 1;
   }
-  if ((cnum[a] == 7 || cnum[a] == 14) && k == 4)
+  if ((a == 7 || a == 14) && k == 4)
     return 1;			/* 兵卒絕張 */
-  if (k == 1 && (cnum[a] != 7 && cnum[a] != 14))
+  if (k == 1 && (a != 7 && a != 14))
     return 1;
   return 0;
 }
@@ -377,7 +339,7 @@ diecard(a)			/* 傳進一張牌, 看是否絕張 */
 static inline int
 any_throw()
 {
-  int i, j, k, set[5] = {0}, tmp[4] = {0};
+  int i, j, k = 0, set[5] = {0}, tmp[4] = {0};
   int point[5] = {0};	/* point[5] 為評分系統, 看丟哪張牌比較好, 分數高的優先丟 */
 
   /* 測試將手上五支拿掉一支 */
@@ -399,82 +361,76 @@ any_throw()
 	point[i] += 5;		/* 絕張更該丟 */
       for (k = 0; k < 4; k++)
       {
-	if (((cnum[host_card[i]] == cnum[tmp[k]]) || 
-	  (cnum[tmp[k]] == 1 && cnum[host_card[i]] == 8) || 
-	  (cnum[tmp[k]] == 8 && cnum[host_card[i]] == 1)) && 
-	  cnum[host_card[i]] != 7 && cnum[host_card[i]] != 14)
+	if (((host_card[i] == tmp[k])
+	    || (tmp[k] == 1 && host_card[i] == 8)
+	    || (tmp[k] == 8 && host_card[i] == 1))
+	  && host_card[i] != 7 && host_card[i] != 14)
 	  point[i] += 10;
       }
       /* 車馬包包, 包該丟 */
     }
   }
-
   k = 0;
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 5; i++)	/* 算有幾支兵 */
   {
-    if (cnum[host_card[i]] == 7)
-      k++;			/* 算有幾支兵 */
+    if (host_card[i] == 7)
+      k++;
   }
-  if (k == 3)		/* 有三支兵: 剩下二支不是兵的各加 5 分 */
+  if (k == 3)			/* 有三支兵: 剩下二支不是兵的各加 5 分 */
   {
     for (i = 0; i < 5; i++)
-    {
-      if (cnum[host_card[i]] != 7)
+      if (host_card[i] != 7)
 	point[i] += 5;
+  }
+  else if (k == 4)		/* 有四支兵的話 */
+  {
+    if (diecard(7))		/* 但最後一支兵已絕張: 丟兵 */
+    {
+      for (i = 0; i < 5; i++)
+	if (host_card[i] == 7)
+	  point[i] += 999;
+    }
+    else			/* 最後一支兵尚未絕張: 丟不是兵的那支 */
+    {
+      for (i = 0; i < 5; i++)
+	if (host_card[i] != 7)
+	  point[i] += 999;
     }
   }
-  else if (k == 4)	/* 有四支兵 */
+  k = 0;
+  for (i = 0; i < 5; i++)	/* 算有幾支卒 */
   {
-    if (diecard(12))	/* 但最後一支兵已絕張: 丟兵 */
+    if (host_card[i] == 14)
+      k++;
+  }
+  if (k == 3)			/* 有三支卒: 剩下二支不是卒的各加 5 分 */
+  {
+    for (i = 0; i < 5; i++)
+      if (host_card[i] != 14)
+	point[i] += 5;
+  }
+  else if (k == 4)		/* 有四支卒的話 */
+  {
+    if (diecard(14))		/* 但最後一支卒已絕張: 丟卒 */
     {
       for (i = 0; i < 5; i++)
-      {
-	if (cnum[host_card[i]] == 7)
-	  point[i] += 9999;
-      }
+	if (host_card[i] == 14)
+	  point[i] += 999;
     }
-    else		/* 最後一支兵尚未絕張: 丟不是兵的那支 */
+    else			/* 最後一支卒尚未絕張: 丟不是卒的那支 */
     {
       for (i = 0; i < 5; i++)
-      {
-	if (cnum[host_card[i]] != 7)
-	  point[i] += 9999;
-      }
+	if (host_card[i] != 14)
+	  point[i] += 999;
     }
   }
 
-  k = 0;
   for (i = 0; i < 5; i++)
   {
-    if (cnum[host_card[i]] == 14)
-      k++;			/* 算有幾支卒 */
-  }
-  if (k == 3)		/* 有三支卒: 剩下二支不是卒的各加 5 分 */
-  {
-    for (i = 0; i < 5; i++)
-    {
-      if (cnum[host_card[i]] != 14)
-	point[i] += 5;
-    }
-  }
-  else if (k == 4)	/* 有四支卒 */
-  {
-    if (diecard(28))	/* 但最後一支卒已絕張: 丟卒 */
-    {
-      for (i = 0; i < 5; i++)
-      {
-	if (cnum[host_card[i]] == 14)
-	  point[i] += 9999;
-      }
-    }
-    else		/* 最後一支卒尚未絕張: 丟不是卒的那支 */
-    {
-      for (i = 0; i < 5; i++)
-      {
-	if (cnum[host_card[i]] != 14)
-	  point[i] += 9999;
-      }
-    }
+    if (host_card[i] == 7)
+      point[i] -= 1;
+    if (host_card[i] == 14)
+      point[i] -= 1;		/* 兵卒盡量不丟 */
   }
 
   for (i = 0; i < 4; i++)
@@ -494,14 +450,14 @@ any_throw()
     }
   }
 
-#if 1	/* 耍賤, 如果丟了會被胡就死都不丟, 耍賤機率 5/6 */
+#if 1	/* 耍賤, 如果丟了會被胡就死都不丟, 耍賤機率 1/2 */
   for (i = 0; i < 4; i++)
     set[i] = guest_card[i];
   for (i = 0; i < 5; i++)
   {
     set[4] = host_card[i];
-    if (testall(set) && rnd(6))
-      point[i] = -9999;
+    if (testall(set) && rnd(2))
+      point[i] = -999;
   }
 #endif
 
@@ -510,7 +466,7 @@ any_throw()
   k = point[0];
   for (i = 1; i < 5; i++)
   {
-    if (point[i] >= k)
+    if (point[i] > k)
     {
       k = point[i];
       j = i;
@@ -552,9 +508,9 @@ count_tai(set)
   for (i = 0, j = 0, k = 0; i < 5; i++)
   {
     /* 算 帥/將 的支數 */
-    if (cnum[set[i]] == 1)
+    if (set[i] == 1)
       j++;
-    if (cnum[set[i]] == 8)
+    if (set[i] == 8)
       k++;
   }
   if (j)
@@ -572,7 +528,7 @@ count_tai(set)
   for (i = 0, j = 0; i < 5; i++)
   {
     /* 算 兵 的支數 */
-    if (cnum[set[i]] == 7)
+    if (set[i] == 7)
       j++;
   }
   if (j == 5)
@@ -583,7 +539,7 @@ count_tai(set)
   for (i = 0, j = 0; i < 5; i++)
   {
     /* 算 卒 的支數 */
-    if (cnum[set[i]] == 14)
+    if (set[i] == 14)
       j++;
   }
   if (j == 5)
@@ -601,22 +557,16 @@ count_tai(set)
 
   /* 列印出獎項 */
   move(b_lines - 5, 0);
-  outs("┌──────────────────────────┐\n");
-  for (i = 0; i < 5; i++)
+  outs("┌───────────────────────────────────┐\n");
+  for (i = 0; i < 10; i++)
   {
-    if (yes[i])
-      prints("    %8s [%d 台]", name[i], tai[i]);
-  }
-  move(b_lines - 3, 0);
-  for (i = 5; i < 10; i++)
-  {
-    if (yes[i])
-      prints("    %8s [%d 台]", name[i], tai[i]);
+    if (yes[i])		/* 最多四種 */
+      prints("  %8s [%d 台] ", name[i], tai[i]);
   }
   move(b_lines - 2, 0);
   clrtoeol();		/* 清除 out_song() */
-  prints("          底 [2 台]          合計 [%d 台]\n", sum += 2);
-  outs("└──────────────────────────┘");
+  prints("        底 [2 台]       合計 [%d 台]\n", sum += 2);
+  outs("└───────────────────────────────────┘");
 
   return sum;
 }
@@ -635,7 +585,7 @@ main_chessmj()
   int i, j, k, m;
   int jp, x, xx, ch, z;
 
-  char ans[10], *msg;
+  char ans[10], msg[40];
   int tmp[4];
 
   if (HAS_STATUS(STATUS_COINLOCK))
@@ -648,23 +598,21 @@ main_chessmj()
   {
     vs_bar("象棋麻將");
 
-    out_song();
+    out_song(0);
 
     vget(2, 0, "請問要下注多少呢？(1 ~ 50000) ", ans, 6, DOECHO);
     money = atoi(ans);
-    if (money < 1 || money > 50000 || money * 10 > cuser.money)
-    {
-      vmsg("要有十倍的賭金才可以進來喔...！");	/* 賠錢最多賠十倍 */
+    if (money < 1 || money > 50000 || money > cuser.money)
       break;			/* 離開賭場 */
-    }
     cuser.money -= money;	/* 扣一份賭金，玩家如果中途離開將拿不回賭金 */
 
+    out_song(money);
     move(2, 0);
     clrtoeol();		/* 清掉「請問要下注多少」 */
     outs("(按 ←→選牌, ↑丟牌, 按 ENTER 胡牌)");
 
     for (i = 0; i < 32; i++)		/* 牌先一張一張排好，準備洗牌 */
-      chesslist[i] = i;
+      chesslist[i] = cnum[i];
 
     for (i = 0; i < 31; i++)
     {
@@ -676,9 +624,6 @@ main_chessmj()
       chesslist[j] = m;
     }
 
-    for (i = 0; i < 32; i++)		/* 還沒有牌被丟棄 */
-      throw[i] = 32;
-
     selftouch = 0;			/* 歸零 */
     mo = 0;
     pickup = 0;
@@ -686,8 +631,6 @@ main_chessmj()
     listen = 0;
     flag = 0;
     tflag = 0;
-    tflagA = 0;
-    tflagB = 0;
 
     for (i = 0; i < 4; i++)		/* 發前四張牌 */
     {
@@ -696,25 +639,9 @@ main_chessmj()
       guest_card[i] = chesslist[flag];
       flag++;
     }
+    guest_card[4] = 0;
 
-    for (i = 0; i < 4; i++)			/* 排序 */
-    {
-      for (j = 0; j < (3 - i); j++)
-      {
-	if (guest_card[j] > guest_card[j + 1])
-	{
-	  m = guest_card[j];
-	  guest_card[j] = guest_card[j + 1];
-	  guest_card[j + 1] = m;
-	}
-	if (host_card[j] > host_card[j + 1])
-	{
-	  m = host_card[j];
-	  host_card[j] = host_card[j + 1];
-	  host_card[j + 1] = m;
-	}
-      }
-    }
+    sortchess();			/* 排序 */
 
     move(4, 0);
     outs("╭─╮╭─╮╭─╮╭─╮");
@@ -722,9 +649,13 @@ main_chessmj()
     outs("│  ││  ││  ││  │");
     move(6, 0);
     outs("╰─╯╰─╯╰─╯╰─╯");
+    move(15, 0);
+    outs("╭─╮╭─╮╭─╮╭─╮");
 
-    for (i = 0; i < 4; i++)
-      print_Schess(guest_card[i], 15, 6 * i);	/* 印出前四張牌 */
+	print_guest();
+
+    move(17, 0);
+    outs("╰─╯╰─╯╰─╯╰─╯");  /* 印出前四張牌 */
 
     for (;;)
     {
@@ -737,7 +668,7 @@ main_chessmj()
 	if (!mo)
 	{
 	  move(14, 24);
-	  outs("按任一鍵摸牌(或 ↓ 撿牌)");
+	  outs("按空白鍵摸牌(或 ↓ 撿牌)");
 	}
 	else
 	{
@@ -750,11 +681,6 @@ main_chessmj()
 
 	ch = vkey();
 
-	if (ch != '\n' && flag == 32)
-	{
-	  msg = "流局";
-	  goto next_game;
-	}
 	if (!mo && ch != KEY_DOWN && ch != '\n')
 	{
 	  ch = 'p';		/* 四張牌則強制摸牌 */
@@ -789,26 +715,29 @@ main_chessmj()
 	  outs("  ");
 	  throw[tflag] = guest_card[jp - 1];
 	  tflag++;
-	  tflagB++;
 	  z = 0;
 	  mo = 0;
 	  guest_card[jp - 1] = guest_card[4];
 	  guest_card[4] = 0;
 	  sortchess();
-	  clear_5card();
-	  P_allchess();
-	  print_Schess(throw[tflag - 1], 11, (tflagB - 1) * 4);
+	  print_guest();
+	  print_throw(0);
 	  picky = 0;
 	  break;
 
 	case 'p':		/* 摸牌 */
 	  if (!mo)
 	  {
+        if (flag == 32)
+        {
+          strcpy(msg, "流局");
+          goto next_game;
+        }
 	    move(18, 2 + (jp - 1) * 6);
 	    outs("  ");
 	    guest_card[4] = chesslist[flag];
 	    flag++;
-	    print_Schess(guest_card[4], 15, 24);
+	    print_guest();
 	    mo = 1;
 	  }
 	  break;
@@ -817,8 +746,9 @@ main_chessmj()
 	  if (tflag > 0 && !mo)
 	  {
 	    guest_card[4] = throw[tflag - 1];
-	    print_Sign(8, (tflagA - 1) * 4);
-	    print_Schess(guest_card[4], 15, 24);
+	    throw[tflag - 1] |= 0x80;
+	    print_sign(0);
+	    print_guest();
 	    mo = 1;
 	    picky = 1;
 	  }
@@ -832,16 +762,15 @@ main_chessmj()
 	case '\n':
 	  if (testall(guest_card) && mo && !picky)
 	  {
-	    printhostfour();
-	    msg = "哇咧自摸啦！";
-	    addmoney(money * count_tai(guest_card));
+	    selftouch = 1;
+	    addmoney(money *= count_tai(guest_card));
+	    sprintf(msg, "哇咧自摸啦！贏了%d元", money);
 	    goto next_game;
 	  }
 	  else if (picky && testall(guest_card))
 	  {
-	    printhostfour();
-	    msg = "看我的厲害，胡啦！";
-	    addmoney(money * count_tai(guest_card));
+	    addmoney(money *= count_tai(guest_card));
+	    sprintf(msg, "看我的厲害，胡啦！贏了%d元", money);
 	    goto next_game;
 	  }
 
@@ -851,11 +780,10 @@ main_chessmj()
 	    guest_card[4] = throw[tflag - 1];
 	    if (testall(guest_card) == 1)
 	    {
-	      print_Sign(8, (tflagA - 1) * 4);
-	      print_Schess(guest_card[4], 15, 24);
-	      printhostfour();
-	      msg = "胡！";
-	      addmoney(money * count_tai(guest_card));
+	      print_sign(0);
+	      print_guest();
+	      addmoney(money *= count_tai(guest_card));
+	      sprintf(msg, "胡！贏了%d元", money);
 	      goto next_game;
 	    }
 	    guest_card[4] = i;
@@ -870,26 +798,27 @@ main_chessmj()
       host_card[4] = throw[tflag - 1];
       if (testall(host_card))
       {
-	host_hula();
-	msg = "電腦胡啦！";
-	cuser.money -= money * count_tai(host_card);	/* 電腦台數越多就賠越多，且押金沒收 */
+	print_sign(1);	/* 印撿牌符號 */
+	sprintf(msg, "電腦胡啦！輸了%d元", money *= count_tai(host_card));
+	cuser.money -= money;	/* 電腦台數越多就賠越多，且押金沒收 */
 	if (cuser.money < 0)
 	  cuser.money = 0;
 	goto next_game;
       }
 
-      if (tflag == 32)
+      if (flag == 32)
       {
-        msg = "流局";
+        host_card[4] = 0;
+        strcpy(msg, "流局");
         goto next_game;
       }
 
       host_card[4] = chesslist[flag];
       if (testall(host_card))
       {
-	host_self();
-	msg = "電腦自摸！";
-	cuser.money -= money * count_tai(host_card);	/* 電腦台數越多就賠越多，且押金沒收 */
+	selftouch = 1;
+	sprintf(msg, "電腦自摸！輸了%d元", money *= count_tai(host_card));
+	cuser.money -= money;	/* 電腦台數越多就賠越多，且押金沒收 */
 	if (cuser.money < 0)
 	  cuser.money = 0;
 	goto next_game;
@@ -916,8 +845,8 @@ main_chessmj()
 	  {			/* 撿牌有聽的話 */
 	    listen = 1;
 	    host_card[4] = throw[tflag - 1];
-	    tflag--;
-	    print_Sign(11, (tflagB - 1) * 4);	/* 印撿牌符號 */
+	    throw[tflag - 1] |= 0x80;
+	    print_sign(1);	/* 印撿牌符號 */
 	    xx = i;		/* 紀錄下要丟的那張牌 */
 	    pickup = 1;
 	    break;		/* 跳出 i loop */
@@ -931,35 +860,35 @@ main_chessmj()
       {				/* 有聽且剛剛沒撿 */
 	m = 0;
 	for (i = 0; i < 4; i++)
-	  if (cnum[tmp[i]] == 7)
+	  if (tmp[i] == 7)
 	    m++;
-	if (m == 2 && cnum[throw[tflag - 1]] == 7)
+	if (m == 2 && throw[tflag - 1] == 7)
 	  pickup = 1;
-	if (m == 3 && cnum[throw[tflag - 1]] == 7)
+	if (m == 3 && throw[tflag - 1] == 7)
 	{
 	  pickup = 1;
 	  for (i = 0; i < tflag - 1; i++)
-	    if (cnum[throw[i]] == 7)
+	    if (throw[i] == 7)
 	      pickup = 0;
 	}
 	m = 0;
 	for (i = 0; i < 4; i++)
-	  if (cnum[tmp[i]] == 14)
+	  if (tmp[i] == 14)
 	    m++;
-	if (m == 2 && cnum[throw[tflag - 1]] == 14)
+	if (m == 2 && throw[tflag - 1] == 14)
 	  pickup = 1;
-	if (m == 3 && cnum[throw[tflag - 1]] == 14)
+	if (m == 3 && throw[tflag - 1] == 14)
 	{
 	  pickup = 1;
 	  for (i = 0; i < tflag - 1; i++)
-	    if (cnum[throw[i]] == 14)
+	    if (throw[i] == 14)
 	      pickup = 0;
 	}
 	if (pickup)
 	{
 	  host_card[4] = throw[tflag - 1];
-	  tflag--;
-	  print_Sign(11, (tflagB - 1) * 4);	/* 印撿牌符號 */
+	  throw[tflag - 1] |= 0x80;
+	  print_sign(1);	/* 印撿牌符號 */
 	}
       }
 
@@ -970,8 +899,6 @@ main_chessmj()
 	flag++;
       }
       /* 剛剛沒撿牌現在就摸牌 */
-      Phost5();
-      Chost5();
 
       if (!pickup)
       {
@@ -1003,17 +930,21 @@ main_chessmj()
 
       throw[tflag] = host_card[xx];
       tflag++;
-      tflagA++;
       host_card[xx] = host_card[4];	/* 丟出沒聽那張 */
-      print_Schess(throw[tflag - 1], 8, (tflagA - 1) * 4);
+      print_throw(1);
 
+      host_card[4] = 0;
       pickup = 0;
       listen = 0;
 
     }		/* for 迴圈結束 */
 
 next_game:
-    vmsg(msg);
+    print_host();
+    move(b_lines, 0);
+    clrtoeol();
+    prints("\033[1;37;44m ◆ %-55s \033[1;33;46m [請按任意鍵繼續] \033[m", msg);
+    vkey();
 
   }		/* while 迴圈結束 */
 
