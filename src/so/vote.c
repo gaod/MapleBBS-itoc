@@ -1324,29 +1324,43 @@ vote_all()		/* itoc.010414: 投票中心 */
 	break;
 
       redraw = brd_bno(vb->brdname);	/* 借用 redraw */
-      ch = brd_bits[redraw];
+      if (currbno != redraw)
+      {
+	ch = brd_bits[redraw];
 
-      /* 處理權限 */
-      if (ch & BRD_X_BIT)
-	bbstate |= STAT_BOARD;
-      else
-	bbstate &= ~STAT_BOARD;
+	/* 處理權限 */
+	if (ch & BRD_M_BIT)
+	  bbstate |= (STAT_BM | STAT_BOARD | STAT_POST);
+	else if (ch & BRD_X_BIT)
+	  bbstate |= (STAT_BOARD | STAT_POST);
+	else if (ch & BRD_W_BIT)
+	  bbstate |= STAT_POST;
 
-      /* itoc.050613.註解: 人氣的減少不是在離開看板時，而是在進入新的看板或是離站時，
-         這是為了避免 switch 跳看板會算錯人氣 */
-      if (currbno >= 0)
-	bshm->mantime[currbno]--;	/* 退出上一個板 */
-      bshm->mantime[redraw]++;		/* 進入新的板 */
+	/* itoc.050613.註解: 人氣的減少不是在離開看板時，而是在進入新的看板或是離站時，
+	 這是為了避免 switch 跳看板會算錯人氣 */
+	if (currbno >= 0)
+ 	  bshm->mantime[currbno]--;		/* 退出上一個板 */
+	bshm->mantime[redraw]++;		/* 進入新的板 */
 
-      currbno = redraw;
-      bhead = bshm->bcache + currbno;
-      currbattr = bhead->battr;
-      strcpy(currboard, bhead->brdname);
-      str = bhead->BM;
-      sprintf(currBM, "板主：%s", *str <= ' ' ? "徵求中" : str);
+	currbno = redraw;
+	bhead = bshm->bcache + currbno;
+	currbattr = bhead->battr;
+	strcpy(currboard, bhead->brdname);
+	str = bhead->BM;
+	sprintf(currBM, "板主：%s", *str <= ' ' ? "徵求中" : str);
 #ifdef HAVE_BRDMATE
-      strcpy(cutmp->reading, currboard);
+	strcpy(cutmp->reading, currboard);
 #endif
+
+	brd_fpath(fpath, currboard, fn_dir);
+#ifdef AUTO_JUMPPOST
+	xz[XZ_POST - XO_ZONE].xo = xo = xo_get_post(fpath, bhead);	/* itoc.010910: 為 XoPost 量身打造一支 xo_get() */
+#else
+	xz[XZ_POST - XO_ZONE].xo = xo = xo_get(fpath);
+#endif
+	xo->key = XZ_POST;
+	xo->xyz = bhead->title;
+      }
 
       sprintf(fpath, "brd/%s/%s", currboard, FN_VCH);
       xz[XZ_VOTE - XO_ZONE].xo = xo = xo_new(fpath);
