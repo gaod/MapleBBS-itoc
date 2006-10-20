@@ -247,7 +247,7 @@ outs_line(str)			/* 印出一般內容 */
     {
       if (!(ptr1 = str_sub(str, hunt)))
       {
-	strcpy(ptr2, str);
+	str_ncpy(ptr2, str, buf + ANSILINELEN - ptr2 - 1);
 	break;
       }
 
