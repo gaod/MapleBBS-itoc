@@ -48,6 +48,7 @@ int is_bm(char *list, char *userid);
 int XoPost(int bno);
 int Select(void);
 int Class(void);
+int MFclass_browse(char *name);
 void board_main(void);
 int Boards(void);
 

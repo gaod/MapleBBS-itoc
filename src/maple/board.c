@@ -1743,6 +1743,8 @@ class_addMF(xo)
 {    
   short *chp;
   int chn;
+  MF mf;
+  char fpath[64];
 
   if (!cuser.userlevel)
     return XO_NONE;
@@ -1750,7 +1752,7 @@ class_addMF(xo)
   chp = (short *) xo->xyz + xo->pos;
   chn = *chp;
       
-  if (chn >= 0)
+  if (chn >= 0)		/* 一般看板 */
   {
     BRD *bhdr;
 
@@ -1758,9 +1760,6 @@ class_addMF(xo)
 
     if (!in_favor(bhdr->brdname))
     {
-      MF mf;
-      char fpath[64];
-
       memset(&mf, 0, sizeof(MF));
       time(&mf.chrono);
       mf.mftype = MF_BOARD;
@@ -1768,15 +1767,64 @@ class_addMF(xo)
 
       mf_fpath(fpath, cuser.userid, FN_MF);
       rec_add(fpath, &mf, sizeof(MF));
-      vmsg("已加入我的最愛");
+      vmsg("已將此看板加入我的最愛");
     }
     else
     {
       vmsg("此看板已在最愛中。若要重覆加入，請進我的最愛裡新增");
     }
   }
+  else			/* 分類群組 */
+  {
+    short *chx;
+    char *img, *str, *ptr;
+
+    img = class_img;
+    chx = (short *) img + (CH_END - chn);
+    str = img + *chx;
+
+    memset(&mf, 0, sizeof(MF));
+    time(&mf.chrono);
+    mf.mftype = MF_CLASS;
+    ptr = strchr(str, '/');
+    strncpy(mf.xname, str, ptr - str);
+    strncpy(mf.class, str + BNLEN + 1, BCLEN);
+    strcpy(mf.title, str + BNLEN + 1 + BCLEN + 1);
+
+    mf_fpath(fpath, cuser.userid, FN_MF);
+    rec_add(fpath, &mf, sizeof(MF));
+    vmsg("已將此分類加入我的最愛");
+  }
 
   return XO_FOOT;
+}
+
+
+int
+MFclass_browse(name)
+  char *name;
+{
+  int chn, min_chn, len;
+  short *chx;
+  char *img, cname[BNLEN + 2];
+
+  min_chn = bshm->min_chn;
+  img = class_img;
+
+  sprintf(cname, "%s/", name);
+  len = strlen(cname);
+
+  for (chn = CH_END - 2; chn >= min_chn; chn--)
+  {
+    chx = (short *) img + (CH_END - chn);
+    if (!strncmp(img + *chx, cname, len))
+    {
+      if (XoClass(chn))
+	return 1;
+      break;
+    }
+  }
+  return 0;
 }
   
 #endif  /* MY_FAVORITE */

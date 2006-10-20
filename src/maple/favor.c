@@ -86,10 +86,18 @@ mf_item(num, mf)
       brdpost ? 0 : num, 
       mftype & MF_MARK ? ')' : ' ', "■", mf->title);
   }
-  else /* if (mftype & MF_LINE) */	/* qazq.040721: 分隔線 */
+  else  if (mftype & MF_LINE)		/* qazq.040721: 分隔線 */
   {
     prints("%6d   %s\n", 
       brdpost ? 0 : num, mf->title);
+  }
+  else /* if (mftype & MF_CLASS) */	/* LHD.051007: 分類群組 */
+  {
+    char cname[BNLEN + 2];
+
+    sprintf(cname, "%s/", mf->xname);
+    prints("%6d   %-13.13s\033[1;3%dm%-5.5s\033[m%s\n",
+      num, cname, mf->class[3] & 7, mf->class, mf->title);
   }
 }
 
@@ -545,6 +553,16 @@ mf_browse(xo)
     XoMF(fpath);
     mf_depth--;
     return mf_load(xo);
+  }
+  else if (type & MF_CLASS)	/* 分類群組 */
+  {
+    if (!MFclass_browse(xname))
+    {
+      rec_del(xo->dir, sizeof(MF), xo->pos, NULL);
+      vmsg("本分類群組已被刪除，系統將自動移除捷徑");
+      return mf_load(xo);
+    }
+    return mf_init(xo);
   }
 
   return XO_NONE;
