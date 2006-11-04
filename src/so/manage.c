@@ -127,7 +127,7 @@ post_terminator(xo)		/* Thor.980521: 終極文章刪除大法 */
 	}
 	else
 	{
-	  /* 若為看板就連線砍信 */
+	  /* 砍文並連線砍信 */
 
 	  cancel_post(hdr);
 	  hdr_fpath(fold, fpath, hdr);
@@ -144,6 +144,8 @@ post_terminator(xo)		/* Thor.980521: 終極文章刪除大法 */
       else
   contWhileOuter:
 	unlink(fnew);
+
+      btime_update(brd_bno(currboard));
     } while (++head < tail);
 
     /* 還原 currboard */
