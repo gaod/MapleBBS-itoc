@@ -34,7 +34,7 @@
   http://my.domain/img?filename                顯示圖檔
   http://my.domain/rss?brdname                 各看板的RSS Feed
   http://my.domain/class?folder                列出分類中 [folder] 這個卷宗下的所有看板
-  http://my.domain/robot.txt                   Robot Exclusion
+  http://my.domain/robots.txt                  Robot Exclusion
 
 #endif
 
@@ -942,6 +942,9 @@ out_title(fpw, title)
   /* html 檔案開始 */
   fprintf(fpw, "\r\n<HTML><HEAD>\n"
     "<meta http-equiv=Content-Type content=\"text/html; charset=" MYCHARSET "\">\n"
+#ifdef ROBOT_EXCLUSION
+    "<meta name=robots content=noindex,nofollow>\n"
+#endif
     "<title>-=" BBSNAME "=- %s</title>\n", title);
 
   fputs("<script language=javascript>\n"
@@ -3083,12 +3086,12 @@ cmd_rss(ap)
 
 #ifdef ROBOT_EXCLUSION
 static int
-cmd_robot(ap)
+cmd_robots(ap)
   Agent *ap;
 {
   FILE *fpw = out_http(ap, HS_OK, NULL);
 
-  fprintf(fpw, "Content-Length: 28\r\n");	/* robot.txt 的長度 */
+  fprintf(fpw, "Content-Length: 28\r\n");	/* robots.txt 的長度 */
   fprintf(fpw, "Last-Modified: Sat, 01 Jan 2000 00:02:21 GMT\r\n\r\n");	/* 隨便給個時間 */
 
   fprintf(fpw, "User-agent: *\r\nDisallow: /\r\n");
@@ -3183,7 +3186,7 @@ static Command cmd_table_get[] =
   cmd_rss,         "rss",       3,
 
 #ifdef ROBOT_EXCLUSION
-  cmd_robot,       "robot.txt", 9,
+  cmd_robots,      "robots.txt",9,
 #endif
 
   cmd_mainpage,    "",          0,
