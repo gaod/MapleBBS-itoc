@@ -712,16 +712,19 @@ brd_set(brd, row)
       if (i == 1)	/* 開新板若無輸入板名表示離開 */
 	return -1;
 
-      strcpy(brdname, buf);	/* Thor:若是清空則設為原名稱 */
+      strcpy(brdname, buf);	/* Thor: 若是清空則設為原名稱 */
       continue;
     }
 
-    if (!strcmp(buf, brdname) && valid_brdname(brdname))	/* Thor: 與原名同則跳過 */
+    if (!valid_brdname(brdname))
+      continue;
+
+    if (!str_cmp(buf, brdname))	/* Thor: 與舊板原名相同則跳過 */
       break;
 
     if (brd_bno(brdname) >= 0)
       outs("\n錯誤！板名雷同");
-    else if (valid_brdname(brdname))
+    else
       break;
   }
 
