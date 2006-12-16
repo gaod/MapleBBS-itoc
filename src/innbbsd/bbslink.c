@@ -174,14 +174,14 @@ deal_sover(bntp)
   {
     mtime = bntp->chrono;
     str_ncpy(sover.title, bntp->title, sizeof(sover.title));
-    sprintf(sover.msgid, "%s$%s@" MYHOSTNAME, filename, board);
+    sprintf(sover.msgid, "%s$%s@" MYHOSTNAME, board, filename);
   }
   else				/* cancel */
   {
     time(&mtime);
-    sprintf(buf, "%s$%s@" MYHOSTNAME, filename, board);		/* 欲砍文章的 Message-ID */
+    sprintf(buf, "%s$%s@" MYHOSTNAME, board, filename);		/* 欲砍文章的 Message-ID */
     sprintf(sover.title, "cmsg cancel <%s>", buf);
-    sprintf(sover.msgid, "C%s$%s@" MYHOSTNAME, filename, board);/* LHD.030628: 在原 msgid 加任意字串當作 cmsg 的 Message-ID */
+    sprintf(sover.msgid, "C%s$%s@" MYHOSTNAME, board, filename);/* LHD.030628: 在原 msgid 加任意字串當作 cmsg 的 Message-ID */
     sprintf(sover.control, "cancel <%s>", buf);
   }
 

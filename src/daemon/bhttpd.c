@@ -2195,21 +2195,21 @@ cmd_gemlist(ap)
 	"  <td>%d</td>\n", i);
       if (hdr.xmode & GEM_RESTRICT)
       {
-	fputs("  <td>[唯讀] 資料保密</td>\n</tr>\n", fpw);
+	fputs("  <td>◇ 資料保密</td>\n</tr>\n", fpw);
       }
       else if (hdr.xname[0] == 'A')	/* 文章 */
       {
-	fprintf(fpw, "  <td><a href=/gmore?%s&%s&%d>[文章] %s</a></td>\n</tr>\n",
+	fprintf(fpw, "  <td><a href=/gmore?%s&%s&%d>◇ %s</a></td>\n</tr>\n",
 	  brdname, xname, i, str_html(hdr.title, TTLEN));
       }
       else if (hdr.xname[0] == 'F')	/* 卷宗 */
       {
-	fprintf(fpw, "  <td><a href=/gem?%s&%s>[卷宗] %s</a></td>\n</tr>\n",
+	fprintf(fpw, "  <td><a href=/gem?%s&%s>◆ %s</a></td>\n</tr>\n",
 	  brdname, hdr.xname, str_html(hdr.title, TTLEN));
       }
       else				/* 其他類別就不秀了 */
       {
-	fputs("  <td>[唯讀] 其他資料</td>\n</tr>\n", fpw);
+	fputs("  <td>◇ 其他資料</td>\n</tr>\n", fpw);
       }
 
       i++;
