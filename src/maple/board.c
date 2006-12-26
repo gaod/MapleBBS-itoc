@@ -126,7 +126,7 @@ brh_put()
 
     list[-item - 1] = item;
     *list = 0;
-    brh_tail = list;  /* Thor.980904:新的空brh */
+    brh_tail = list;  /* Thor.980904: 新的空brh */
   }
 }
 
@@ -1841,11 +1841,12 @@ static int
 XoAuthor(xo)
   XO *xo;
 {
-  int chn, len, max, tag;
+  int chn, len, max, tag, value;
   short *chp, *chead, *ctail;
   BRD *brd;
   char key[30], author[IDLEN + 1];
   XO xo_a, *xoTmp;
+  struct timeval tv = {0, 10};
 
   vget(b_lines, 0, MSG_XYPOST1, key, 30, DOECHO);
   vget(b_lines, 0, MSG_XYPOST2, author, IDLEN + 1, DOECHO);
@@ -1877,11 +1878,11 @@ XoAuthor(xo)
       char folder[80];
       HDR *head, *tail;
 
-      sprintf(folder, "《尋找指定標題作者》看板：%s \033[5m...\033[m", brd[chn].brdname);
+      sprintf(folder, "《尋找指定標題作者》看板：%s \033[5m...\033[m按任意鍵中斷", brd[chn].brdname);
       outz(folder);
       refresh();
-      brd_fpath(folder, brd[chn].brdname, fn_dir);
 
+      brd_fpath(folder, brd[chn].brdname, fn_dir);
       fimage = f_map(folder, &fsize);
 
       if (fimage == (char *) -1)
@@ -1902,6 +1903,14 @@ XoAuthor(xo)
       }
 
       munmap(fimage, fsize);
+    }
+
+    /* 使用者可以中斷搜尋 */
+    value = 1;
+    if (select(1, (fd_set *) &value, NULL, NULL, &tv) > 0)
+    {
+      vkey();
+      break;
     }
   } while (chead < ctail);
 
