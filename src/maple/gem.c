@@ -1409,6 +1409,16 @@ gem_gather(xo)
   if (tag < 0)
     return XO_FOOT;
 
+  /* gather 視同 copy，可準備作 paste */
+  dir = xo->dir;
+  gem_buffer(dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top), chkgather);
+
+  if (!GemBufferNum)
+  {
+    zmsg("無可收錄文章");
+    return XO_FOOT;
+  }
+
   fp = NULL;
 
   if (tag > 0)
@@ -1430,10 +1440,6 @@ gem_gather(xo)
       strcpy(hdr.title, title);
     }
   }
-
-  /* gather 視同 copy，可準備作 paste */
-  dir = xo->dir;
-  gem_buffer(dir, tag ? NULL : (HDR *) xo_pool + (xo->pos - xo->top), chkgather);
 
   head = GemBuffer;
   tail = head + GemBufferNum;
