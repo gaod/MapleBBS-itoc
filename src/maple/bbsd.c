@@ -1541,8 +1541,8 @@ main(argc, argv)
     /* ------------------------------------------------- */
 
     tn_addr = sin.sin_addr.s_addr;
-    /* dns_name((char *) &sin.sin_addr, fromhost); */
-    str_ncpy(fromhost, (char *)inet_ntoa(sin.sin_addr), sizeof(fromhost));
+    dns_name((char *) &sin.sin_addr, fromhost);
+    /* str_ncpy(fromhost, (char *)inet_ntoa(sin.sin_addr), sizeof(fromhost)); */
 
     telnet_init();
     term_init();
