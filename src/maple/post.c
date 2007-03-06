@@ -1645,7 +1645,7 @@ post_delete(xo)
     {
       pos = move_post(hdr, xo->dir, by_BM);
 
-      if (!by_BM && !(currbattr & BRD_NOCOUNT))
+      if (!by_BM && !(currbattr & BRD_NOCOUNT) && !(hdr->xmode & POST_BOTTOM))
       {
 	/* itoc.010711: 砍文章要扣錢，算檔案大小 */
 	pos = pos >> 3;	/* 相對於 post 時 wordsnum / 10 */
