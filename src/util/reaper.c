@@ -461,7 +461,10 @@ reaper(fpath, lowid)
     if (!life)
     {
       sprintf(buf, "usr/@/%s", lowid);
+      f_rm(buf);
 
+#if 0
+      /* 清除的帳號放在 usr/@ */
       while (rename(fpath, buf))
       {
 	extern int errno;
@@ -469,6 +472,7 @@ reaper(fpath, lowid)
 	fprintf(flog, "rename %s ==> %s : %d\n", fpath, buf, errno);
 	sprintf(buf, "usr/@/%s.%d", lowid, ++life);
       }
+#endif
 
       userno_free(userno);
       datemsg(buf, &acct.lastlogin);
