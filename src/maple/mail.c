@@ -605,7 +605,7 @@ m_quota()
 
 	  hdr_fpath(fpath, folder, head);
 	  unlink(fpath);
-	  prune--;
+	  prune++;
 	  continue;
 	}
 
@@ -622,11 +622,11 @@ m_quota()
 	}
 
 	if (prune)
-	  head[prune] = head[0];
+	  memcpy(head - prune, head, sizeof(HDR));
 
       } while (++head < tail);
 
-      fsize += (prune * sizeof(HDR));
+      fsize -= (prune * sizeof(HDR));
       if ((fsize > 0) && (prune || (status & STATUS_MQUOTA)))
       {
 	lseek(fd, 0, SEEK_SET);
@@ -644,7 +644,7 @@ m_quota()
 
   close(fd);
 
-  if (fsize > limit)
+  if (fsize > limit * sizeof(HDR))
     status ^= STATUS_MAILOVER;
   else if (fsize < sizeof(HDR))
     unlink(folder);
