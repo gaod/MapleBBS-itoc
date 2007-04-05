@@ -271,7 +271,7 @@ bsmtp(fpath, title, rcpt, method)
       "X-Disclaimer: [%s] 對本信內容恕不負責\r\n\r\n",
       cuser.userid, cuser.username,
       Atime(&stamp), msgid, str_host,
-      method & MQ_ATTACH ? "application/x-gzip" : "text/plain", MYCHARSET, 
+      method & MQ_ATTACH ? "application/x-compressed" : "text/plain", MYCHARSET, 
       str_site);
 
 #ifdef EMAIL_JUSTIFY
