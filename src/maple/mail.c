@@ -260,19 +260,23 @@ bsmtp(fpath, title, rcpt, method)
       method & MQ_JUSTIFY ? "BBS Register" : 
 #endif
       cuser.username, from, rcpt);
+
     /* itoc.030411: mail 輸出 RFC 2047 */
     output_rfc2047_qp(fw, "Subject: ", title, MYCHARSET, "\r\n");
+
+    fprintf(fw, "Date: %s\r\nMessage-Id: <%s@%s>\r\n", Atime(&stamp), msgid, str_host);
+
     /* itoc.030323: mail 輸出 RFC 2045 */
+    fprintf(fw, "Mime-Version: 1.0\r\n"
+      "Content-Type: %s; charset="MYCHARSET"\r\n"
+      "Content-Transfer-Encoding: 8bit\r\n",
+      method & MQ_ATTACH ? "application/x-compressed" : "text/plain");
+    if (method & MQ_ATTACH)
+      fprintf(fw, "Content-Disposition: attachment; filename=%s.tgz\r\n", cuser.userid);
+
     fprintf(fw, "X-Sender: %s (%s)\r\n"
-      "Date: %s\r\nMessage-Id: <%s@%s>\r\n"
-      "Mime-Version: 1.0\r\n"
-      "Content-Type: %s; charset=%s\r\n"
-      "Content-Transfer-Encoding: 8bit\r\n"
       "X-Disclaimer: [%s] 對本信內容恕不負責\r\n\r\n",
-      cuser.userid, cuser.username,
-      Atime(&stamp), msgid, str_host,
-      method & MQ_ATTACH ? "application/x-compressed" : "text/plain", MYCHARSET, 
-      str_site);
+      cuser.userid, cuser.username, str_site);
 
 #ifdef EMAIL_JUSTIFY
     if (method & MQ_JUSTIFY)	/* 身分認證信函 */
