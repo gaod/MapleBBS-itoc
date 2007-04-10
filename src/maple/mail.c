@@ -269,8 +269,9 @@ bsmtp(fpath, title, rcpt, method)
     /* itoc.030323: mail 輸出 RFC 2045 */
     fprintf(fw, "Mime-Version: 1.0\r\n"
       "Content-Type: %s; charset="MYCHARSET"\r\n"
-      "Content-Transfer-Encoding: 8bit\r\n",
-      method & MQ_ATTACH ? "application/x-compressed" : "text/plain");
+      "Content-Transfer-Encoding: %s\r\n",
+      method & MQ_ATTACH ? "application/x-compressed" : "text/plain",
+      method & MQ_ATTACH ? "base64" : "8bit");
     if (method & MQ_ATTACH)
       fprintf(fw, "Content-Disposition: attachment; filename=%s.tgz\r\n", cuser.userid);
 
@@ -296,6 +297,8 @@ bsmtp(fpath, title, rcpt, method)
 
       str = buf;
       *str++ = '.';
+      if (method & MQ_ATTACH)	/* LHD.061222: 去掉開頭 begin 那行 */
+	fgets(str, sizeof(buf) - 3, fp);
       while (fgets(str, sizeof(buf) - 3, fp))
       {
 	if (ptr = strchr(str, '\n'))
@@ -420,7 +423,7 @@ do_forward(title, mode)
       gem_fpath(fpath, currboard, NULL);
     }
 
-    sprintf(cmd, "tar cfz - %s | uuencode %s.tgz > tmp/%s.tgz", fpath, userid, userid);
+    sprintf(cmd, "tar cfz - %s | uuencode -m %s.tgz > tmp/%s.tgz", fpath, userid, userid);
     system(cmd);
 
     sprintf(fpath, "tmp/%s.tgz", userid);
