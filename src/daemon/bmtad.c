@@ -62,7 +62,7 @@
 
 
 #define SPAM_MHOST_LIMIT	1000	/* 同一個 @host 寄進來超過 1000 封信，就將此 @host 視為廣告商 */
-#define SPAM_MFROM_LIMIT	100	/* 同一個 from 寄進來超過 100 封信，就將此 from 視為廣告商 */
+#define SPAM_MFROM_LIMIT	128	/* 同一個 from 寄進來超過 128 封信，就將此 from 視為廣告商 */
 
 #define SPAM_TITLE_LIMIT	50	/* 同一個標題寄進來超過 50 次就特別記錄 */
 #define SPAM_FORGE_LIMIT	10	/* 同一個 @domain 錯 10 次以上，就認定不是筆誤，而是故意的 */
@@ -2171,7 +2171,7 @@ mta_mail_body:
       score = nrcpt;
       delta = hx->fsize - ap->used;
       if (delta >= -16 && delta <= 16)
-	score +=  SPAM_MFROM_LIMIT >> 5;
+	score +=  SPAM_MFROM_LIMIT >> 6;
       hx->fsize = ap->used;		/* 記錄用這標題的最後一封信之檔案大小 */
     }
     else
@@ -2193,7 +2193,7 @@ mta_mail_body:
 
       /* 如果這個 from 在這次來信和他自己上次來信的標題相同，那麼這個 from 很可能是廣告商 */
       if (he->ttl == hx)
-	score += SPAM_MFROM_LIMIT >> 4;
+	score += SPAM_MFROM_LIMIT >> 5;
       else
 	he->ttl = hx;		/* 記錄這個 from 在這次來信的標題 */
     }

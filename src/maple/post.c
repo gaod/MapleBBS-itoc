@@ -290,6 +290,27 @@ check_crosspost(fpath, bno)
 /* ----------------------------------------------------- */
 
 
+int
+is_author(hdr)
+  HDR *hdr;
+{
+  /* 這裡沒有檢查是不是 guest，注意使用此函式時要特別考慮 guest 情況 */
+
+  /* itoc.070426: 當帳號被清除後，新註冊相同 ID 的帳號並不擁有過去該 ID 發表的文章之所有權 */
+  return !strcmp(hdr->owner, cuser.userid) && (hdr->chrono > cuser.firstlogin);
+}
+
+
+#ifdef HAVE_REFUSEMARK
+int
+chkrestrict(hdr)
+  HDR *hdr;
+{
+  return !(hdr->xmode & POST_RESTRICT) || is_author(hdr) || (bbstate & STAT_BM);
+}
+#endif  
+
+
 #ifdef HAVE_ANONYMOUS
 static void
 log_anonymous(fname)
@@ -531,8 +552,7 @@ post_reply(xo)
     hdr = (HDR *) xo_pool + (xo->pos - xo->top);
 
 #ifdef HAVE_REFUSEMARK
-    if ((hdr->xmode & POST_RESTRICT) &&
-      strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))
+    if (!chkrestrict(hdr))
       return XO_NONE;
 #endif
 
@@ -784,8 +804,7 @@ post_attr(hdr)
   /* 由於置底文沒有閱讀記錄，所以視為已讀 */
   /* 加密文章視為已讀 */
 #ifdef HAVE_REFUSEMARK
-  attr = ((mode & POST_BOTTOM) || !brh_unread(hdr->chrono) || 
-    ((mode & POST_RESTRICT) && strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))) ? 0x20 : 0;
+  attr = ((mode & POST_BOTTOM) || !brh_unread(hdr->chrono) || !chkrestrict(hdr)) ? 0x20 : 0;
 #else
   attr = ((mode & POST_BOTTOM) || !brh_unread(hdr->chrono)) ? 0x20 : 0;
 #endif
@@ -998,8 +1017,7 @@ post_browse(xo)
     xmode = hdr->xmode;
 
 #ifdef HAVE_REFUSEMARK
-    if ((xmode & POST_RESTRICT) && 
-      strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))
+    if (!chkrestrict(hdr))
       break;
 #endif
 
@@ -1219,7 +1237,7 @@ post_cross(xo)
   hdr = tag ? &xhdr : (HDR *) xo_pool + (xo->pos - xo->top);	/* lkchu.981201: 整批轉錄 */
 
   /* 原作者轉錄自己文章時，可以選擇「原文轉載」 */
-  method = (HAS_PERM(PERM_ALLBOARD) || (!tag && !strcmp(hdr->owner, cuser.userid))) &&
+  method = (HAS_PERM(PERM_ALLBOARD) || (!tag && is_author(hdr))) &&
     (vget(2, 0, "(1)原文轉載 (2)轉錄文章？[1] ", buf, 3, DOECHO) != '2') ? 0 : 1;
 
   if (!tag)	/* lkchu.981201: 整批轉錄就不要一一詢問 */
@@ -1396,8 +1414,7 @@ post_forward(xo)
     return XO_NONE;
 
 #ifdef HAVE_REFUSEMARK
-  if ((hdr->xmode & POST_RESTRICT) &&
-    strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))
+  if (!chkrestrict(hdr))
     return XO_NONE;
 #endif
 
@@ -1499,7 +1516,7 @@ post_refuse(xo)		/* itoc.010602: 文章加密 */
   cur = pos - xo->top;
   hdr = (HDR *) xo_pool + cur;
 
-  if (!strcmp(hdr->owner, cuser.userid) || (bbstate & STAT_BM))
+  if (is_author(hdr) || (bbstate & STAT_BM))
   {
     hdr->xmode ^= POST_RESTRICT;
     currchrono = hdr->chrono;
@@ -1631,8 +1648,7 @@ post_delete(xo)
   cur = pos - xo->top;
   hdr = (HDR *) xo_pool + cur;
 
-  if ((hdr->xmode & POST_MARKED) ||
-    (!(bbstate & STAT_BOARD) && strcmp(hdr->owner, cuser.userid)))
+  if ((hdr->xmode & POST_MARKED) || (!(bbstate & STAT_BOARD) && !is_author(hdr)))
     return XO_NONE;
 
   by_BM = bbstate & STAT_BOARD;
@@ -1740,17 +1756,6 @@ post_prune(xo)
 }
 
 
-#ifdef HAVE_REFUSEMARK
-static int
-chkrestrict(hdr)
-  HDR *hdr;
-{
-  return !(hdr->xmode & POST_RESTRICT) || 
-    !strcmp(hdr->owner, cuser.userid) || (bbstate & STAT_BM);
-}
-#endif
-
-
 static int
 post_copy(xo)	   /* itoc.010924: 取代 gem_gather */
   XO *xo;
@@ -1809,12 +1814,12 @@ post_edit(xo)
   if (HAS_PERM(PERM_ALLBOARD))			/* 站長修改 */
   {
 #ifdef HAVE_REFUSEMARK
-    if ((hdr->xmode & POST_RESTRICT) && !(bbstate & STAT_BM) && strcmp(hdr->owner, cuser.userid))
+    if (!chkrestrict(hdr))
       return XO_NONE;
 #endif
     vedit(fpath, 0);
   }
-  else if (cuser.userlevel && !strcmp(hdr->owner, cuser.userid))	/* 原作者修改 */
+  else if (cuser.userlevel && is_author(hdr))	/* 原作者修改 */
   {
     if (!vedit(fpath, 0))	/* 若非取消則加上修改資訊 */
     {
@@ -1897,7 +1902,7 @@ post_title(xo)
   fhdr = (HDR *) xo_pool + cur;
   memcpy(&mhdr, fhdr, sizeof(HDR));
 
-  if (strcmp(cuser.userid, mhdr.owner) && !HAS_PERM(PERM_ALLBOARD))
+  if (!is_author(&mhdr) && !HAS_PERM(PERM_ALLBOARD))
     return XO_NONE;
 
   vget(b_lines, 0, "標題：", mhdr.title, TTLEN + 1, GCARRY);
@@ -1992,8 +1997,7 @@ post_score(xo)
   hdr = (HDR *) xo_pool + cur;
 
 #ifdef HAVE_REFUSEMARK
-  if ((hdr->xmode & POST_RESTRICT) &&
-    strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))
+  if (!chkrestrict(hdr))
     return XO_NONE;
 #endif
 

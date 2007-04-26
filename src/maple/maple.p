@@ -149,6 +149,8 @@ int t_list(void);
 int cmpchrono(HDR *hdr);
 void btime_update(int bno);
 void cancel_post(HDR *hdr);
+int is_author(HDR *hdr);
+int chkrestrict(HDR *hdr);
 int do_reply(XO *xo, HDR *hdr);
 int tag_char(int chrono);
 void hdr_outs(HDR *hdr, int cc);

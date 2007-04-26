@@ -1655,7 +1655,7 @@ mbox_title(xo)		/* itoc.020113: 可以改自己信箱中的標題 */
   fhdr = (HDR *) xo_pool + cur;
   memcpy(&mhdr, fhdr, sizeof(HDR));
 
-  if (strcmp(cuser.userid, mhdr.owner) && !HAS_PERM(PERM_ALLBOARD))
+  if (!is_author(&mhdr) && !HAS_PERM(PERM_ALLBOARD))
     return XO_NONE;
 
   vget(b_lines, 0, "標題：", mhdr.title, TTLEN + 1, GCARRY);

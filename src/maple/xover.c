@@ -998,8 +998,7 @@ xo_thread(xo, op)
     }
 
 #ifdef HAVE_REFUSEMARK
-    if ((hdr->xmode & POST_RESTRICT) &&
-      strcmp(hdr->owner, cuser.userid) && !(bbstate & STAT_BM))
+    if (!chkrestrict(hdr))
       continue;
 #endif
 
