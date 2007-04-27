@@ -107,35 +107,44 @@ mm_getcharset(str, charset, size)
   char *charset;
   int size;		/* charset size */
 {
-  char *ptr, delim;
-  int i;
+  char *src, *dst, *end;
+  char delim;
+  int ch;
 
   *charset = '\0';
 
   if (!str)
     return;
 
-  if (!(ptr = (char *) strstr(str, "charset=")))
+  if (!(src = (char *) strstr(str, "charset=")))
     return;
 
-  ptr += 8;
+  src += 8;
+  dst = charset;
+  end = dst + size - 1;	/* 保留空間給 '\0' */
   delim = '\0';
-  i = 0;
-  size--;	/* 保留空間給 '\0' */
 
-  for (; *ptr && *ptr != delim && !isspace(*ptr); ptr++)
+  while (ch = *src++)
   {
-    if (*ptr == '\"')
+    if (ch == delim)
+      break;
+
+    if (ch == '\"')
     {
-      delim = *ptr;
+      delim = '\"';
       continue;
     }
 
-    charset[i] = *ptr;
-    if (++i >= size)
+    if (!is_alnum(ch))
+      break;
+
+    *dst = ch;
+
+    if (++dst >= end)
       break;
   }
-  charset[i] = '\0';
+
+  *dst = '\0';
 
   if (!str_cmp(charset, "iso-8859-1"))	/* 歷史包伏不可丟 */
     *charset = '\0';
