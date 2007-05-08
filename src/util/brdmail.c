@@ -113,7 +113,7 @@ mail2brd(brd)
 start:
     if (!memcmp(buf, "From", 4))
     {
-      if ((str = strchr(buf, '<')) && (ptr = strrchr(str, '>')))
+      if ((str = strrchr(buf, '<')) && (ptr = strrchr(str, '>')))
       {
 	if (str[-1] == ' ')
 	  str[-1] = '\0';
