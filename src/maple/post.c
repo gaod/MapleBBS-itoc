@@ -1401,14 +1401,12 @@ post_forward(xo)
   XO *xo;
 {
   ACCT muser;
-  int pos;
   HDR *hdr;
 
   if (!HAS_PERM(PERM_LOCAL))
     return XO_NONE;
 
-  pos = xo->pos;
-  hdr = (HDR *) xo_pool + (pos - xo->top);
+  hdr = (HDR *) xo_pool + (xo->pos - xo->top);
 
   if (hdr->xmode & GEM_FOLDER)	/* 非 plain text 不能轉 */
     return XO_NONE;
