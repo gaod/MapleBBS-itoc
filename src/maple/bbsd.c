@@ -97,7 +97,7 @@ u_exit(mode)
   char fpath[80];
   ACCT tuser;
 
-  if (currbno >= 0 && bshm->mantime[currbno] > 0)
+  if (currbno >= 0)
     bshm->mantime[currbno]--;	/* 退出最後看的那個板 */
 
   utmp_free(cutmp);		/* 釋放 UTMP shm */
