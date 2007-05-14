@@ -171,7 +171,7 @@ do_gem(folder)		/* itoc.011105: 把看板/精華區的文章收進 movie */
   {
     while (fread(&hdr, sizeof(HDR), 1, fp) == 1)
     {
-      if (hdr.xmode & (GEM_RESTRICT | GEM_RESERVED | GEM_BOARD))	/* 限制級、看板 不放入 movie 中 */
+      if (hdr.xmode & (GEM_RESTRICT | GEM_RESERVED | GEM_BOARD | GEM_LINE))	/* 限制級、看板、分隔線 不放入 movie 中 */
 	continue;
 
       hdr_fpath(fpath, folder, &hdr);
