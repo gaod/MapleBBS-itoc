@@ -45,6 +45,7 @@ void brh_save(void);
 void brd_force(void);
 void class_item(int num, int bno, int brdpost);
 int is_bm(char *list, char *userid);
+void mantime_add(int outbno, int inbno);
 int XoPost(int bno);
 int Select(void);
 int Class(void);

@@ -1336,11 +1336,7 @@ vote_all()		/* itoc.010414: 投票中心 */
 	else if (ch & BRD_W_BIT)
 	  bbstate |= STAT_POST;
 
-	/* itoc.050613.註解: 人氣的減少不是在離開看板時，而是在進入新的看板或是離站時，
-	 這是為了避免 switch 跳看板會算錯人氣 */
-	if (currbno >= 0)
- 	  bshm->mantime[currbno]--;		/* 退出上一個板 */
-	bshm->mantime[redraw]++;		/* 進入新的板 */
+	mantime_add(currbno, redraw);
 
 	currbno = redraw;
 	bhead = bshm->bcache + currbno;

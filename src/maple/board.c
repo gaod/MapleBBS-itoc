@@ -770,6 +770,19 @@ czh_load()
 
 /*-------------------------------------------------------*/
 
+void
+mantime_add(outbno, inbno)
+  int outbno;
+  int inbno;
+{
+  /* itoc.050613.註解: 人氣的減少不是在離開看板時，而是在進入新的看板或是離站時，
+     這是為了避免 switch 跳看板會算錯人氣 */
+  if (outbno >= 0)
+    bshm->mantime[outbno]--;		/* 退出上一個板 */
+  if (inbno >= 0)
+    bshm->mantime[inbno]++;		/* 進入新的板 */
+}
+
 
 int
 XoPost(bno)
@@ -805,11 +818,7 @@ XoPost(bno)
     else if (bits & BRD_W_BIT)
       bbstate |= STAT_POST;
 
-    /* itoc.050613.註解: 人氣的減少不是在離開看板時，而是在進入新的看板或是離站時，
-       這是為了避免 switch 跳看板會算錯人氣 */
-    if (currbno >= 0)
-      bshm->mantime[currbno]--;		/* 退出上一個板 */
-    bshm->mantime[bno]++;		/* 進入新的板 */
+    mantime_add(currbno, bno);
 
     currbno = bno;
     currbattr = brd->battr;
