@@ -18,6 +18,8 @@
 #define MORE_BUFSIZE	4096
 
 
+static int more_width;	/* more screen 的寬度 */
+
 static uschar more_pool[MORE_BUFSIZE];
 static int more_base;		/* more_pool[more_base ~ more_base+more_size] 有值 */
 static int more_size;
@@ -30,7 +32,7 @@ static int more_size;
 
 /* itoc.041226.註解: mgets() 和 more_line() 不一樣的部分有
    1. mgets 直接用 more_pool 的空間；more_line 則是會把值寫入一塊 buffer
-   2. mgets 不會自動斷行；more_line 則是會自動斷行在 b_cols
+   2. mgets 不會自動斷行；more_line 則是會自動斷行在 more_width
    所以 mgets 是拿用在一些系統檔處理或是 edit.c，而 more_line 只用在 more()
  */
 
@@ -151,7 +153,7 @@ more_line(buf)
     /* weiyu.040802: 如果這碼是中文字的首碼，但是只剩下一碼的空間可以印，那麼不要印這碼 */
     if (in_chi || IS_ZHC_HI(ch))
       in_chi ^= 1;
-    if (in_chi && (len >= b_cols - 1 || bytes >= ANSILINELEN - 2))
+    if (in_chi && (len >= more_width - 1 || bytes >= ANSILINELEN - 2))
       break;
 
     foff++;
@@ -181,14 +183,14 @@ more_line(buf)
 
     *buf++ = ch;
 
-    /* 若不含控制碼的長度已達 b_cols 字，或含控制碼的長度已達 ANSILINELEN-1，那麼離開迴圈 */
-    if (len >= b_cols || bytes >= ANSILINELEN - 1)
+    /* 若不含控制碼的長度已達 more_width 字，或含控制碼的長度已達 ANSILINELEN-1，那麼離開迴圈 */
+    if (len >= more_width || bytes >= ANSILINELEN - 1)
     {
-      /* itoc.031123: 如果是控制碼，即使不含控制碼的長度已達 b_cols 了，還可以繼續吃 */
+      /* itoc.031123: 如果是控制碼，即使不含控制碼的長度已達 more_width 了，還可以繼續吃 */
       if ((in_ansi || (foff < fend && *foff == KEY_ESC)) && bytes < ANSILINELEN - 1)
 	continue;
 
-      /* itoc.031123: 再檢查下一個字是不是 '\n'，避免恰好是 b_cols 或 ANSILINELEN-1 時，會多跳一列空白 */
+      /* itoc.031123: 再檢查下一個字是不是 '\n'，避免恰好是 more_width 或 ANSILINELEN-1 時，會多跳一列空白 */
       if (foff < fend && *foff == '\n')
       {
 	foff++;
@@ -428,6 +430,9 @@ more(fpath, footer)
 
   foff = fimage;
   fend = fimage + fsize;
+
+  /* more_width = b_cols - 1; */	/* itoc.070517.註解: 若用這個，每列最大字數會和 header 及 footer 對齊 (即會有留白二格) */
+  more_width = b_cols + 1;		/* itoc.070517.註解: 若用這個，每列最大字數與螢幕同寬 */
 
   /* 找檔頭結束的地方 */
   for (i = 0; i < LINE_HEADER; i++)

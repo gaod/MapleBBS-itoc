@@ -1786,4 +1786,5 @@
 
 [2007/05/17] visio.c talk.c 將 b_cols 的定義從每列字數改為游標最大可及處 (和 b_lines 相同)。
              struct.h edit.c talk.c camera.c 重新整理 SCR_WIDTH 相關程式。
+             more.c 將 more() 的寬度放大到與 telnet term 螢幕寬度相同。
 
