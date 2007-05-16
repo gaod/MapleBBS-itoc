@@ -1784,4 +1784,6 @@
 
 [2007/05/09] bbsmail.c brdmail.c 改用 str_from()。
 
+[2007/05/17] visio.c talk.c 將 b_cols 的定義從每列字數改為游標最大可及處 (和 b_lines 相同)。
+
 

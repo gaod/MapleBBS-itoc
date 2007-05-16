@@ -194,10 +194,12 @@ move(x, y)
 {
   screenline *cslp;
 
+  /* itoc.070517.註解: 畫面大小是 (b_lines+1)*(b_cols+1)，允許的座標 (x,y) 範圍是 x=0~b_lines、y=0~b_cols */
+
   if (x > b_lines)
     return;
 
-  if (y >= b_cols)
+  if (y > b_cols)
     y = 0;
 
   cur_row = x;
@@ -311,7 +313,7 @@ rel_move(new_col, new_row)
   int was_col, was_row;
   char buf[16];
 
-  if (new_row > b_lines || new_col >= b_cols)
+  if (new_row > b_lines || new_col > b_cols)
     return;
 
   was_col = tc_col;
@@ -770,7 +772,7 @@ new_line:
   cur_pos = ++pos;
   cy = ++cur_col;
 
-  if ((pos >= ANSILINELEN) /* || (cy >= b_cols) */ )
+  if ((pos >= ANSILINELEN) /* || (cy > b_cols) */ )
     goto new_line;
 
   if (slp->width < cy)
@@ -1541,7 +1543,7 @@ vget_match(prefix, len, op)
 	outs(data);
 
 	col += BNLEN + 1;
-	if (col > b_cols - BNLEN - 1)	/* 總共可以放 b_cols / (BNLEN + 1) 欄 */
+	if (col > b_cols + 1 - BNLEN - 1)	/* 總共可以放 (b_cols + 1) / (BNLEN + 1) 欄 */
 	{
 	  col = 0;
 	  if (++row >= b_lines)
@@ -1591,7 +1593,7 @@ vget_match(prefix, len, op)
       outs(data);
 
       col += IDLEN + 1;
-      if (col > b_cols - IDLEN - 1)	/* 總共可以放 b_cols / (IDLEN + 1) 欄 */
+      if (col > b_cols + 1 - IDLEN - 1)	/* 總共可以放 (b_cols + 1) / (IDLEN + 1) 欄 */
       {
 	col = 0;
 	if (++row >= b_lines)
@@ -1636,7 +1638,7 @@ vget_match(prefix, len, op)
       outs(data);
 
       col += IDLEN + 1;
-      if (col > b_cols - IDLEN - 1)	/* 總共可以放 b_cols / (IDLEN + 1) 欄 */
+      if (col > b_cols + 1 - IDLEN - 1)	/* 總共可以放 (b_cols + 1) / (IDLEN + 1) 欄 */
       {
 	col = 0;
 	if (++row >= b_lines)

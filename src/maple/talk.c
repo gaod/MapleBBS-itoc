@@ -287,7 +287,7 @@ loginNotify()
 	move(row, col);
 	outs(benz->userid);
 	col += IDLEN + 1;
-	if (col > b_cols - IDLEN - 1)	/* 總共可以放 b_cols / (IDLEN + 1) 欄 */
+	if (col > b_cols + 1 - IDLEN - 1)	/* 總共可以放 (b_cols + 1) / (IDLEN + 1) 欄 */
 	{
 	  row++;
 	  col = 0;

@@ -731,7 +731,7 @@ login_user(content)
 	    if ((kill(pid, SIGTERM) == -1) && (errno == ESRCH))
 	      utmp_free(ui);
 	    else
-	      sleep(3);			/* 被踢的人這時候正在自我了斷 */ 
+	      sleep(3);			/* 被踢的人這時候正在自我了斷 */
 	    blog("MULTI", cuser.userid);
 	  }
 
