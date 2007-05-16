@@ -16,9 +16,7 @@
 #define STRLEN		80	/* Length of most string data */
 #define ANSILINELEN	250	/* Maximum Screen width in chars */
 
-/* itoc.031123: 螢幕的寬度設為 80 也無妨，只是有些 telnet term 在貼上文字太長時，
-                會自動斷行在 79，所以在此就從其設定 */
-#define SCR_WIDTH	79	/* edit/talk/camera screen width */
+#define SCR_WIDTH	78	/* edit/talk/camera screen width */
 
 #define TAB_STOP	4	/* 按 TAB 換成幾格空白 (要是 2 的次方) */
 #define TAB_WIDTH	(TAB_STOP - 1)

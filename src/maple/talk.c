@@ -341,10 +341,11 @@ static char page_requestor[40];
 static int page_requestor_zhc;
 #endif
 
+/* 每列可以輸入的字數為 SCR_WIDTH */
 #ifdef HAVE_MULTI_BYTE
-static uschar talk_pic[T_LINES][SCR_WIDTH + 1];	/* 每列可以輸入的字數為 SCR_WIDTH - 1 (保留二個空白) */
+static uschar talk_pic[T_LINES][SCR_WIDTH + 1];	/* 刪除列尾字時會用到後一碼的空白，所以要多一碼 */
 #else
-static uschar talk_pic[T_LINES][SCR_WIDTH];	/* 每列可以輸入的字數為 SCR_WIDTH - 1 (保留一個空白) */
+static uschar talk_pic[T_LINES][SCR_WIDTH + 2];	/* 刪除列尾中文字時會用到後二碼的空白，所以要多二碼 */
 #endif
 static int talk_len[T_LINES];			/* 每列目前已輸入多少字 */
 
@@ -430,7 +431,7 @@ talk_char(twin, ch)
 
   if (isprint2(ch))
   {
-    if (col >= SCR_WIDTH - 1)	/* 若已經打到列尾，先換列 */
+    if (col >= SCR_WIDTH)	/* 若已經打到列尾，先換列 */
     {
       talk_nextline(twin);
       col = twin->curcol;
@@ -448,10 +449,10 @@ talk_char(twin, ch)
     }
     else		/* 要 insert */
     {
-      for (i = SCR_WIDTH - 2; i > col; i--)
+      for (i = SCR_WIDTH - 1; i > col; i--)
 	talk_pic[ln][i] = talk_pic[ln][i - 1];
       talk_pic[ln][col] = ch;
-      if (len < SCR_WIDTH - 1)
+      if (len < SCR_WIDTH)
 	len++;
       talk_len[ln] = len;
       talk_outs(talk_pic[ln] + col, len - col);
@@ -489,7 +490,7 @@ talk_char(twin, ch)
 	  else
 #endif
 	    ch = 1;
-	  for (i = col; i < SCR_WIDTH - 1; i++)
+	  for (i = col; i < SCR_WIDTH; i++)
 	    talk_pic[ln][i] = talk_pic[ln][i + ch];
 	  move(ln, col);
 	  talk_outs(talk_pic[ln] + col, len - col);
@@ -510,7 +511,7 @@ talk_char(twin, ch)
 	else
 #endif
 	  ch = 1;
-	for (i = col; i < SCR_WIDTH - 1; i++)
+	for (i = col; i < SCR_WIDTH; i++)
 	  talk_pic[ln][i] = talk_pic[ln][i + ch];
 	move(ln, col);
 	talk_outs(talk_pic[ln] + col, len - col);
@@ -534,12 +535,12 @@ talk_char(twin, ch)
       break;
 
     case Ctrl('F'):		/* KEY_RIGHT */
-      if (col < SCR_WIDTH - 1)
+      if (col < SCR_WIDTH)
       {
 	col++;
 #ifdef HAVE_MULTI_BYTE
 	/* hightman.060504: 右移時碰到漢字移雙格 */
-	if (twin->zhc && col < SCR_WIDTH - 1 && IS_ZHC_HI(talk_pic[ln][col - 1]))
+	if (twin->zhc && col < SCR_WIDTH && IS_ZHC_HI(talk_pic[ln][col - 1]))
 	  col++;
 #endif
 	twin->curcol = col;
@@ -553,7 +554,7 @@ talk_char(twin, ch)
 	twin->curln = --ln;
 #ifdef HAVE_MULTI_BYTE
 	/* hightman.060504: 漢字整字調節 */
-	if (twin->zhc && col < SCR_WIDTH - 1 && IS_ZHC_LO(talk_pic[ln], col))
+	if (twin->zhc && col < SCR_WIDTH && IS_ZHC_LO(talk_pic[ln], col))
 	  col++;
 #endif
 	move(ln, col);
@@ -566,7 +567,7 @@ talk_char(twin, ch)
 	twin->curln = ++ln;
 #ifdef HAVE_MULTI_BYTE
 	/* hightman.060504: 漢字整字調節 */
-	if (twin->zhc && col < SCR_WIDTH - 1 && IS_ZHC_LO(talk_pic[ln], col))
+	if (twin->zhc && col < SCR_WIDTH && IS_ZHC_LO(talk_pic[ln], col))
 	  col++;
 #endif
 	move(ln, col);

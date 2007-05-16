@@ -33,17 +33,21 @@ static char *list[] = 		/* src/include/struct.h */
 
 
 static void
-str_strip(str)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
+str_strip(str, size)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
   char *str;
+  int size;
 {
   int ch, ansi, len;
+  char *ptr;
+  const char *strip = "\033[m\n";
 
   /* 若動態看板有一列的寬度超過 SCR_WIDTH，會顯示二列，造成排版錯誤 (主要是點歌的部分)
      所以就乾脆把超過 SCR_WIDTH 的部分刪除 (在此不考慮寬螢幕) */
   /* 若本列中有 \033*s 或 \033*n，顯示出來會更長，所以要特別處理 */
 
   ansi = len = 0;
-  while (ch = *str++)
+  ptr = str;
+  while (ch = *ptr++)
   {
     if (ch == '\n')
     {
@@ -61,7 +65,10 @@ str_strip(str)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
 	len += BMAX(IDLEN, UNLEN) - 1;
 	if (len > SCR_WIDTH)
 	{
-	  strcpy(str - 1, "\033[m\n");
+	  if (ptr - 1 + sizeof(strip) - 1 < str + size)	/* 避免 overflow */
+	    strcpy(ptr - 1, strip);
+	  else
+	    strcpy(ptr - 1, "\n");
 	  break;
 	}
       }
@@ -72,7 +79,10 @@ str_strip(str)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
     {
       if (++len > SCR_WIDTH)
       {
-	strcpy(str - 1, "\033[m\n");
+	if (ptr - 1 + sizeof(strip) - 1 < str + size)	/* 避免 overflow */
+	  strcpy(ptr - 1, strip);
+	else
+	  strcpy(ptr - 1, "\n");
 	break;
       }
     }
@@ -110,7 +120,7 @@ mirror(fpath, line)
     size = i = 0;
     while (fgets(tmp, ANSILINELEN, fp))
     {
-      str_strip(tmp);
+      str_strip(tmp, ANSILINELEN);
 
       strcpy(buf + size, tmp);
       size += strlen(tmp);

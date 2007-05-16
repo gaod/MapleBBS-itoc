@@ -1781,7 +1781,7 @@ vedit(fpath, ve_op)
     mode = ve_mode;
     col = ve_col;
     /* itoc.031123.註解: 如果超過 SCR_WIDTH，那麼頁面往右翻，並保留左頁的最後 4 字 */
-    cc = (col < SCR_WIDTH) ? 0 : (col / (SCR_WIDTH - 4)) * (SCR_WIDTH - 4);
+    cc = (col <= SCR_WIDTH) ? 0 : (col / (SCR_WIDTH - 4)) * (SCR_WIDTH - 4);
     if (cc != margin)
     {
       mode |= VE_REDRAW;
