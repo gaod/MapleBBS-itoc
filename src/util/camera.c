@@ -65,7 +65,7 @@ str_strip(str, size)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
 	len += BMAX(IDLEN, UNLEN) - 1;
 	if (len > SCR_WIDTH)
 	{
-	  if (ptr - 1 + sizeof(strip) - 1 < str + size)	/* 避免 overflow */
+	  if (ptr - 1 + strlen(strip) < str + size)	/* 避免 overflow */
 	    strcpy(ptr - 1, strip);
 	  else
 	    strcpy(ptr - 1, "\n");
@@ -79,7 +79,7 @@ str_strip(str, size)		/* itoc.060417: 將動態看板每列的寬度掐在 SCR_WIDTH */
     {
       if (++len > SCR_WIDTH)
       {
-	if (ptr - 1 + sizeof(strip) - 1 < str + size)	/* 避免 overflow */
+	if (ptr - 1 + strlen(strip) < str + size)	/* 避免 overflow */
 	  strcpy(ptr - 1, strip);
 	else
 	  strcpy(ptr - 1, "\n");
