@@ -258,10 +258,10 @@ show_availability(type)		/* 將 BAKPATH 裡面所有可取回備份的目錄印出來 */
       if (!strncmp(fname, type, tlen))
       {
 	len = strlen(fname) + 2;
-	if (SCR_WIDTH - col < len)
+	if (b_cols - col < len)
 	{
 	  fputc('\n', fp);
-	  col = 0;
+	  col = len;
 	}
 	else
 	{

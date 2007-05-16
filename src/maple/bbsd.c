@@ -547,7 +547,7 @@ utmp_setup(mode)
 
 #else
   str_ncpy(utmp.from, fromhost, sizeof(utmp.from));
-#endif	/* HAVE_WHERE */      
+#endif	/* HAVE_WHERE */
   
   /* Thor: 告訴User已經滿了放不下... */
   if (!utmp_new(&utmp))
