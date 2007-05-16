@@ -236,8 +236,8 @@ poststat(mytype)
   {
     int max, cnt;
 
-    fprintf(fp, "\t\t\033[1;34m-----\033[37m=====\033[41m 本%s大熱門話題 \033[40m=====\033[34m-----\033[0m\n\n", 
-      mytitle[mytype]);
+    fprintf(fp, "%16s\033[1;34m-----\033[37m=====\033[41m 本%s大熱門話題 \033[40m=====\033[34m-----\033[m\n\n", 
+      "", mytitle[mytype]);
 
     max = mytop[mytype];
     p = buf + 5;
