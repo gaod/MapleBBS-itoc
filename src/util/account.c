@@ -907,8 +907,8 @@ draw_usies(ptime)
   }
 
   /* Thor.990329: y2k */
-  fprintf(fp, "\t\t\t   \033[1;33;46m [%02d/%02d/%02d] 上站人次統計 \033[40m\n",
-    ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
+  fprintf(fp, "%24s\033[1;33;46m [%02d/%02d/%02d] 上站人次統計 \033[m\n",
+    "", ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
 
   for (i = MAX_LINE + 1; i > 0; i--)
   {

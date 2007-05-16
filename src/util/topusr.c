@@ -284,8 +284,8 @@ write_age(fpath, year, month, day)
 
   item = max / MAX_LINE + 1;
 
-  fprintf(fp, "\t\t\t \033[1;33;45m " BBSNAME " 年齡統計 [%02d/%02d/%02d] \033[m\n\n",
-    year % 100, month, day);
+  fprintf(fp, "%26s\033[1;33;45m [%02d/%02d/%02d] 年齡統計 \033[m\n\n",
+    "", year % 100, month, day);
 
   for (i = MAX_LINE + 1; i > 0; i--)
   {
@@ -312,7 +312,7 @@ write_age(fpath, year, month, day)
 
   fprintf(fp, "  \033[1;35m╒═══════════════════════════════════╕ \n"
     "   \033[1;32m10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33\n"
-    "\t\t      \033[36m有效統計人次：\033[37m%-9d\033[36m平均年齡：\033[37m%d\033[40;0m\n",
+    "                      \033[36m有效統計人次：\033[37m%-9d\033[36m平均年齡：\033[37m%d\033[m\n",
     act_age[24], (int) totalage / (act_age[24] ? act_age[24] : 1));
 
   fclose(fp);
@@ -464,8 +464,8 @@ write_star(fpath, year, month, day)
 
   item = max / 30 + 1;
 
-  fprintf(fp, "\t\t\t \033[1;33;45m " BBSNAME " 星座統計 [%02d/%02d/%02d] \033[m\n\n",
-    year % 100, month, day);
+  fprintf(fp, "%26s\033[1;33;45m [%02d/%02d/%02d] 星座統計 \033[m\n\n",
+    "", year % 100, month, day);
 
   for (i = 0; i < 13; i++)
   {
@@ -549,8 +549,8 @@ write_sex(fpath, year, month, day)
 
   item = max / 30 + 1;
 
-  fprintf(fp, "\t\t\t \033[1;33;45m " BBSNAME " 性別統計 [%02d/%02d/%02d] \033[m\n\n",
-    year % 100, month, day);
+  fprintf(fp, "%26s\033[1;33;45m [%02d/%02d/%02d] 性別統計 \033[m\n\n",
+    "", year % 100, month, day);
 
   for (i = 0; i < 3; i++)
   {
@@ -582,8 +582,8 @@ write_birthday(fpath, year, month, day)
   if (!(fp = fopen(fpath, "w")))
     return;
 
-  fprintf(fp, "\t\t\t \033[1;33;45m " BBSNAME " 本日壽星 [%02d/%02d/%02d] \033[m\n\n",
-    year % 100, month, day);
+  fprintf(fp, "%26s\033[1;33;45m [%02d/%02d/%02d] 本日壽星 \033[m\n\n",
+    "", year % 100, month, day);
 
   fclose(fp);
 }
@@ -601,8 +601,10 @@ write_birthmon(fpath, year, month, day)
   if (!(fp = fopen(fpath, "a")))
     return;
 
-  fprintf(fp, "\n\n\t\t\t \033[1;33;45m " BBSNAME " 本月壽星 [%02d/%02d/%02d] \033[m\n\n",
-    year % 100, month, day);
+  fprintf(fp, "\n\n");
+
+  fprintf(fp, "%26s\033[1;33;45m [%02d/%02d/%02d] 本月壽星 \033[m\n\n",
+    "", year % 100, month, day);
 
   f_suck(fp, TMPFILE_BIRTHMON);
   unlink(TMPFILE_BIRTHMON);
