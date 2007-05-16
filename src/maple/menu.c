@@ -361,7 +361,7 @@ status_foot()
   ufo = (now - (uptime - 86400)) / 60;	/* 借用 ufo 來做時間(分) */
 
   /* itoc.010717: 改一下 feeter 使長度和 FEETER_XXX 一致 */
-  sprintf(feeter, COLOR1 " %8.8s %02d:%02d " COLOR2 " 人數 %-4d 我是 %-12s %s [呼叫]%-9s  ",
+  sprintf(feeter, COLOR1 " %8.8s %02d:%02d " COLOR2 " 人數 %-4d 我是 %-12s %s [呼叫]%-9s ",
     fshm->today, ufo / 60, ufo % 60, total_user, cuser.userid, coinmsg, flagmsg);
   outf(feeter);
 }
