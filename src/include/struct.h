@@ -14,7 +14,7 @@
 /* screen control */
 
 #define STRLEN		80	/* Length of most string data */
-#define ANSILINELEN	250	/* Maximum Screen width in chars */
+#define ANSILINELEN	500	/* Maximum Screen width in chars，不能超過 1023 */
 
 #define SCR_WIDTH	78	/* edit/talk/camera screen width */
 
@@ -535,14 +535,14 @@ typedef struct
 
 typedef struct screenline
 {
-  uschar oldlen;		/* previous line length */
-  uschar len;			/* current length of line */
-  uschar width;			/* padding length of ANSI codes */
-  uschar smod;			/* start of modified data */
-  uschar emod;			/* end of modified data */
-  uschar sso;			/* start of standout data */
-  uschar eso;			/* end of standout data */
-  uschar mode;			/* status of line, as far as update */
+  int oldlen;			/* previous line length */
+  int len;			/* current length of line */
+  int width;			/* padding length of ANSI codes */
+  int smod;			/* start of modified data */
+  int emod;			/* end of modified data */
+  int sso;			/* start of standout data */
+  int eso;			/* end of standout data */
+  uschar mode;			/* status of line, as far as update */	/* 由於 SL_* 的 mode 不超過八個，故用 uschar 即可 */
   uschar data[ANSILINELEN];
 }          screenline;
 

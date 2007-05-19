@@ -436,7 +436,7 @@ find_best(x, y, level)	/* 傳回 (x, y) 電腦所放置最好的位置 */
       {
 	if (tmp = do_count(i, j, TILE_CPU))
 	{
-	  /* 角 +100  邊 +50  一般 +1*/
+	  /* 角 +100  邊 +50  一般 +1 */
 	  if (i == 0 || i == MAP_X - 1)
 	  {
 	    if (j == 0 || j == MAP_Y - 1)
@@ -749,7 +749,7 @@ main_gray()
 {
   int level;
 
-  level = vans("請選擇 [1] 易如反掌 [2] 非常簡單 [3] 普通難度，或按 [Q] 離開：") - '1';
+  level = vans("請選擇 1)易如反掌 2)非常簡單 3)普通難度，或按 [Q] 離開：") - '1';
   if (level >= 0 && level <= 2)
   {
     level = LEVEL_1 << level;	/* 設定難度 */

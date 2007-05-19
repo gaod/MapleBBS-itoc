@@ -931,7 +931,7 @@ save_foot(slp)
     move(lines[i], 0);
     memcpy(slp + i, cur_slp, sizeof(screenline));
     slp[i].smod = 0;
-    slp[i].emod = ANSILINELEN;	/* Thor.990125:ぃ阶程Ωэ, 场璶酶 */
+    slp[i].emod = ANSILINELEN;	/* Thor.990125: ぃ阶程Ωэ, 场璶酶 */
     slp[i].oldlen = ANSILINELEN;
     slp[i].mode |= SL_MODIFIED;
   }

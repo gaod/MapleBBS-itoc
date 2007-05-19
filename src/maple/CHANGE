@@ -1788,3 +1788,6 @@
              struct.h edit.c talk.c camera.c 重新整理 SCR_WIDTH 相關程式。
              more.c 將 more() 的寬度放大到與 telnet term 螢幕寬度相同。
 
+[2007/05/18] struct.h 加大 ANSILINELEN。
+
+
