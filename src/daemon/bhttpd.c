@@ -947,10 +947,11 @@ out_title(fpw, title)
 #endif
     "<title>-=" BBSNAME "=- %s</title>\n", title);
 
-  fputs("<script language=javascript>\n"
+  fputs("<script type=text/javascript>\n<!--\n"
     "  function mOver(obj) {obj.bgColor='" HCOLOR_BAR "';}\n"
     "  function mOut(obj) {obj.bgColor='" HCOLOR_BG "';}\n"
-    "</script>\n<style type=text/css>\n"
+    "-->\n</script>\n"
+    "<style type=text/css>\n"
     "  PRE {font-size: 15pt; line-height: 15pt; font-weight: lighter; background-color: #000000; color: #C0C0C0;}\n"
     "  TD  {font-size: 15pt; line-height: 15pt; font-weight: lighter;}\n"
     "</style>\n"
