@@ -14,8 +14,11 @@
 
 #ifdef HAVE_GAME
 
-#define LOG_KM		/* 是否提供記錄棋譜的功能 */
 #define RETRACT_CHESS	/* 是否提供悔棋功能 */
+
+#ifdef RETRACT_CHESS
+#  define LOG_KM	/* 是否提供記錄棋譜的功能 */
+#endif
 
 
 #if 0
@@ -55,6 +58,9 @@ enum
 
 
 static int board[MAX_X][MAX_Y];
+#ifdef LOG_KM
+static int origin_board[MAX_X][MAX_Y];
+#endif
 static int cx, cy;
 static int stage, NUM_TABLE;
 static char piece[4][3] = {"　", "○", "●", "☆"};
@@ -174,6 +180,11 @@ read_board()
     }
   }
   fclose(fp);
+
+#ifdef LOG_KM
+  memcpy(origin_board, board, sizeof(origin_board));
+#endif
+
   return count;
 }
 
@@ -351,20 +362,59 @@ live()
 
 #ifdef LOG_KM
 static void
-log_km(fp)
-  FILE *fp;
+log_km()
 {
-  int i, j;
+  int s, i, j;
+  int fx, fy, tx, ty;
+  char fpath[64], buf[80];
+  FILE *fp;
 
-  for (i = 0; i < MAX_X; i++)
+  usr_fpath(fpath, cuser.userid, "km.log");
+  fp = fopen(fpath, "w");
+  fprintf(fp, "%s %s (%s)\n", str_author1, cuser.userid, cuser.username);
+  fprintf(fp, "標題: 孔明棋譜 %s 破解過程\n時間: %s\n\n", title, Now());
+  fprintf(fp, "%s\n\n", title);
+
+  memcpy(board, origin_board, sizeof(board));
+  fx = fy = tx = ty = -1;
+
+  for (s = 0;; s++)
   {
-    for (j = 0; j < MAX_Y; j++)
+    for (i = 0; i < MAX_X; i++)
     {
-      fprintf(fp, "%s", piece[board[i][j]]);
+      for (j = 0; j < MAX_Y; j++)
+      {
+#if 0	/* 加顏色好像沒比較清楚 */
+	fprintf(fp, "%s%s%s", 
+	  (i == fx && j == fy) ? "\033[1;43m" : (i == tx && j == ty) ? "\033[1;33m" : "", 
+	  piece[board[i][j]], 
+	  (i == fx && j == fy) || (i == tx && j == ty) ? str_ransi : "");
+#endif
+	fprintf(fp, "%s", piece[board[i][j]]);
+      }
+      fprintf(fp, "\n");
     }
     fprintf(fp, "\n");
+
+    if (s >= step)
+      break;
+
+    fx = route[s][0];
+    fy = route[s][1];
+    tx = route[s][2];
+    ty = route[s][3];
+    board[fx][fy] = TILE_BLANK;
+    board[(fx + tx) / 2][(fy + ty) / 2] = TILE_BLANK;
+    board[tx][ty] = TILE_CHESS;
   }
-  fprintf(fp, "\n");
+
+  ve_banner(fp, 0);
+  fclose(fp);
+
+  sprintf(buf, "孔明棋譜 %s 破解過程", title);
+  mail_self(fpath, cuser.userid, buf, MAIL_READ);
+
+  unlink(fpath);
 }
 #endif
 
@@ -374,26 +424,12 @@ main_km()
 {
   int fx, fy, tx, ty, count;
 
-#ifdef LOG_KM
-  char fpath[64];
-  FILE *fp;
-#endif
-
   stage = -1;
 
 start_game:
 
   if (!(count = read_board()))
     return 0;
-
-#ifdef LOG_KM
-  usr_fpath(fpath, cuser.userid, "km.log");
-  fp = fopen(fpath, "w");
-  fprintf(fp, "%s %s (%s)\n", str_author1, cuser.userid, cuser.username);
-  fprintf(fp, "標題: 孔明棋譜 %s 破解過程\n時間: %s\n\n", title, Now());
-  fprintf(fp, "%s\n\n", title);
-  log_km(fp);
-#endif
 
 #ifdef RETRACT_CHESS
   step = 0;
@@ -410,20 +446,11 @@ start_game:
       vmsg("恭喜您成功\了");
 
 #ifdef LOG_KM
-      ve_banner(fp, 0);
-      fclose(fp);
-
       if (vans("您是否要把完成的棋譜保存在信箱中(Y/N)？[Y] ") != 'n')
-      {
-        char buf[60];
-
-	sprintf(buf, "孔明棋譜 %s 破解過程", title);
-	mail_self(fpath, cuser.userid, buf, MAIL_READ);
-      }
-      unlink(fpath);
+	log_km();
 #endif
 
-      switch (vans("請選擇 (1)繼續下一關 (2)重新挑戰此關 (Q)離開 ？[1] "))
+      switch (vans("請選擇 1)繼續下一關 2)重新挑戰此關 Q)離開？[1] "))
       {
       case 'q':
         goto abort_game;
@@ -437,13 +464,9 @@ start_game:
     }
     if (!live())
     {
-#ifdef LOG_KM
-      unlink(fpath);
-#endif
-
       vmsg("糟糕...沒棋了...@@");
 
-      switch (vans("請選擇 (1)繼續下一關 (2)重新挑戰此關 (Q)離開 ？[2] "))
+      switch (vans("請選擇 1)繼續下一關 2)重新挑戰此關 Q)離開？[2] "))
       {
       case 'q':
         goto abort_game;
@@ -467,10 +490,6 @@ start_game:
 	  {
 	    retract();
 	    count++;
-#ifdef LOG_KM  
-	    fprintf(fp, "悔棋，回到上一步\n");
-	    log_km(fp);
-#endif
 	  }
 	  continue;
 	}
@@ -518,9 +537,6 @@ start_game:
       {
 	jump(fx, fy, tx, ty);
 	count--;
-#ifdef LOG_KM
-	log_km(fp);
-#endif
 	break;
       }
     }
