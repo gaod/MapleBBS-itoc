@@ -617,22 +617,21 @@ login_user(content)
 	{
 	  FILE *fp;
 	  char parentid[IDLEN + 1], buf[80];
-	  time_t now;
+
+	  strcpy(parentid, cuser.userid);
+
+	  acct_apply();
 
 	  /* itoc.010820: 記錄保人於保證人及被保人 */
-	  strcpy(parentid, cuser.userid);
-	  acct_apply();
-	  time(&now);
-
 	  /* itoc.010820.註解: 把對方 log 在行首，在 reaper 時可以方便砍 tree */
-	  sprintf(buf, "%s 於 %s 介紹此人(%s)加入本站\n", parentid, Btime(&now), cuser.userid);
+	  sprintf(buf, "%s 於 %s 介紹此人(%s)加入本站\n", parentid, Btime(&ap_start), cuser.userid);
 	  usr_fpath(fpath, cuser.userid, "guarantor");
 	  if (fp = fopen(fpath, "a"))
 	  {
 	    fputs(buf, fp);
 	    fclose(fp);
 	  }
-	  sprintf(buf, "%s 於 %s 被此人(%s)介紹加入本站\n", cuser.userid, Btime(&now), parentid);
+	  sprintf(buf, "%s 於 %s 被此人(%s)介紹加入本站\n", cuser.userid, Btime(&ap_start), parentid);
 	  usr_fpath(fpath, parentid, "guarantor");
 	  if (fp = fopen(fpath, "a"))
 	  {
