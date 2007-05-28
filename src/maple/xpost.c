@@ -97,7 +97,7 @@ XoXpost(xo, hdr, on, off, fchk)		/* Thor: eXtended post : call from post_cb */
   int returnPos;
 #endif
 
-  if (xo->max <= 0)	/* Thor.980911: 註解: 以防萬一 */
+  if (xo->max <= 0)	/* Thor.980911.註解: 以防萬一 */
     return XO_FOOT;
   
   /* build index according to input condition */
@@ -1055,7 +1055,7 @@ XoNews(xo)			/* itoc: News reader : call from post_cb */
   HDR *head;
   XO *xt;
 
-  if (xo->max <= 0)		/* Thor.980911: 註解: 以防萬一 */
+  if (xo->max <= 0)		/* Thor.980911.註解: 以防萬一 */
     return XO_FOOT;
 
 #ifdef EVERY_Z		/* itoc.060206: 只有用 ^Z 才可能從不同看板進入新聞模式 */

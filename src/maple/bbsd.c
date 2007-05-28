@@ -621,6 +621,7 @@ login_user(content)
 	  strcpy(parentid, cuser.userid);
 
 	  acct_apply();
+	  logattempt(' ', content);
 
 	  /* itoc.010820: 記錄保人於保證人及被保人 */
 	  /* itoc.010820.註解: 把對方 log 在行首，在 reaper 時可以方便砍 tree */
@@ -643,7 +644,8 @@ login_user(content)
 	}
       }
 #  else
-      acct_apply(); /* Thor.980917: 註解: setup cuser ok */
+      acct_apply(); /* Thor.980917.註解: cuser setup ok */
+      logattempt(' ', content);
       break;
 #  endif
 #else
@@ -751,7 +753,7 @@ login_user(content)
       logattempt(' ', content);
       cuser.userlevel = 0;	/* Thor.981207: 怕人亂玩, 強制寫回cuser.userlevel */
       cuser.ufo = UFO_DEFAULT_GUEST;
-      break;	/* Thor.980917: 註解: cuser ok! */
+      break;	/* Thor.980917.註解: cuser setup ok */
     }
   }
 
@@ -947,7 +949,7 @@ tn_login()
   /* --------------------------------------------------- */
 
   bbstate = STAT_STARTED;	/* 進入系統以後才可以回水球 */
-  utmp_setup(M_LOGIN);		/* Thor.980917: 註解: cutmp, cutmp-> setup ok */
+  utmp_setup(M_LOGIN);		/* Thor.980917.註解: cutmp, cutmp-> setup ok */
   total_user = ushm->count;	/* itoc.011027: 未進使用者名單前，啟始化 total_user */
 
   mbox_main();
