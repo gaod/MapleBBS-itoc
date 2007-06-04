@@ -1923,7 +1923,7 @@ postlist_list(fpw, folder, brdname, start, total)
 {
   HDR hdr;
   char owner[80], *ptr1, *ptr2;
-  int fd;
+  int fd, xmode;
 
   fputs("<table cellspacing=0 cellpadding=4 border=0>\n<tr bgcolor=" HCOLOR_TIE ">\n"
     "  <td width=15>¼Ð</td>\n"
@@ -1972,14 +1972,13 @@ postlist_list(fpw, folder, brdname, start, total)
 	  i, hdr.chrono, i, hdr.chrono);
       }
 
-      if (hdr.xmode & POST_BOTTOM)
-	fputs("  <td>­«­n</td>\n", fpw);
-      else
-	fprintf(fpw, "  <td>%d</td>\n", i);
-      fprintf(fpw, "  <td>%s</td>\n  <td>", hdr.xmode & POST_MARKED ? "m" : "");
+      xmode = hdr.xmode;
+
+      fprintf(fpw, "  <td>%d</td>\n  <td>%s</td>\n  <td>",
+	xmode & POST_BOTTOM ? -1 : i, xmode & POST_MARKED ? "m" : "");
 
 #ifdef HAVE_SCORE
-      if (hdr.xmode & POST_SCORE)
+      if (xmode & POST_SCORE)
 	fprintf(fpw, "<font color='%s'>%d</font>", hdr.score >= 0 ? "red" : "green", abs(hdr.score));
 #endif
 
