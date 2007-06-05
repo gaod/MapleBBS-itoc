@@ -21,19 +21,19 @@ main()
   struct tm *ptime;
   char *folders[] = {"bin", "etc", "innd", "run", "src", NULL};
 
+  chdir(BBSHOME);
+  umask(077);
+
+  /* 建立備份路徑目錄 */
   time(&now);
   ptime = localtime(&now);
-
   sprintf(bakpath, "%s/oth%02d%02d%02d", BAKPATH, ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
-  mkdir(bakpath, 0755);
+  mkdir(bakpath, 0700);
 
   for (i = 0; str = folders[i]; i++)
   {
-    if (*str)
-    {
-      sprintf(cmd, "tar cfz %s/%s.tgz %s/%s", bakpath, str, BBSHOME, str);
-      system(cmd);
-    }
+    sprintf(cmd, "tar cfz %s/%s.tgz ./%s", bakpath, str, str);
+    system(cmd);
   }
 
   exit(0);

@@ -17,18 +17,21 @@ main()
   struct dirent *de;
   DIR *dirp;
   char *ptr;
-  char bakpath[128], cmd[256];
+  char gempath[128], bakpath[128], cmd[256];
   time_t now;
   struct tm *ptime;
 
-  if (chdir(BBSHOME "/gem") || !(dirp = opendir(".")))
-    exit(-1);
+  chdir(BBSHOME);
+  umask(077);
 
   /* 建立備份路徑目錄 */
   time(&now);
   ptime = localtime(&now);
   sprintf(bakpath, "%s/gem%02d%02d%02d", BAKPATH, ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
-  mkdir(bakpath, 0755);
+  mkdir(bakpath, 0700);
+
+  if (chdir(BBSHOME "/gem") || !(dirp = opendir(".")))
+    exit(-1);
 
   sprintf(cmd, "cp %s %s/", FN_DIR, bakpath);
   system(cmd);  
@@ -44,7 +47,7 @@ main()
 
     if (ptr[0] > ' ' && ptr[0] != '.')
     {
-      sprintf(cmd, "tar cfz %s/%s.tgz %s", bakpath, ptr, ptr);
+      sprintf(cmd, "tar cfz %s/%s.tgz ./%s", bakpath, ptr, ptr);
       system(cmd);
     }
   }
@@ -57,8 +60,8 @@ main()
     exit(-1);
 
   /* 建立備份路徑目錄 */
-  sprintf(bakpath, "%s/brd", bakpath);
-  mkdir(bakpath, 0755);
+  sprintf(gempath, "%s/brd", bakpath);
+  mkdir(gempath, 0700);
 
   /* 把各看板分別壓縮成一個壓縮檔 */
   while (de = readdir(dirp))
@@ -67,7 +70,7 @@ main()
 
     if (ptr[0] > ' ' && ptr[0] != '.')
     {
-      sprintf(cmd, "tar cfz %s/%s.tgz %s", bakpath, ptr, ptr);
+      sprintf(cmd, "tar cfz %s/%s.tgz ./%s", gempath, ptr, ptr);
       system(cmd);
     }
   }

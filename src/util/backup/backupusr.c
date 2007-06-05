@@ -17,19 +17,22 @@ main()
   struct dirent *de;
   DIR *dirp;
   char *ptr, ch;
-  char fpath[128], bakpath[128], cmd[256];
+  char usrpath[128], bakpath[128], cmd[256];
   time_t now;
   struct tm *ptime;
 
+  chdir(BBSHOME);
+  umask(077);
+
+  /* 建立備份路徑目錄 */
   time(&now);
   ptime = localtime(&now);
-  /* 建立備份路徑目錄 */
-  sprintf(fpath, "%s/usr%02d%02d%02d", BAKPATH, ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
-  mkdir(fpath, 0755);
+  sprintf(bakpath, "%s/usr%02d%02d%02d", BAKPATH, ptime->tm_year % 100, ptime->tm_mon + 1, ptime->tm_mday);
+  mkdir(bakpath, 0700);
 
-  /* 改變權限使 ftp 傳檔不會漏傳 */
-  sprintf(cmd, "cp %s/%s %s/; chmod 644 %s/%s", BBSHOME, FN_SCHEMA, fpath, fpath, FN_SCHEMA);
-  system(cmd);
+  /* 備份 .USR */
+  sprintf(cmd, "%s/%s", bakpath, FN_SCHEMA);
+  f_cp(FN_SCHEMA, cmd, O_EXCL);
 
   for (ch = 'a'; ch <= 'z'; ch++)
   {
@@ -37,8 +40,8 @@ main()
     if (chdir(cmd) || !(dirp = opendir(".")))
       exit(-1);
 
-    sprintf(bakpath, "%s/%c", fpath, ch);
-    mkdir(bakpath, 0755);
+    sprintf(usrpath, "%s/%c", bakpath, ch);
+    mkdir(usrpath, 0700);
 
     /* 把各使用者分別壓縮成一個壓縮檔 */
     while (de = readdir(dirp))
@@ -47,7 +50,7 @@ main()
 
       if (ptr[0] > ' ' && ptr[0] != '.')
       {
-	sprintf(cmd, "tar cfz %s/%s.tgz %s", bakpath, ptr, ptr);
+	sprintf(cmd, "tar cfz %s/%s.tgz ./%s", usrpath, ptr, ptr);
 	system(cmd);
       }
     }
