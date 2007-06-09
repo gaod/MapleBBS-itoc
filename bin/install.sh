@@ -37,7 +37,7 @@ echo "[1;36m¶i¦æÂà´«¤¤ [0;5m...[m"
 
 # ´«¦WºÙ ip addr
 
-filelist_1="etc/valid etc/tip src/include/config.h";
+filelist_1="etc/valid src/include/config.h";
 
 for i in $filelist_1
 do
