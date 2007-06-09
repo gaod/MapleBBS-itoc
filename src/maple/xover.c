@@ -1743,6 +1743,30 @@ xo_cursor(ch, pagemax, num, pageno, cur, redraw)
     *cur = num % XO_TALL;
     *redraw = 1;
     break;
+
+  default:
+    if (ch >= '1' && ch <= '9')
+    {
+      int pos;
+      char buf[6];
+
+      buf[0] = ch;
+      buf[1] = '\0';
+      vget(b_lines, 0, "跳至第幾項：", buf, sizeof(buf), GCARRY);
+
+      pos = atoi(buf);
+
+      if (pos > 0)
+      {
+	pos--;
+	if (pos >num)
+	  pos = num;
+	*pageno = pos / XO_TALL;
+	*cur = pos % XO_TALL;
+      }
+
+      *redraw = 1;	/* 就算沒有換頁，也要重繪 feeter */
+    }
   }
 
   return ch;

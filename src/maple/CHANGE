@@ -1790,4 +1790,6 @@
 
 [2007/05/18] struct.h 加大 ANSILINELEN。
 
+[2007/06/09] xover.c xo_cursor() 加入可直接輸入位置跳去該篇的功能。
+
 
