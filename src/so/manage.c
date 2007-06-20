@@ -457,6 +457,8 @@ int
 post_manage(xo)
   XO *xo;
 {
+  BRD *brd;
+
 #ifdef POPUP_ANSWER
   char *menu[] = 
   {
@@ -484,8 +486,20 @@ post_manage(xo)
     "？[Q] ";
 #endif
 
+  vs_bar("板主管理");
+  brd = bshm->bcache + currbno;
+  prints("看板名稱：%s\n看板說明：[%s] %s\n板主名單：%s\n",
+    brd->brdname, brd->class, brd->title, brd->BM);
+  prints("中文敘述：%s\n", brd->title);
+#ifdef HAVE_MODERATED_BOARD
+  prints("看板權限：%s看板\n", brd->readlevel == PERM_SYSOP ? "秘密" : brd->readlevel == PERM_BOARD ? "好友" : "公開");
+#endif
+
   if (!(bbstate & STAT_BOARD))
-    return XO_NONE;
+  {
+    vmsg(NULL);
+    return XO_HEAD;
+  }
 
 #ifdef POPUP_ANSWER
   switch (pans(3, 20, "板主選單", menu))
@@ -516,5 +530,5 @@ post_manage(xo)
 #endif
   }
 
-  return XO_FOOT;
+  return XO_HEAD;
 }
