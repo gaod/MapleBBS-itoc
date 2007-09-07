@@ -58,9 +58,9 @@
      [anywhere] -bbs- % ipcrm shm 2997
      [anywhere] -bbs- % ipcrm shm 2999
 
-   <font color="#FF0000">+如果是改了 src/so/*.c 的話</font>
+   <font color="#FF0000">+如果是改了 src/so/*.c src/game/*.c src/pip/*.c 的話</font>
 
-     以 xyz.c 為例，其他也是一樣
+     以 so/xyz.c 為例，其他就換去那個目錄，做一樣的動作
 
      [~bbs/src/so] -bbs- % make freebsd
      [~bbs/src/so] -bbs- % cp xyz.so ~/bin/
@@ -70,27 +70,24 @@
 
    <font color="#FF0000">+如果是改了 src/util/*.c src/util/*/*.c 的話</font>
 
+     以 util/*.c 為例，其他就換去那個目錄，做一樣的動作
+
      [~bbs/src/util] -bbs- % make freebsd install
 
      若是改 account.c camera.c 還要多執行一步
      [~bbs/bin] -bbs- % ./account           (倘若改的是 src/util/account.c)
      [~bbs/bin] -bbs- % ./camera            (倘若改的是 src/util/camera.c)
 
-   <font color="#FF0000">+如果是改了 src/bgopherd/*.c 或 src/bmtad/*.c 或 src/bpop3d/*.c 或</font>
-   <font color="#FF0000"> src/innbbsd/*.c 或 src/maple/*.c</font>
+   <font color="#FF0000">+如果是改了 src/daemon/*.c src/innbbsd/*.c src/maple/*.c 的話</font>
 
-     [~bbs/src/xxxx] -bbs- % make freebsd install update
+     以 daemon/xyz.c 為例，其他就換去那個目錄，做一樣的動作
 
-     就是在那目錄下 make freebsd install update
+     [~bbs/src/daemon] -bbs- % make freebsd install update
 
      若是沒有跑 inetd 或 xinetd，那麼還要多執行一步
-     [~bbs/bin] -root- # ./gemd             (倘若改的是 src/bgopherd/*.c)
-     [~bbs/bin] -root- # ./bmtad            (倘若改的是 src/bmtad/*.c)
-     [~bbs/bin] -root- # ./bpop3d           (倘若改的是 src/bpop3d/*.c)
-     [~bbs/innd] -root- # ./innbbsd         (倘若改的是 src/innbbsd/*.c)
-     [~bbs/bin] -root- # ./xchatd           (倘若改的是 src/maple/xchatd.c)
-     [~bbs/bin] -root- # ./bguard           (倘若改的是 src/maple/bguard.c)
-     [~bbs/bin] -root- # ./bbsd             (倘若改的是 src/maple/其他 *.c)
+     [~bbs/bin] -root- # ./xyz             (倘若改的是 src/daemon/*.c)
+     [~bbs/innd] -bbs- % ./innbbsd         (倘若改的是 src/innbbsd/*.c)
+     [~bbs/bin] -root- # ./bbsd            (倘若改的是 src/maple/*.c)
 
    <font color="#FF0000">+如果是改了 src/include/*.h</font>  (改變了 struct)
 
