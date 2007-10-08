@@ -210,7 +210,6 @@ credit_count()
 }
 
 
-
 int
 main_credit()
 {
