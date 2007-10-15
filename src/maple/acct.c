@@ -875,6 +875,12 @@ brd_new(brd)
   if (vans(msg_sure_ny) != 'y')
     return -1;
 
+  if (brd_bno(brd->brdname) >= 0)
+  {
+    vmsg("錯誤！板名雷同，可能有其他站務剛開啟此板");
+    return -1;
+  }
+
   time(&brd->bstamp);
   if ((bno = brd_bno("")) >= 0)
   {
