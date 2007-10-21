@@ -243,8 +243,9 @@ is_badid(userid)
 }
 
 
+#if 0
 static int
-uniq_userno(fd)
+uniq_userno(fd)			/* 找 .USR 前面空的 userno */
   int fd;
 {
   char buf[4096];
@@ -270,6 +271,19 @@ uniq_userno(fd)
   }
 
   return userno;
+}
+#endif
+
+
+static int
+uniq_userno(fd)
+  int fd;
+{
+  struct stat st;
+
+  fstat(fd, &st);
+  lseek(fd, 0, SEEK_END);
+  return (st.st_size / sizeof(SCHEMA)) + 1;
 }
 
 
