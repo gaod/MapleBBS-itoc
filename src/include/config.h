@@ -57,8 +57,6 @@
 
 #define	HAVE_SEM		/* 使用 semaphore */
 
-#define	HAVE_MMAP		/* 採用 mmap(): memory mapped I/O */
-
 #ifndef CYGWIN
 #define	HAVE_RLIMIT		/* 採用 resource limit，Cygwin 不能用 */
 #endif
@@ -168,8 +166,6 @@
 
 #define	ENHANCED_VISIT		/* itoc.010407: 已讀/未讀檢查是該看板的最後一篇決定 */
 
-#define	SLIDE_SHOW		/* itoc.030411: 自動播放文章 */
-
 #define	COLOR_HEADER            /* lkchu.981201: 變換彩色標頭 */
 
 #define	CURSOR_BAR		/* itoc.010113: 選單光棒，若開啟選單光棒，選單就不能有顏色控制碼 */
@@ -198,6 +194,8 @@
 #undef	AUTO_JUMPPOST		/* itoc.010910: 文章列表自動跳去最後一篇未讀 */
 
 #define	ENHANCED_BSHM_UPDATE	/* itoc.021101: 看板列表刪除/標記文章不列入未讀的燈 */
+
+#define	SLIDE_SHOW		/* itoc.030411: 自動播放文章 */
 
 #define	EVERY_Z			/* ctrl-z Everywhere (除了寫文章) */
 
@@ -236,7 +234,7 @@
 
 #define	HAVE_EXTERNAL		/* Xyz 選單 */
 
-#ifdef	HAVE_EXTERNAL
+#ifdef HAVE_EXTERNAL
 #  define HAVE_SONG		/* itoc.010205: 提供點歌功能 */
 #  define HAVE_NETTOOL		/* itoc.010209: 提供網路服務工具 */
 #  define HAVE_GAME		/* itoc.010208: 提供遊戲 */
@@ -257,10 +255,6 @@
 /* ----------------------------------------------------- */
 /* 組態設定                                              */
 /* ------------------------------------------------------*/
-
-#ifdef	HAVE_MMAP
-#include <sys/mman.h>
-#endif
 
 #ifdef HAVE_SIGNED_MAIL
 #define PRIVATE_KEY_PERIOD 0	/* 平均幾天換一次key，0 表示不換key，自動產生 */
