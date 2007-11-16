@@ -11,6 +11,7 @@
 
 
 #include "dao.h"
+#include <string.h>
 
 
 int

@@ -8,8 +8,9 @@
 /*-------------------------------------------------------*/
 
 
-#include <stdio.h>
 #include "splay.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 
 SplayNode *

@@ -1,3 +1,5 @@
+#include <string.h>
+
 void
 str_folder(fpath, folder, fname)
   char *fpath;
