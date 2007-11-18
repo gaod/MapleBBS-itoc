@@ -1,10 +1,10 @@
 /*-------------------------------------------------------*/
 /* util/showACCT.c      ( NTHU CS MapleBBS Ver 3.10 )    */
 /*-------------------------------------------------------*/
-/* target : 陪ボㄏノ戈                               */
-/* create : 01/07/16                                     */
-/* update :                                              */
-/* author : itoc.bbs@bbs.tnfsh.tn.edu.tw                 */
+/* target : 陪ボㄏノ戈				 */
+/* create : 01/07/16					 */
+/* update :   /  /  					 */
+/* author : itoc.bbs@bbs.tnfsh.tn.edu.tw		 */
 /*-------------------------------------------------------*/
 
 
@@ -16,46 +16,60 @@
 
 #ifdef SHOW_PASSWORD
 
-#define GUESS_LEN	3		/* 代絏()盞絏舱 (程琌 PSWDLEN) */
+#if 0
+#  define GUESS_LEN	3	/* 代絏()┮Τ盞絏舱 (程琌 PSWDLEN) */
+#  define GUESS_START	' '
+#  define GUESS_END	0x7f
+#else
+#  define GUESS_LEN	6	/* 代せ絏()计盞絏舱 (程琌 PSWDLEN) */
+#  define GUESS_START	'0'
+#  define GUESS_END	'9'
+#endif
+
 
 static inline void
 showpasswd(passwd)
   char *passwd;
 {
-  int i;
+
+  int i, index;
   char guess[PSWDLEN + 1];
 
-  /* 礚阶琌ぐ或 encrypt よ猭常祑眖 ' ' 秨﹍ try  0x7f */
+  /* 礚阶琌ぐ或 encrypt よ猭常祑眖 GUESS_START 秨﹍ try  GUESS_END */
 
   memset(guess, 0, sizeof(guess));
-  guess[0] = ' ';
+  index = 0;
+  guess[index] = GUESS_START;
 
-  while (1)
+  while (index < GUESS_LEN)
   {
-    guess[0]++;
-
-    /* 秈 */
-    for (i = 0; i < GUESS_LEN ;i++)
-    {
-      if (guess[i] < 0x7f)
-        break;
-
-      guess[i] = ' ';
-      guess[i + 1]++;
-    }
-
     if (!chkpasswd(passwd, guess))
     {
       printf("盞絏: %s \n", guess);
-      break;
+      return;
     }
 
-    if (i == GUESS_LEN)
+    for (i = index; i >= 0; i--)
     {
-      printf("盞絏禬筁 %d \n", GUESS_LEN);
-      break;
+      if (guess[i] < GUESS_END)
+      {
+	guess[i]++;
+	break;
+      }
+      else     /* 秈 */
+      {
+	guess[i] = GUESS_START;
+      }
+    }
+
+    if (i < 0)	/* ┮Τ index 常刚Ч */
+    {
+      index++;
+      guess[index] = GUESS_START;
+      printf("苯磞盞絏い叫祔...ЧΘ %d 盞絏ぇ苯磞\n", index);
     }
   }
+  printf("盞絏禬筁 %d \n", GUESS_LEN);
 }
 #endif
 
