@@ -777,8 +777,8 @@ static MENU menu_game3[] =
   "bin/tetris.so:main_tetris", 0, - M_GAME,
   "2Tetris    ♂ 俄羅斯塊 ♀",
 
-  "bin/gray.so:main_gray", 0, - M_GAME,
-  "3Gray      ♂ 淺灰大戰 ♀",
+  "bin/reversi.so:main_reversi", 0, - M_GAME,
+  "3Reversi   ♂ 淺灰大戰 ♀",
 
   menu_game, PERM_MENU + '0', M_XMENU,
   "反斗特區"

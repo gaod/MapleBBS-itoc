@@ -1,5 +1,5 @@
 /*-------------------------------------------------------*/
-/* gray.c	( NTHU CS MapleBBS Ver 3.10 )		 */
+/* reversi.c	( NTHU CS MapleBBS Ver 3.10 )		 */
 /*-------------------------------------------------------*/
 /* target : ¶Â¥Õ´Ñ¹CÀ¸					 */
 /* create : 01/07/24					 */
@@ -616,7 +616,7 @@ result(msg)
 
 
 static inline void
-play_gray(level)
+play_reversi(level)
   int level;
 {
   int i, j;
@@ -745,7 +745,7 @@ cpu_first:
 
 
 int
-main_gray()
+main_reversi()
 {
   int level;
 
@@ -768,7 +768,7 @@ main_gray()
 
   init_map();
   out_map();
-  play_gray(level);
+  play_reversi(level);
 
   if (EndGame < 0)
   {
