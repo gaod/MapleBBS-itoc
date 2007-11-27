@@ -697,17 +697,17 @@ send_list(title, fpath, list)
   char *list;		/* 寄信的名單 */
 {
   char folder[64], *ptr;
-  HDR mhdr;
+  HDR hdr;
 
   for (ptr = list; *ptr; ptr += IDLEN + 1)
   {
     usr_fpath(folder, ptr, fn_dir);
-    if (hdr_stamp(folder, HDR_LINK, &mhdr, fpath) >= 0)
+    if (hdr_stamp(folder, HDR_LINK, &hdr, fpath) >= 0)
     {
-      strcpy(mhdr.owner, str_sysop);
-      strcpy(mhdr.title, title);
-      mhdr.xmode = 0;
-      rec_add(folder, &mhdr, sizeof(HDR));
+      strcpy(hdr.owner, str_sysop);
+      strcpy(hdr.title, title);
+      hdr.xmode = 0;
+      rec_add(folder, &hdr, sizeof(HDR));
     }
   }
 }
