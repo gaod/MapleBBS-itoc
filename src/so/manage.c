@@ -181,11 +181,10 @@ post_brdtitle(xo)
     {
       memcpy(oldbrd, &newbrd, sizeof(BRD));
       rec_put(FN_BRD, &newbrd, sizeof(BRD), currbno, NULL);
-      return XO_HEAD;	/* itoc.011125: 要重繪中文板名 */
     }
   }
 
-  return XO_FOOT;
+  return XO_HEAD;
 }
 
 
@@ -210,14 +209,14 @@ post_memo_edit(xo)
     if (mode == 'd')
     {
       unlink(fpath);
-      return XO_FOOT;
     }
-
-    if (vedit(fpath, 0))	/* Thor.981020: 注意被talk的問題 */
-      vmsg(msg_cancel);
-    return XO_HEAD;
+    else
+    {
+      if (vedit(fpath, 0))	/* Thor.981020: 注意被talk的問題 */
+	vmsg(msg_cancel);
+    }
   }
-  return XO_FOOT;
+  return XO_HEAD;
 }
 
 
@@ -245,7 +244,7 @@ post_battr_noscore(xo)
     newbrd.battr |= BRD_NOSCORE;
     break;
   default:
-    return XO_FOOT;
+    return XO_HEAD;
   }
 
   if (memcmp(&newbrd, oldbrd, sizeof(BRD)) && vans(msg_sure_ny) == 'y')
@@ -254,7 +253,7 @@ post_battr_noscore(xo)
     rec_put(FN_BRD, &newbrd, sizeof(BRD), currbno, NULL);
   }
 
-  return XO_FOOT;
+  return XO_HEAD;
 }
 #endif	/* HAVE_SCORE */
 
@@ -277,7 +276,7 @@ post_changeBM(xo)
 
   blist = oldbrd->BM;
   if (is_bm(blist, cuser.userid) != 1)	/* 只有正板主可以設定板主名單 */
-    return XO_FOOT;
+    return XO_HEAD;
 
   memcpy(&newbrd, oldbrd, sizeof(BRD));
 
@@ -347,11 +346,10 @@ post_changeBM(xo)
     memcpy(oldbrd, &newbrd, sizeof(BRD));
     rec_put(FN_BRD, &newbrd, sizeof(BRD), currbno, NULL);
 
-    sprintf(currBM, "板主：%s", newbrd.BM);
-    return XO_HEAD;	/* 要重繪檔頭的板主 */
+    sprintf(currBM, "板主：%s", newbrd.BM);	/* 要重繪檔頭的板主 */
   }
 
-  return XO_BODY;
+  return XO_HEAD;
 }
 
 
@@ -391,7 +389,7 @@ post_brdlevel(xo)
     break;
 
   default:
-    return XO_FOOT;
+    return XO_HEAD;
   }
 
   if (memcmp(&newbrd, oldbrd, sizeof(BRD)) && vans(msg_sure_ny) == 'y')
@@ -400,7 +398,7 @@ post_brdlevel(xo)
     rec_put(FN_BRD, &newbrd, sizeof(BRD), currbno, NULL);
   }
 
-  return XO_FOOT;
+  return XO_HEAD;
 }
 #endif	/* HAVE_MODERATED_BOARD */
 
