@@ -186,6 +186,7 @@ credit_count()
     }
     close(fd);
 
+    moneyout = 0;
     for (fd = 0; fd <= 6; fd++)
       moneyout += way[fd];
 

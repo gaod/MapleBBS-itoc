@@ -23,7 +23,6 @@ extern XZ xz[];
 extern char xo_pool[];
 extern char brd_bits[];		/* itoc.010821: 判斷是否有閱讀看板的權限 */
 extern BCACHE *bshm;
-extern int class_flag;
 
 #ifndef ENHANCED_VISIT
 extern time_t brd_visit[];
@@ -223,7 +222,7 @@ mf_head(xo)
 {
   vs_head("我的最愛", str_site);
   prints(NECKER_MF, 
-    class_flag & UFO_BRDPOST ? "總數" : "編號", 
+    cuser.ufo & UFO_BRDPOST ? "總數" : "編號", 
     d_cols >> 1, "", d_cols - (d_cols >> 1), "");
   return mf_body(xo);
 }
@@ -639,7 +638,6 @@ mf_namemode(xo)
 {
   cuser.ufo ^= UFO_BRDPOST;
   cutmp->ufo = cuser.ufo;
-  class_flag ^= UFO_BRDPOST;	/* 和 class 同步 */
   return mf_head(xo);
 }
 

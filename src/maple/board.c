@@ -894,17 +894,12 @@ brd_force()			/* itoc.010407: 強制閱讀公告板，且強迫讀最後一篇 */
 /* ----------------------------------------------------- */
 
 
-#ifdef MY_FAVORITE
-int class_flag = 0;			/* favorite.c 要用 */
-#else
-static int class_flag = 0;
-#endif
-
-
 #ifdef AUTO_JUMPBRD
 static int class_jumpnext = 0;	/* itoc.010910: 是否跳去下一個未讀板 1:要 0:不要 */
 #endif
 
+
+static int class_bfo = 0;
 
 #define	BFO_YANK	0x01
 
@@ -946,7 +941,7 @@ class_load(xo)
   max = 0;
   brd = bshm->bcache;
   bits = brd_bits;
-  zap = (class_flag & BFO_YANK) ? 0 : BRD_Z_BIT;
+  zap = (class_bfo & BFO_YANK) ? 0 : BRD_Z_BIT;
 
   do
   {
@@ -1171,7 +1166,7 @@ class_body(xo)
   }
 #endif
 
-  brdpost = class_flag & UFO_BRDPOST;
+  brdpost = cuser.ufo & UFO_BRDPOST;
   chp = (short *) xo->xyz + cnt;
 
   n = 3;
@@ -1225,7 +1220,7 @@ class_neck(xo)
 {
   move(1, 0);
   prints(NECKER_CLASS, 
-    class_flag & UFO_BRDPOST ? "總數" : "編號", 
+    cuser.ufo & UFO_BRDPOST ? "總數" : "編號", 
     d_cols >> 1, "", d_cols - (d_cols >> 1), "");
   return class_body(xo);
 }
@@ -1255,7 +1250,6 @@ class_postmode(xo)
 {
   cuser.ufo ^= UFO_BRDPOST;
   cutmp->ufo = cuser.ufo;
-  class_flag ^= UFO_BRDPOST;
   return class_neck(xo);
 }
 
@@ -1382,7 +1376,7 @@ class_yank(xo)
   if (xo->key >= 0)
     return XO_NONE;
     
-  class_flag ^= BFO_YANK;
+  class_bfo ^= BFO_YANK;
   return class_init(xo);
 }
 
@@ -1471,7 +1465,7 @@ class_zapall(xo)
     bno++;
   } while (++brdp < bend);
 
-  class_flag |= BFO_YANK;	/* 強迫 yank 起來看結果 */
+  class_bfo |= BFO_YANK;	/* 強迫 yank 起來看結果 */
   return class_init(xo);
 }
 
@@ -2017,11 +2011,10 @@ board_main()
   {
     free(class_img);
   }
-  else			/* itoc.040102: 第一次進入 board_main 時，才需要初始化 class_flag */
+  else			/* itoc.040102: 第一次進入 board_main 時，才需要初始化 class_bfo */
   {
-    class_flag = cuser.ufo & UFO_BRDPOST;	/* 看板列表 1:文章數 0:編號 */
     if (!cuser.userlevel)			/* guest yank all boards */
-      class_flag |= BFO_YANK;
+      class_bfo |= BFO_YANK;
 
     /* 設定 default board */
     strcpy(currboard, BN_NULL);

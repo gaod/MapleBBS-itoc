@@ -304,7 +304,7 @@ post_changeBM(xo)
 	vmsg("不可以將自己移出板主名單");
 	continue;
       }
-      else if (!str_cmp(buf + BMlen - len, userid))	/* 名單上最後一位，ID 後面不接 '/' */
+      else if (!str_cmp(buf + BMlen - len, userid) && buf[BMlen - len - 1] == '/')	/* 名單上最後一位，ID 後面不接 '/' */
       {
 	buf[BMlen - len - 1] = '\0';			/* 刪除 ID 及前面的 '/' */
 	len++;

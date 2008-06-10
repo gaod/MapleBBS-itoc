@@ -1194,7 +1194,7 @@ xo_jump(pos, zone)
   move(b_lines, 0);
   clrtoeol();
 #endif
-  outf(xz[zone].feeter);	/* itoc.010403: 把 b_lines 填上 feeter */
+  outf(xz[zone - XO_ZONE].feeter);	/* itoc.010403: 把 b_lines 填上 feeter */
 
   pos = atoi(buf);
 
@@ -1224,7 +1224,7 @@ xover(cmd)
     {
       if (cmd == XO_FOOT)
       {
-	outf(xz[zone].feeter);	/* itoc.010403: 把 b_lines 填上 feeter */
+	outf(xz[zone - XO_ZONE].feeter);	/* itoc.010403: 把 b_lines 填上 feeter */
 	break;
       }
 
