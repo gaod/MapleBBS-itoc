@@ -286,7 +286,7 @@ typedef struct
   time_t tissue;		/* 發支票時間 */
   int money;
   int gold;
-  char reason[20];
+  char reason[20];		/* "[動作] brdname/userid"，假設 BNLEN、IDLEN 不超過 12 */
 }      PAYCHECK;
 
 
