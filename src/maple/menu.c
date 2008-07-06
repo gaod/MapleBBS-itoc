@@ -224,7 +224,8 @@ void
 vs_head(title, mid)
   char *title, *mid;
 {
-  char buf[40], ttl[60];
+  char buf[(T_COLS - 1) - 79 + 69 + 1];		/* d_cols 最大可能是 (T_COLS - 1) */
+  char ttl[(T_COLS - 1) - 79 + 69 + 1];
   int spc, len;
 
   if (mid)	/* xxxx_head() 都是用 vs_head(title, str_site); */
@@ -238,7 +239,7 @@ vs_head(title, mid)
     mid = str_site;
   }
 
-  len = d_cols + 69 - strlen(title) - strlen(currboard);
+  len = d_cols + 69 - strlen(title) - strlen(currboard);	/* len: 中間還剩下多長的空間 */
 
   if (HAS_STATUS(STATUS_BIFF))
   {
@@ -247,7 +248,7 @@ vs_head(title, mid)
   }
   else
   {
-    if ((spc = strlen(mid)) > len)
+    if ((spc = strlen(mid)) > len)	/* 空間不夠擺下原本要擺的 mid，只好把 mid 截斷 */
     {
       spc = len;
       memcpy(ttl, mid, spc);
@@ -256,7 +257,7 @@ vs_head(title, mid)
     }
   }
 
-  spc = 2 + len - spc;
+  spc = 2 + len - spc;		/* 擺完 mid 以後，中間還有 spc 格空間，在 mid 左右各放 spc/2 長的空白 */
   len = 1 - spc & 1;
   memset(buf, ' ', spc >>= 1);
   buf[spc] = '\0';
