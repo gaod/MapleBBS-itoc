@@ -1046,7 +1046,7 @@ re_key:
       break;
 
     case 'm':
-      if ((bbstate & STAT_BOARD) && !(xmode & POST_MARKED))
+      if ((bbstate & STAT_BOARD) && !(xmode & (POST_MARKED | POST_DELETE)))
       {
 	/* hdr->xmode = xmode ^ POST_MARKED; */
 	/* 在 post_browse 時看不到 m 記號，所以限制只能 mark */

@@ -138,7 +138,7 @@ mm_getcharset(str, charset, size)
       continue;
     }
 
-    if (!is_alnum(ch))
+    if (!is_alnum(ch) && ch != '-')
       break;
 
     *dst = ch;
