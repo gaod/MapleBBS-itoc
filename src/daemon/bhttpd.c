@@ -3189,7 +3189,7 @@ static Command cmd_table_get[] =
   cmd_robots,      "robots.txt",9,
 #endif
 
-  cmd_mainpage,    "",          0,
+  cmd_mainpage,    "\0",        1,
 
   NULL,            NULL,        0
 };
@@ -3466,7 +3466,15 @@ do_cmd(ap, str, end, mode)
     {
       /* 分析 Cookie */
       if (!str_ncmp(str, "Cookie: user=", 13))
+      {
 	str_ncpy(ap->cookie, str + 13, LEN_COOKIE);
+      }
+      else if (!str_ncmp(str, "Cookie: ", 8))	/* waynesan.081018: 修正多 cookie 的狀況 */
+      {
+	char *user;
+	if (user = strstr(str, "user="))
+	  str_ncpy(ap->cookie, user + 5, LEN_COOKIE);
+      }
 
       /* 分析 If-Modified-Since */
       if ((mode & AM_GET) && !str_ncmp(str, "If-Modified-Since: ", 19))	/* str 格式為 If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT */
@@ -3496,10 +3504,10 @@ do_cmd(ap, str, end, mode)
 	  break;
       }
 
-      /* 如果在 command_table 裡面找不到，那麼自動重新導向 */
+      /* waynesan.081018: 如果在 command_table 裡面找不到，那麼送 404 Not Found */
       if (!ptr)
       {
-	out_http(ap, HS_REDIRECT, NULL);
+	out_error(ap, HS_NOTFOUND);
 	return -1;
       }
 
