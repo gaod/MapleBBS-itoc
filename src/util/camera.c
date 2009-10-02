@@ -219,7 +219,7 @@ lunar_calendar(key, now, ptime)	/* itoc.050528: 由陽曆算農曆日期 */
   #define TABLE_INITAIL_YEAR	2005
   #define TABLE_FINAL_YEAR	2016
 
-  /* 參考 http://sean.o4u.com/ap/calendar/calendar.htm 而得 */
+  /* 參考 http://sean.tw.googlepages.com/calendar.htm 而得 */
   char Table[TABLE_FINAL_YEAR - TABLE_INITAIL_YEAR + 1][21] = 
   {
     "-L-L-LL-L-L-,X,02/09",	/* 2005 雞年 */
