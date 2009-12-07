@@ -439,6 +439,9 @@ do_post(xo, title)
 #ifdef HAVE_UNANONYMOUS_BOARD
     do_unanonymous(fpath);
 #endif
+
+    /* gaod.091205: 發匿名文後不取消 EDIT_ANONYMOUS 會導致轉錄文章 header 資訊有誤，Thanks for om@cpu.tfcis.org. */
+    curredit &= ~EDIT_ANONYMOUS;
   }
   else
 #endif
