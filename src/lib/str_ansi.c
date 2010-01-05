@@ -11,7 +11,7 @@ str_ansi(dst, str, max)		/* strip ANSI code */
   int ch, ansi;
   char *tail;
 
-  for (ansi = 0, tail = dst + max - 1; ch = *str; str++)
+  for (ansi = 0, tail = dst + max - 1; (ch = *str); str++)
   {
     if (ch == '\n')
     {

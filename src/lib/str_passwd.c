@@ -1,5 +1,6 @@
 #include <string.h>
-
+#include <sys/types.h>
+#include <unistd.h>
 
 #define	PASSLEN	13
 

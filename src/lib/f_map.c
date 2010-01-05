@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-
+#include <unistd.h>
 
 #ifdef MAP_FILE         /* 44BSD defines this & requires it to mmap files */
 #  define DAO_MAP       (MAP_SHARED | MAP_FILE)

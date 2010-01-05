@@ -16,7 +16,7 @@ str_has(list, tag, len)
     {
       return priority;
     }
-    while (cc = *list++)
+    while ((cc = *list++))
     {
       if (cc == '/')
       {

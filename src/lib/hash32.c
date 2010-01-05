@@ -5,7 +5,7 @@ hash32(str)
   int xo, cc;
 
   xo = 1048583;			/* a big prime number */
-  while (cc = *str++)
+  while ((cc = *str++))
   {
     xo = (xo << 5) - xo + cc;	/* 31 * xo + cc */
   }

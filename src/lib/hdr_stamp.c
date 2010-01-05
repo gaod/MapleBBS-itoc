@@ -12,6 +12,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 
 #if 0	/* itoc.030303.註解: 簡易說明 */
 
@@ -55,11 +56,10 @@ hdr_stamp(folder, token, hdr, fpath)
   HDR *hdr;
   char *fpath;
 {
-  char *fname, *family;
+  char *fname = NULL, *family = NULL;
   int rc, chrono;
-  char *flink, buf[128];
+  char *flink = NULL, buf[128];
 
-  flink = NULL;
   if (token & (HDR_LINK | HDR_COPY))
   {
     flink = fpath;
@@ -67,7 +67,7 @@ hdr_stamp(folder, token, hdr, fpath)
   }
 
   fname = fpath;
-  while (rc = *folder++)
+  while ((rc = *folder++))
   {
     *fname++ = rc;
     if (rc == '/')
@@ -84,7 +84,7 @@ hdr_stamp(folder, token, hdr, fpath)
     *fname++ = '/';
   }
 
-  if (rc = token & 0xdf)	/* 變大寫 */
+  if ((rc = token & 0xdf))	/* 變大寫 */
   {
     *fname++ = rc;
   }

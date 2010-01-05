@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
+#include <unistd.h>
 
 char *
 f_img(fpath, fsize)

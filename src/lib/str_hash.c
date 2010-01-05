@@ -5,7 +5,7 @@ str_hash(str, seed)
 {
   int cc;
 
-  while (cc = *str++)
+  while ((cc = *str++))
   {
     seed = (seed << 5) - seed + cc;	/* 31 * seed + cc */
   }

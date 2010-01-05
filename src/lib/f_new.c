@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
-
+#include <unistd.h>
 
 FILE *
 f_new(fold, fnew)

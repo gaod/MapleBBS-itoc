@@ -25,7 +25,7 @@ str_from(from, addr, nick)
 
   langle = ptr = NULL;
 
-  for (str = from; cc = *str; str++)
+  for (str = from; (cc = *str); str++)
   {
     if (cc == '<')
       langle = str;
@@ -76,7 +76,7 @@ str_from(from, addr, nick)
 	str--;
       *str = 0;
 
-      if (ptr = (char *) strchr(from, '('))
+      if ((ptr = (char *) strchr(from, '(')))
       {
 	ptr[-1] = 0;
 	if (*++ptr == '"')

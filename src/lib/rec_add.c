@@ -1,5 +1,5 @@
 #include <fcntl.h>
-
+#include <unistd.h>
 
 int
 rec_add(fpath, data, size)

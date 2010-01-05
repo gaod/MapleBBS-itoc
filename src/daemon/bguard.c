@@ -129,7 +129,7 @@ log_open()
 
   umask(077);
 
-  if (fp = fopen(GUARD_PIDFILE, "w"))
+  if ((fp = fopen(GUARD_PIDFILE, "w")))
   {
     fprintf(fp, "%d\n", getpid());
     fclose(fp);
@@ -281,7 +281,7 @@ ushm_guard()
   do
   {
     flop++;
-    if (pid = uentp->pid)
+    if ((pid = uentp->pid))
     {
 #ifdef DETAIL_IDLETIME
       idle = (now - uentp->idle_time) / 60;
@@ -658,7 +658,7 @@ agent_serve(ap)
 
   cmd = str = ap->pool;
 
-  while (ch = *str)
+  while ((ch = *str))
   {
     str++;
     if (ch != ' ' && ch != '\t')
@@ -768,7 +768,7 @@ agent_read(ap)
 
   str[len] = '\0';
 
-  while (cc = *str)
+  while ((cc = *str))
   {
     if (cc == '\r' || cc == '\n')
     {
@@ -1062,7 +1062,7 @@ main(argc, argv)
       {
 	tagent = uptime - FINGER_TIMEOUT;
 
-	for (FBI = &Scully; agent = *FBI;)
+	for (FBI = &Scully; (agent = *FBI);)
 	{
 	  if (agent->uptime < tagent)
 	  {
@@ -1136,7 +1136,7 @@ main(argc, argv)
 
     uptime = time(0);
 
-    for (FBI = &Scully; agent = *FBI;)
+    for (FBI = &Scully; (agent = *FBI);)
     {
       csock = agent->sock;
 
@@ -1188,7 +1188,7 @@ main(argc, argv)
 
 	if (csock > 0)
 	{
-	  if (agent = Mulder)
+	  if ((agent = Mulder))
 	  {
 	    Mulder = agent->next;
 	  }

@@ -21,7 +21,7 @@ rec_bot(fpath, data, size)	/* amaki.040715: 嵌入式寫檔 */
   int size;
 {
   int fd, fsize, count;
-  void *pool, *set;
+  void *pool = NULL, *set = NULL;
   char set_pool[REC_SIZ];
   struct stat st;
 
@@ -37,7 +37,7 @@ rec_bot(fpath, data, size)	/* amaki.040715: 嵌入式寫檔 */
   count = 0;
   set = (void *) set_pool;
 
-  if (fsize = st.st_size)
+  if ((fsize = st.st_size))
   {
     while ((fsize -= size) >= 0)
     {

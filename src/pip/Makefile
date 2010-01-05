@@ -32,22 +32,22 @@ all:
 	@echo " make cygwin  : for Microsoft Windows and Cygwin gcc"
 
 sun:
-	@$(MAKE) CC=gcc CFLAGS="-O2 -pipe -fomit-frame-pointer -Wunused -I../include" $(SO)
+	@$(MAKE) CC=gcc CFLAGS="-O2 -pipe -fomit-frame-pointer -Wunused -I../include -fPIC" $(SO)
 
 linux:
-	@$(MAKE) CC=gcc CFLAGS="-DLINUX -O2 -pipe -fomit-frame-pointer -Wunused -I../include" $(SO)
+	@$(MAKE) CC=gcc CFLAGS="-DLINUX -O2 -pipe -fomit-frame-pointer -Wunused -I../include -fPIC" $(SO)
 
 solaris:
-	@$(MAKE) CC=gcc CFLAGS="-DSOLARIS -DSYSV -O2 -pipe -fomit-frame-pointer -Wunused -I../include" $(SO)
+	@$(MAKE) CC=gcc CFLAGS="-DSOLARIS -DSYSV -O2 -pipe -fomit-frame-pointer -Wunused -I../include -fPIC" $(SO)
 
 sol-x86:
-	@$(MAKE) CC=gcc CFLAGS="-DSOLARIS -DSYSV -O2 -fomit-frame-pointer -Wunused -I../include" $(SO)
+	@$(MAKE) CC=gcc CFLAGS="-DSOLARIS -DSYSV -O2 -fomit-frame-pointer -Wunused -I../include -fPIC" $(SO)
 
 freebsd:
-	@$(MAKE) CC=gcc CFLAGS="-DBSD44 -O2 -pipe -fomit-frame-pointer -Wunused -I../include" $(SO)
+	@$(MAKE) CC=gcc CFLAGS="-DBSD44 -O2 -pipe -fomit-frame-pointer -Wunused -I../include -fPIC" $(SO)
 
 bsd:
-	@$(MAKE) CC=gcc CFLAGS="-DBSD44 -O2 -pipe -fomit-frame-pointer -Wunused -I../include" $(SO)
+	@$(MAKE) CC=gcc CFLAGS="-DBSD44 -O2 -pipe -fomit-frame-pointer -Wunused -I../include -fPIC" $(SO)
 
 cygwin:
 	@cd ../maple; make cygwin

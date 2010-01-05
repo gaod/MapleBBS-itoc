@@ -8,10 +8,10 @@ hdr_fpath(fpath, folder, hdr)
   char *folder;
   HDR *hdr;
 {
-  char *str;
+  char *str = NULL;
   int cc, chrono;
 
-  while (cc = *folder++)
+  while ((cc = *folder++))
   {
     *fpath++ = cc;
     if (cc == '/')

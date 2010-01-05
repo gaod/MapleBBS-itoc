@@ -6,9 +6,9 @@ setdirpath(fpath, direct, fname)
   char *fpath, *direct, *fname;
 {
   int ch;
-  char *target;
+  char *target = NULL;
 
-  while (ch = *direct)
+  while ((ch = *direct))
   {
     *fpath++ = ch;
     if (ch == '/')

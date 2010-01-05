@@ -4,7 +4,7 @@
 
 
 #include <sys/stat.h>
-
+#include <unistd.h>
 
 void
 mak_dirs(fpath)

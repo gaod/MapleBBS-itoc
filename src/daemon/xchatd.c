@@ -10,7 +10,6 @@
 #include "bbs.h"
 #include "xchat.h"
 
-
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -191,7 +190,7 @@ log_init()
   /* log daemon's PID					 */
   /* --------------------------------------------------- */
 
-  if (fp = fopen(CHAT_PIDFILE, "w"))
+  if ((fp = fopen(CHAT_PIDFILE, "w")))
   {
     fprintf(fp, "%d\n", getpid());
     fclose(fp);
@@ -305,7 +304,7 @@ valid_chatid(id)
 {
   int ch, len;
 
-  for (len = 0; ch = *id; id++)
+  for (len = 0; (ch = *id); id++)
   { /* Thor.980921: 空白為不合理chatid, 怕getnext判斷錯誤等等 */
     if (ch == '/' || ch == '*' || ch == ':' || ch ==' ')
       return 0;
@@ -480,7 +479,7 @@ croom_by_roomid(roomid)
   {
     if (!str_cmp(buf, room->name))
       break;
-  } while (room = room->next);
+  } while ((room = room->next));
   return room;
 }
 
@@ -514,7 +513,7 @@ list_add(list, user)
   int len;
 
   len = strlen(userid = user->userid) + 1;
-  if (node = (UserList *) malloc(sizeof(UserList) + len))
+  if ((node = (UserList *) malloc(sizeof(UserList) + len)))
   {
     node->next = *list;
     node->userno = user->userno;
@@ -534,7 +533,7 @@ list_delete(list, userid)
 
   str_lower(buf, userid);
 
-  while (node = *list)
+  while ((node = *list))
   {
     if (!str_cmp(buf, node->userid))
     {
@@ -856,7 +855,7 @@ chat_query(cu, msg)
     send_to_user(cu, buf, 0, MSG_MESSAGE);
 
     usr_fpath(buf, acct.userid, FN_PLANS);
-    if (fp = fopen(buf, "r"))
+    if ((fp = fopen(buf, "r")))
     {
       int i;
 
@@ -1065,7 +1064,7 @@ chat_list_rooms(cuser, msg)
 	send_to_user(cuser, buf, 0, MSG_MESSAGE);
       }
     }
-  } while (cr = cr->next);
+  } while ((cr = cr->next));
 
   if (mode)
     send_to_user(cuser, "", 0, MSG_ROOMLISTEND);
@@ -1420,7 +1419,7 @@ chat_help(cu, msg)
     table = chat_msg;
   }
 
-  while (str = *table++)
+  while ((str = *table++))
   {
     sprintf(buf, "  %-20s- %s", str, *table++);
     send_to_user(cu, buf, 0, MSG_MESSAGE);
@@ -1568,7 +1567,7 @@ enter_room(cuser, rname, msg)
     debug_room();
 #endif
 
-    if (room = roompool)
+    if ((room = roompool))
     {
       roompool = room->next;
     }
@@ -1682,7 +1681,7 @@ print_user_counts(cuser)
       userc += num;
       roomc++;
     }
-  } while (room = room->next);
+  } while ((room = room->next));
 
   number = (cuser->clitype) ? MSG_MOTD : MSG_MESSAGE;
 
@@ -1959,7 +1958,7 @@ chat_ignore(cu, msg)
     {
       UserList *list;
 
-      if (list = cu->ignore)
+      if ((list = cu->ignore))
       {
 	int len;
 	char userid[16];
@@ -1976,7 +1975,7 @@ chat_ignore(cu, msg)
 	    send_to_user(cu, str, 0, MSG_MESSAGE);
 	    len = 0;
 	  }
-	} while (list = list->next);
+	} while ((list = list->next));
 
 	if (len == 0)
 	  return;
@@ -3185,7 +3184,7 @@ view_action_verb(cu, cmd)	/* Thor.980726: 新加動詞分類顯示 */
 
   if (cmd < '1' || cmd > '3')
   {				/* Thor.980726: 寫得不好, 想辦法改進... */
-    for (i = 0; p = dscrb[i]; i++)
+    for (i = 0; (p = dscrb[i]); i++)
     {
       sprintf(data, "  [//]help %d          - MUD-like 社交動詞   第 %d 類", i + 1, i + 1);
       send_to_user(cu, data, 0, MSG_MESSAGE);
@@ -3206,7 +3205,7 @@ view_action_verb(cu, cmd)	/* Thor.980726: 新加動詞分類顯示 */
 
     cap = catbl[i];
 
-    for (i = 0; p = cap[i].verb; i++)
+    for (i = 0; (p = cap[i].verb); i++)
     {
       q = cap[i].chinese;
 
@@ -3244,41 +3243,41 @@ view_action_verb(cu, cmd)	/* Thor.980726: 新加動詞分類顯示 */
 
 static ChatCmd chatcmdlist[] =
 {
-  "act", chat_act, 0,
-  "bye", chat_bye, 0,
-  "chatroom", chat_chatroom, 1,		/* Xshadow: for common client */
-  "clear", chat_clear, 0,
-  "cloak", chat_cloak, 2,
-  "date", chat_date, 0,
-  "flags", chat_setroom, 0,
-  "help", chat_help, 0,
-  "ignore", chat_ignore, 1,
-  "invite", chat_invite, 0,
-  "join", chat_join, 0,
-  "kick", chat_kick, 1,
-  "msg", chat_private, 0,
-  "nick", chat_nick, 0,
-  "operator", chat_makeop, 0,
-  "party", chat_party, 1,		/* Xshadow: party data for common client */
-  "partyinfo", chat_partyinfo, 1,	/* Xshadow: party info for common client */
+  {"act", chat_act, 0},
+  {"bye", chat_bye, 0},
+  {"chatroom", chat_chatroom, 1},		/* Xshadow: for common client */
+  {"clear", chat_clear, 0},
+  {"cloak", chat_cloak, 2},
+  {"date", chat_date, 0},
+  {"flags", chat_setroom, 0},
+  {"help", chat_help, 0},
+  {"ignore", chat_ignore, 1},
+  {"invite", chat_invite, 0},
+  {"join", chat_join, 0},
+  {"kick", chat_kick, 1},
+  {"msg", chat_private, 0},
+  {"nick", chat_nick, 0},
+  {"operator", chat_makeop, 0},
+  {"party", chat_party, 1},		/* Xshadow: party data for common client */
+  {"partyinfo", chat_partyinfo, 1},	/* Xshadow: party info for common client */
 
 #ifndef STAND_ALONE
-  "query", chat_query, 0,
+  {"query", chat_query, 0},
 #endif
 
-  "quit", chat_bye, 0,
+  {"quit", chat_bye, 0},
 
-  "room", chat_list_rooms, 0,
-  "unignore", chat_unignore, 1,
-  "whoin", chat_list_by_room, 1,
-  "wall", chat_broadcast, 2,
+  {"room", chat_list_rooms, 0},
+  {"unignore", chat_unignore, 1},
+  {"whoin", chat_list_by_room, 1},
+  {"wall", chat_broadcast, 2},
 
-  "who", chat_map_chatids_thisroom, 0,
-  "list", chat_list_users, 0,
-  "topic", chat_topic, 1,
-  "version", chat_version, 1,
+  {"who", chat_map_chatids_thisroom, 0},
+  {"list", chat_list_users, 0},
+  {"topic", chat_topic, 1},
+  {"version", chat_version, 1},
 
-  NULL, NULL, 0
+  {NULL, NULL, 0}
 };
 
 
@@ -3376,7 +3375,7 @@ command_execute(cu)
 
     str_lower(buf, cmd);
 
-    for (cmdrec = chatcmdlist; str = cmdrec->cmdstr; cmdrec++)
+    for (cmdrec = chatcmdlist; (str = cmdrec->cmdstr); cmdrec++)
     {
       switch (cmdrec->exact)
       {
@@ -3698,7 +3697,7 @@ sig_over()
   fclose(flog);
   for (fd = 0; fd < 64; fd++)
     close(fd);
-  execl("bin/xchatd", NULL);
+  execl("bin/xchatd", "", NULL);
 }
 
 
@@ -3743,7 +3742,7 @@ main(argc, argv)
   int argc;
   char *argv[];
 {
-  int sock, nfds, maxfds, servo_sno;
+  int sock, nfds, maxfds = 0, servo_sno;
   ChatUser *cu,/* *userpool,*/ **FBI;
   time_t uptime, tcheck;
   fd_set rset, xset;
@@ -3813,7 +3812,7 @@ main(argc, argv)
 
       tcheck = uptime - CHAT_INTERVAL;
 
-      for (FBI = &mainuser; cu = *FBI;)
+      for (FBI = &mainuser; (cu = *FBI);)
       {
 	if (cu->uptime < tcheck)
 	{
@@ -3888,7 +3887,7 @@ main(argc, argv)
 
     uptime = time(0);
 
-    for (FBI = &mainuser; cu = *FBI;)
+    for (FBI = &mainuser; (cu = *FBI);)
     {
       sock = cu->sock;
 
@@ -3962,7 +3961,7 @@ main(argc, argv)
 	sock = accept(0, (struct sockaddr *) &sin, &value);
 	if (sock > 0)
 	{
-	  if (cu = userpool)
+	  if ((cu = userpool))
 	  {
 	    userpool = cu->unext;
 	  }

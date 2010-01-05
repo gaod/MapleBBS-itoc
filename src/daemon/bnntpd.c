@@ -167,7 +167,7 @@ log_open()
 
   umask(077);
 
-  if (fp = fopen(BNNTP_PIDFILE, "w"))
+  if ((fp = fopen(BNNTP_PIDFILE, "w")))
   {
     fprintf(fp, "%d\n", getpid());
     fclose(fp);
@@ -197,7 +197,7 @@ agent_reply(ap, msg)		/* ±N msg °e¥X¥h */
   char *base, *head;
 
   head = base = ap->data;
-  while (cc = *msg++)
+  while ((cc = *msg++))
   {
     *head++ = cc;
   }
@@ -673,7 +673,7 @@ fetch_article(ap, str, mode)
       {
 #endif
 	hdr_fpath(fpath, folder, &hdr);
-	if (fpr = fopen(fpath, "r"))
+	if ((fpr = fopen(fpath, "r")))
 	{
 	  while (fgets(buf, ANSILINELEN, fpr))
 	  {
@@ -718,21 +718,21 @@ cmd_article(ap)
 
 static Command cmd_table[] =
 {
-  cmd_help, "help", 4,
-  cmd_quit, "quit", 4,
+  {cmd_help, "help", 4},
+  {cmd_quit, "quit", 4},
 
-  cmd_mode, "mode", 4,
-  cmd_list, "list", 4,
+  {cmd_mode, "mode", 4},
+  {cmd_list, "list", 4},
 
-  cmd_group, "group ", 6,
+  {cmd_group, "group ", 6},
 
-  cmd_xhdr, "xhdr ", 5,
-  cmd_xover, "xover ", 6,
+  {cmd_xhdr, "xhdr ", 5},
+  {cmd_xover, "xover ", 6},
 
-  cmd_head, "head ", 5,
-  cmd_article, "article ", 8,
+  {cmd_head, "head ", 5},
+  {cmd_article, "article ", 8},
 
-  cmd_what, NULL, 0
+  {cmd_what, NULL, 0}
 };
 
 
@@ -840,7 +840,7 @@ agent_recv(ap)
     used = 32;
   }
 
-  while (cc = *head)
+  while ((cc = *head))
   {
     if (cc == '\r' || cc == '\n')
     {
@@ -855,7 +855,7 @@ agent_recv(ap)
 	return -1;
       }
 
-      for (cmd = cmd_table; head = cmd->cmd; cmd++)
+      for (cmd = cmd_table; (head = cmd->cmd); cmd++)
       {
 	if (!str_ncmp(data, head, cmd->len))
 	  break;
@@ -1276,7 +1276,7 @@ main(argc, argv)
 
       tcheck = uptime - BNNTP_TIMEOUT;
 
-      for (FBI = &Scully; agent = *FBI;)
+      for (FBI = &Scully; (agent = *FBI);)
       {
 	if (agent->uptime < tcheck)
 	{
@@ -1319,7 +1319,7 @@ main(argc, argv)
 
     n = 0;
 
-    if (state = servo_state)
+    if ((state = servo_state))
     {
       if (state & SS_CONFIG)
       {
@@ -1400,7 +1400,7 @@ main(argc, argv)
 
     uptime = time(0);
 
-    for (FBI = &Scully; agent = *FBI;)
+    for (FBI = &Scully; (agent = *FBI);)
     {
       sock = agent->sock;
 
@@ -1449,12 +1449,12 @@ main(argc, argv)
     if (FD_ISSET(0, &rset))
     {
       /* Thor.990319: check maximum connection number */
-      unsigned int ip_addr;
+      unsigned int ip_addr = 0;
       sock = agent_accept();
 
       if (sock > 0)
       {
-	if (agent = Mulder)
+	if ((agent = Mulder))
 	{
 	  Mulder = agent->anext;
 	}

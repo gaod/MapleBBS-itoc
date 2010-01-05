@@ -178,7 +178,7 @@ log_init()
 {
   FILE *fp;
 
-  if (fp = fopen(POP3_PIDFILE, "w"))
+  if ((fp = fopen(POP3_PIDFILE, "w")))
   {
     fprintf(fp, "%d\n", getpid());
     fclose(fp);
@@ -216,7 +216,7 @@ parse_token(str, lower)
   }
 
   token = NULL;
-  while (ch = *str)
+  while ((ch = *str))
   {
     if (ch == ' ' /* || ch == '\t' || ch == '\r' || ch == '\n' */ )
     {
@@ -352,7 +352,7 @@ mbox_read(cn, phdr, lmax)
   cn->locus = head - pool;
   cn->state = CS_FILE;
 
-  if (body = cn->body)
+  if ((body = cn->body))
   {
     /* Thor.990522: 有執行的機會嗎? */
     free(body);
@@ -368,7 +368,7 @@ mbox_read(cn, phdr, lmax)
 
     if (!fstat(fd, &st) && ((size = st.st_size) > 0))
     {
-      if (body = (char *) malloc(size + 1))
+      if ((body = (char *) malloc(size + 1)))
       {
 	size = read(fd, body, size);
 	if (size > 0)
@@ -565,7 +565,7 @@ mbox_file(cn)
   lmax = cn->lmax;
   cx = '\n'; cc = 0;
 
-  while (ch = *bptr)
+  while ((ch = *bptr))
   {
     /* Thor.990522: 控制單行最大傳送量, Char Count. 寫得醜了點, 會跑就好:p */
     if (cc++ >= SNDLINSIZ)
@@ -740,7 +740,7 @@ cmd_user(cn)
 
   /* userid is "userid.bbs" or "userid" */
 
-  if (ptr = strchr(userid, '.'))
+  if ((ptr = strchr(userid, '.')))
   {
     if (strcmp(ptr, ".bbs"))
     {
@@ -1110,22 +1110,22 @@ typedef struct
 
 static PopCmd cmdlist[] =
 {
-  "list", cmd_list,
-  "uidl", cmd_uidl,
-  "retr", cmd_retrive,
-  "dele", cmd_delete,
+  {"list", cmd_list},
+  {"uidl", cmd_uidl},
+  {"retr", cmd_retrive},
+  {"dele", cmd_delete},
 
-  "user", cmd_user,
-  "pass", cmd_password,
-  "stat", cmd_stat,
-  "quit", cmd_quit,
+  {"user", cmd_user},
+  {"pass", cmd_password},
+  {"stat", cmd_stat},
+  {"quit", cmd_quit},
 
-  "last", cmd_last,
-  "top", cmd_top,
+  {"last", cmd_last},
+  {"top", cmd_top},
 
-  "rset", cmd_reset,
-  "noop", cmd_noop,
-  NULL, cmd_xxxx
+  {"rset", cmd_reset},
+  {"noop", cmd_noop},
+  {NULL, cmd_xxxx}
 };
 
 
@@ -1148,7 +1148,7 @@ client_flush(cn, msg)
   while (*head++ = *msg++)
     ; 
 #endif
-  while (*head = *msg++)
+  while ((*head = *msg++))
     head++;
   
   
@@ -1256,7 +1256,7 @@ client_serve(cn)
   if (!cmd || !*cmd)
     return;
 
-  for (pc = cmdlist; str = pc->cmd; pc++)
+  for (pc = cmdlist; (str = pc->cmd); pc++)
   {
     if (!strcmp(cmd, str))
       break;
@@ -1327,7 +1327,7 @@ client_read(cn)
   }
 #endif
 
-  while (cc = *str)
+  while ((cc = *str))
   {
     switch (cc)
     {
@@ -1370,10 +1370,10 @@ client_close(cn)
 
   if (cn->mode >= CM_LOGIN)
   {
-    if (ptr = (char *) cn->cache)
+    if ((ptr = (char *) cn->cache))
       free(ptr);
 
-    if (ptr = cn->body)
+    if ((ptr = cn->body))
       free(ptr);
   }
 
@@ -1651,7 +1651,7 @@ main(argc, argv)
     {
       tcheck = uptime - POP3_TIMEOUT;
 
-      for (FBI = &Scully; cn = *FBI;)
+      for (FBI = &Scully; (cn = *FBI);)
       {
 	if (cn->uptime < tcheck)
 	{
@@ -1742,7 +1742,7 @@ main(argc, argv)
 
     uptime = time(0);
 
-    for (FBI = &Scully; cn = *FBI;)
+    for (FBI = &Scully; (cn = *FBI);)
     {
       csock = cn->sock;
 
@@ -1800,9 +1800,9 @@ main(argc, argv)
     if (FD_ISSET(0, &rset))
     {
       /* Thor.990222: 查出對方 ip */
-      int len;
+      socklen_t len;
       struct sockaddr_in csin;
-      len = sizeof csin;
+      len = sizeof(csin);
 
       for (;;)
       {
@@ -1826,7 +1826,7 @@ main(argc, argv)
       if (csock <= 0)
 	continue;
 
-      if (cn = Mulder)
+      if ((cn = Mulder))
       {
 	Mulder = cn->next;
       }

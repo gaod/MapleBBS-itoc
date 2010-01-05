@@ -111,7 +111,7 @@ nextword(str)
   }
 
   tail = head + 1;
-  while (ch = *tail)
+  while ((ch = *tail))
   {
 
     if (Isspace(ch))

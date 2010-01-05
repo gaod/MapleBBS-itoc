@@ -283,7 +283,7 @@ log_open()
 
   umask(077);
 
-  if (fp = fopen(BHTTP_PIDFILE, "w"))
+  if ((fp = fopen(BHTTP_PIDFILE, "w")))
   {
     fprintf(fp, "%d\n", getpid());
     fclose(fp);
@@ -330,7 +330,7 @@ ansi_hyperlink(fpw, src)
 
   linkEnd = src;
   fputs("<a class=PRE target=_blank href=", fpw);
-  while (ch = *linkEnd)
+  while ((ch = *linkEnd))
   {
     if (ch < '#' || ch == '<' || ch == '>' || ch > '~')
       break;
@@ -540,7 +540,7 @@ ansi_html(fpw, src)
 	if (ch2 < ' ')		/* 怕出現\n */
 	  fputc(ch2, fpw);
 #ifdef HAVE_SAKURA
-	else if (scode = sakura2unicode((ch1 << 8) | ch2))
+	else if ((scode = sakura2unicode((ch1 << 8) | ch2)))
 	  fprintf(fpw, "&#%d;", scode);
 #endif
 	else
@@ -648,7 +648,7 @@ str_html(src, len)
 	if (in_chi < ' ')	/* 可能只有半個字，前半部就不要了 */
 	  *dst++ = in_chi;
 #ifdef HAVE_SAKURA
-	else if (len = sakura2unicode((ch << 8) + in_chi))
+	else if ((len = sakura2unicode((ch << 8) + in_chi)))
 	{
 	  sprintf(dst, "&#%d;", len);	/* 12291~12540 */
 	  dst += 8;
@@ -767,7 +767,7 @@ txt2htm(fpw, fp)
     /* 作者/看板 檔頭有二欄，特別處理 */
     if (i == 0 && ((pbrd = strstr(buf, "看板:")) || (pbrd = strstr(buf, "站內:"))))
     {
-      if (board = strchr(pbrd, '\n'))
+      if ((board = strchr(pbrd, '\n')))
 	*board = '\0';
       board = pbrd + 6;
       pbrd[-1] = '\0';
@@ -1011,7 +1011,7 @@ out_article(fpw, fpath)
 {
   FILE *fp;
 
-  if (fp = fopen(fpath, "r"))
+  if ((fp = fopen(fpath, "r")))
   {
     out_style(fpw);
     txt2htm(fpw, fp);
@@ -1265,7 +1265,7 @@ allow_userid(ap, userid)
   {
     rc = 1;
     str = userid;
-    while (ch = *(++str))
+    while ((ch = *(++str)))
     {
       if (!is_alnum(ch))
       {
@@ -1444,7 +1444,7 @@ allow_brdname(ap, brdname)
 {
   BRD *bhdr;
 
-  if (bhdr = brd_get(brdname))
+  if ((bhdr = brd_get(brdname)))
   {
     /* 若 readlevel == 0，表示 guest 可讀，無需 acct_fetch() */
     if (!bhdr->readlevel)
@@ -1791,7 +1791,7 @@ init_myfavor(ap)
   num = 0;
   usr_fpath(fpath, ap->userid, "MF/" FN_MF);
 
-  if (fp = fopen(fpath, "r"))
+  if ((fp = fopen(fpath, "r")))
   {
     while (fread(&mf, sizeof(MF), 1, fp) == 1)
     {
@@ -1953,9 +1953,9 @@ postlist_list(fpw, folder, brdname, start, total)
     while (i < end && read(fd, &hdr, sizeof(HDR)) == sizeof(HDR))
     {
       strcpy(owner, hdr.owner);
-      if (ptr1 = strchr(owner, '.'))	/* 站外作者 */
+      if ((ptr1 = strchr(owner, '.')))	/* 站外作者 */
 	*(ptr1 + 1) = '\0';
-      if (ptr2 = strchr(owner, '@'))	/* 站外作者 */
+      if ((ptr2 = strchr(owner, '@')))	/* 站外作者 */
 	*ptr2 = '\0';
 
       fputs("<tr onmouseover=mOver(this); onmouseout=mOut(this);>\n", fpw);

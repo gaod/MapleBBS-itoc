@@ -44,7 +44,7 @@
 #define BAKPATH		"/home/bbs/bak"		/* 備份檔的路徑 */
 
 #define BBSUID		9999
-#define BBSGID		99			/* Linux 請設為 999 */
+#define BBSGID		9999			/* Linux 請設為 999 */
 
 
 /* ----------------------------------------------------- */

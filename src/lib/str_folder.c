@@ -7,9 +7,9 @@ str_folder(fpath, folder, fname)
   char *fname;
 {
   int ch;
-  char *token;
+  char *token = NULL;
 
-  while (ch = *folder++)
+  while ((ch = *folder++))
   {
     *fpath++ = ch;
     if (ch == '/')

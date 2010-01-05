@@ -1,5 +1,6 @@
+#include <stdio.h>
 #include <fcntl.h>
-
+#include <unistd.h>
 
 int
 f_mv(src, dst)
@@ -7,7 +8,7 @@ f_mv(src, dst)
 {
   int ret;
 
-  if (ret = rename(src, dst))
+  if ((ret = rename(src, dst)))
   {
     ret = f_cp(src, dst, O_TRUNC);
     if (!ret)

@@ -9,7 +9,7 @@ not_addr(addr)
 
   mode = -1;
 
-  while (ch = *addr)
+  while ((ch = *addr))
   {
     if (ch == '@')
     {
